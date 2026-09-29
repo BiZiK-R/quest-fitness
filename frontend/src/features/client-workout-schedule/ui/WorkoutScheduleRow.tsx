@@ -1,17 +1,15 @@
 import type { components } from '@/shared/api/schema';
-import {
-  WORKOUT_START_STUB_TITLE,
-  workoutStatusLabel,
-} from '../lib/workout-schedule-labels';
+import { workoutStatusLabel } from '../lib/workout-schedule-labels';
 
 type Workout = components['schemas']['WorkoutDto'];
 
 type Props = {
   workout: Workout;
   formattedScheduledAt: string;
-  showStartStub: boolean;
+  showStartAction: boolean;
   showPendingActions: boolean;
   busy: boolean;
+  onStart: () => void;
   onReschedule: () => void;
   onSkip: () => void;
   onCancel: () => void;
@@ -20,9 +18,10 @@ type Props = {
 export function WorkoutScheduleRow({
   workout,
   formattedScheduledAt,
-  showStartStub,
+  showStartAction,
   showPendingActions,
   busy,
+  onStart,
   onReschedule,
   onSkip,
   onCancel,
@@ -39,15 +38,10 @@ export function WorkoutScheduleRow({
           <span className="workout-overdue-label">Просрочена</span>
         </>
       ) : null}
-      {showStartStub ? (
+      {showStartAction ? (
         <>
           {' '}
-          <button
-            type="button"
-            disabled
-            title={WORKOUT_START_STUB_TITLE}
-            aria-label={`Начать — ${WORKOUT_START_STUB_TITLE}`}
-          >
+          <button type="button" disabled={busy} aria-label="Начать" onClick={onStart}>
             Начать
           </button>
         </>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ClientWorkoutSchedulePanel,
@@ -20,6 +21,24 @@ vi.mock('@/shared/api/client', async (importOriginal) => {
     },
   };
 });
+
+const navigateMock = vi.fn();
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
+
+function renderPanel(props: React.ComponentProps<typeof ClientWorkoutSchedulePanel>) {
+  return render(
+    <MemoryRouter>
+      <ClientWorkoutSchedulePanel {...props} />
+    </MemoryRouter>,
+  );
+}
 
 const clientId = 'client_schedule_1';
 const pendingWorkout = {
@@ -42,6 +61,7 @@ describe('ClientWorkoutSchedulePanel skip/cancel', () => {
   });
 
   beforeEach(() => {
+    navigateMock.mockReset();
     vi.mocked(clientModule.apiClient.GET).mockReset();
     vi.mocked(clientModule.apiClient.POST).mockReset();
     vi.mocked(clientModule.apiClient.PATCH).mockReset();
@@ -60,13 +80,11 @@ describe('ClientWorkoutSchedulePanel skip/cancel', () => {
 
   it('does not call skip API until confirm', async () => {
     const user = userEvent.setup();
-    render(
-      <ClientWorkoutSchedulePanel
-        clientId={clientId}
-        macroProgress={{ currentStageId: 'st1', stagesExhausted: false }}
-        mutationsDisabled={false}
-      />,
-    );
+    renderPanel({
+      clientId,
+      macroProgress: { currentStageId: 'st1', stagesExhausted: false },
+      mutationsDisabled: false,
+    });
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Пропустить' })).toBeInTheDocument();
@@ -94,13 +112,11 @@ describe('ClientWorkoutSchedulePanel skip/cancel', () => {
       return { data: undefined, error: undefined, response: new Response(null, { status: 404 }) };
     });
 
-    render(
-      <ClientWorkoutSchedulePanel
-        clientId={clientId}
-        macroProgress={{ currentStageId: 'st1', stagesExhausted: false }}
-        mutationsDisabled={false}
-      />,
-    );
+    renderPanel({
+      clientId,
+      macroProgress: { currentStageId: 'st1', stagesExhausted: false },
+      mutationsDisabled: false,
+    });
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Пропустить' })).toBeInTheDocument();
@@ -124,13 +140,11 @@ describe('ClientWorkoutSchedulePanel skip/cancel', () => {
 
   it('Перенести from confirm opens reschedule sheet without skip API', async () => {
     const user = userEvent.setup();
-    render(
-      <ClientWorkoutSchedulePanel
-        clientId={clientId}
-        macroProgress={{ currentStageId: 'st1', stagesExhausted: false }}
-        mutationsDisabled={false}
-      />,
-    );
+    renderPanel({
+      clientId,
+      macroProgress: { currentStageId: 'st1', stagesExhausted: false },
+      mutationsDisabled: false,
+    });
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Пропустить' })).toBeInTheDocument();
@@ -177,13 +191,11 @@ describe('ClientWorkoutSchedulePanel skip/cancel', () => {
       return { data: undefined, error: undefined, response: new Response(null, { status: 404 }) };
     });
 
-    render(
-      <ClientWorkoutSchedulePanel
-        clientId={clientId}
-        macroProgress={{ currentStageId: 'st1', stagesExhausted: false }}
-        mutationsDisabled={false}
-      />,
-    );
+    renderPanel({
+      clientId,
+      macroProgress: { currentStageId: 'st1', stagesExhausted: false },
+      mutationsDisabled: false,
+    });
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Перенести' })).toBeInTheDocument();
@@ -237,13 +249,11 @@ describe('ClientWorkoutSchedulePanel skip/cancel', () => {
       return { data: undefined, error: undefined, response: new Response(null, { status: 404 }) };
     });
 
-    render(
-      <ClientWorkoutSchedulePanel
-        clientId={clientId}
-        macroProgress={{ currentStageId: 'st1', stagesExhausted: false }}
-        mutationsDisabled={false}
-      />,
-    );
+    renderPanel({
+      clientId,
+      macroProgress: { currentStageId: 'st1', stagesExhausted: false },
+      mutationsDisabled: false,
+    });
 
     await waitFor(() => {
       expect(screen.getAllByText('Ожидание').length).toBeGreaterThanOrEqual(1);
@@ -253,17 +263,59 @@ describe('ClientWorkoutSchedulePanel skip/cancel', () => {
     expect(screen.getByText('Просрочена')).toBeInTheDocument();
 
     const startButton = screen.getAllByRole('button', { name: /Начать/i })[0];
-    expect(startButton).toBeDisabled();
+    expect(startButton).toBeEnabled();
+  });
+
+  it('Начать calls start session API and navigates to session page', async () => {
+    const user = userEvent.setup();
+    vi.mocked(clientModule.apiClient.POST).mockImplementation(async (path) => {
+      if (path === '/api/workouts/{id}/session') {
+        return {
+          data: {
+            id: 'sess_new_1',
+            workoutId: pendingWorkout.id,
+            clientProfileId: clientId,
+            authorTrainerId: 'trainer1',
+            status: 'active',
+            startedAt: '2026-10-01T10:00:00.000Z',
+            completedAt: null,
+            abandonedAt: null,
+            plannedDurationMinutes: 45,
+            exercises: [],
+          },
+          error: undefined,
+          response: new Response(null, { status: 201 }),
+        };
+      }
+      return { data: undefined, error: undefined, response: new Response(null, { status: 404 }) };
+    });
+
+    renderPanel({
+      clientId,
+      macroProgress: { currentStageId: 'st1', stagesExhausted: false },
+      mutationsDisabled: false,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Начать' })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Начать' }));
+
+    await waitFor(() => {
+      expect(clientModule.apiClient.POST).toHaveBeenCalledWith('/api/workouts/{id}/session', {
+        params: { path: { id: pendingWorkout.id } },
+      });
+      expect(navigateMock).toHaveBeenCalledWith('/sessions/sess_new_1');
+    });
   });
 
   it('hides skip/cancel actions when mutations disabled', async () => {
-    render(
-      <ClientWorkoutSchedulePanel
-        clientId={clientId}
-        macroProgress={{ currentStageId: 'st1', stagesExhausted: false }}
-        mutationsDisabled={true}
-      />,
-    );
+    renderPanel({
+      clientId,
+      macroProgress: { currentStageId: 'st1', stagesExhausted: false },
+      mutationsDisabled: true,
+    });
 
     await waitFor(() => {
       expect(screen.getByText(/Ожидание/)).toBeInTheDocument();

@@ -25,6 +25,7 @@ model User {
   invitesIssued      Invite[]
   clientLocksHeld    ClientLock[]
   workoutsCreated    Workout[]
+  sessionsAuthored   Session[]      @relation("SessionAuthor")
 
   @@map("users")
 }
@@ -41,6 +42,7 @@ model ClientProfile {
   clientLock    ClientLock?
   macroProgress ClientMacroProgress?
   workouts      Workout[]
+  sessions      Session[]
 
   @@map("client_profiles")
 }
@@ -106,8 +108,9 @@ model Exercise {
   archivedAt DateTime?        @map("archived_at")
   createdAt  DateTime         @default(now()) @map("created_at")
   updatedAt  DateTime         @updatedAt @map("updated_at")
-  muscles    ExerciseMuscle[]
+  muscles           ExerciseMuscle[]
   templateExercises TemplateExercise[]
+  sessionExercises  SessionExercise[]
 
   @@map("exercises")
 }
@@ -177,9 +180,54 @@ model Workout {
   createdByUser   User           @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
   createdAt       DateTime       @default(now()) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
+  session         Session?
 
   @@index([clientProfileId, scheduledAt])
   @@map("workouts")
+}
+
+enum SessionStatus {
+  active
+  completed
+  abandoned
+}
+
+model Session {
+  id                     String            @id @default(cuid())
+  workoutId              String            @unique @map("workout_id")
+  workout                Workout           @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  clientProfileId        String            @map("client_profile_id")
+  clientProfile          ClientProfile     @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  authorTrainerId        String            @map("author_trainer_id")
+  authorTrainer          User              @relation("SessionAuthor", fields: [authorTrainerId], references: [id], onDelete: Restrict)
+  status                 SessionStatus     @default(active)
+  startedAt              DateTime          @map("started_at")
+  completedAt            DateTime?         @map("completed_at")
+  abandonedAt            DateTime?         @map("abandoned_at")
+  plannedDurationMinutes Int?              @map("planned_duration_minutes")
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
+  exercises              SessionExercise[]
+
+  @@index([clientProfileId])
+  @@map("sessions")
+}
+
+model SessionExercise {
+  id              String   @id @default(cuid())
+  sessionId       String   @map("session_id")
+  session         Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseId      String   @map("exercise_id")
+  exercise        Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  sortOrder       Int      @map("sort_order")
+  plannedSets     Int?     @map("planned_sets")
+  plannedReps     Int?     @map("planned_reps")
+  plannedWeightKg Decimal? @map("planned_weight_kg") @db.Decimal(10, 2)
+  nameSnapshot    String   @map("name_snapshot")
+  notes           String?
+
+  @@unique([sessionId, sortOrder])
+  @@map("session_exercises")
 }
 
 model IdempotencyRecord {

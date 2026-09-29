@@ -10,6 +10,7 @@ import { AdminTrainersPage } from '@/pages/admin-trainers/AdminTrainersPage';
 import { CatalogPage } from '@/pages/catalog/CatalogPage';
 import { TemplatesPage } from '@/pages/templates/TemplatesPage';
 import { MacrocyclesPage } from '@/pages/macrocycles/MacrocyclesPage';
+import { SessionPage } from '@/pages/session/SessionPage';
 
 export const appRouter = createBrowserRouter([
   { path: '/', element: <RootRedirect /> },
@@ -24,6 +25,7 @@ export const appRouter = createBrowserRouter([
       { path: '/macrocycles', element: <MacrocyclesPage /> },
       { path: '/admin/trainers', element: <AdminTrainersPage /> },
       { path: '/clients/:id', element: <ClientCardPage /> },
+      { path: '/sessions/:sessionId', element: <SessionPage /> },
       { path: '/cabinet/workouts', element: <CabinetWorkoutsPage /> },
     ],
   },

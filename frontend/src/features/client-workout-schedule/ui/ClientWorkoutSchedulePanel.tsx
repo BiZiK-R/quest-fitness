@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
 import {
@@ -43,6 +44,7 @@ export function ClientWorkoutSchedulePanel({
   macroProgress,
   mutationsDisabled,
 }: Props) {
+  const navigate = useNavigate();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [scheduledLocal, setScheduledLocal] = useState('');
@@ -167,6 +169,27 @@ export function ClientWorkoutSchedulePanel({
     [loadWorkouts],
   );
 
+  const handleStartSession = useCallback(
+    async (workoutId: string) => {
+      setActionError(null);
+      setBusy(true);
+
+      const { data, error } = await apiClient.POST('/api/workouts/{id}/session', {
+        params: { path: { id: workoutId } },
+      });
+
+      setBusy(false);
+
+      if (error || !data) {
+        setActionError(error?.error?.code ?? 'SESSION_START_FAILED');
+        return;
+      }
+
+      navigate(`/sessions/${data.id}`);
+    },
+    [navigate],
+  );
+
   const handleAssign = useCallback(async () => {
     if (mutationsDisabled || !scheduledLocal) {
       return;
@@ -235,9 +258,10 @@ export function ClientWorkoutSchedulePanel({
             key={w.id}
             workout={w}
             formattedScheduledAt={formatScheduledAt(w.scheduledAt)}
-            showStartStub={w.status === 'pending' && !mutationsDisabled}
+            showStartAction={w.status === 'pending' && !mutationsDisabled}
             showPendingActions={w.status === 'pending' && !mutationsDisabled}
             busy={busy}
+            onStart={() => void handleStartSession(w.id)}
             onReschedule={() => openRescheduleForWorkout(w.id)}
             onSkip={() => setConfirmTarget({ workoutId: w.id, action: 'skip' })}
             onCancel={() => setConfirmTarget({ workoutId: w.id, action: 'cancel' })}

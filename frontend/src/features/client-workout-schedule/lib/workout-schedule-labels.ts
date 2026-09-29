@@ -14,5 +14,3 @@ export function workoutStatusLabel(status: WorkoutStatus): string {
   return STATUS_LABELS[status];
 }
 
-export const WORKOUT_START_STUB_TITLE =
-  'Старт сессии будет доступен в следующем обновлении';

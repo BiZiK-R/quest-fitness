@@ -1326,6 +1326,86 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a12
+  /api/sessions/{id}:
+    get:
+      operationId: SessionsController_getById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Session id
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags:
+        - sessions
+  /api/workouts/{id}/session:
+    post:
+      operationId: WorkoutSessionController_start
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Workout id
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "409":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags:
+        - sessions
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -1490,6 +1570,25 @@ components:
         - macrocycleId
         - currentStageId
         - stagesExhausted
+    ClientNextWorkoutDto:
+      type: object
+      properties:
+        scheduledAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - pending
+            - attended
+            - skipped
+            - cancelled
+        isOverdue:
+          type: boolean
+      required:
+        - scheduledAt
+        - status
+        - isOverdue
     ClientProfileDto:
       type: object
       properties:
@@ -1529,7 +1628,8 @@ components:
             - $ref: "#/components/schemas/ClientMacroProgressSummaryDto"
         nextWorkout:
           nullable: true
-          description: Earliest pending workout for pool list (Story 4.4)
+          description: Earliest pending workout for pool row meta (Story 4.4)
+          type: object
           allOf:
             - $ref: "#/components/schemas/ClientNextWorkoutDto"
       required:
@@ -1539,25 +1639,6 @@ components:
         - deactivatedAt
         - createdAt
         - updatedAt
-    ClientNextWorkoutDto:
-      type: object
-      properties:
-        scheduledAt:
-          type: string
-          format: date-time
-        status:
-          type: string
-          enum:
-            - pending
-            - attended
-            - skipped
-            - cancelled
-        isOverdue:
-          type: boolean
-      required:
-        - scheduledAt
-        - status
-        - isOverdue
     ClientListResponseDto:
       type: object
       properties:
@@ -2091,7 +2172,8 @@ components:
             - cancelled
         isOverdue:
           type: boolean
-          description: Pending workout scheduled before gym-local today (AD-17, BFF-only)
+          description: True when pending and scheduled gym-local day is before today
+            (AD-17, BFF-only)
         templateId:
           type: string
           nullable: true
@@ -2135,3 +2217,80 @@ components:
           format: date-time
       required:
         - scheduledAt
+    SessionExerciseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionId:
+          type: string
+        exerciseId:
+          type: string
+        sortOrder:
+          type: number
+        plannedSets:
+          type: number
+          nullable: true
+        plannedReps:
+          type: number
+          nullable: true
+        plannedWeightKg:
+          type: number
+          nullable: true
+        nameSnapshot:
+          type: string
+          description: Exercise name frozen at session start (AD-7)
+        notes:
+          type: string
+          nullable: true
+      required:
+        - id
+        - sessionId
+        - exerciseId
+        - sortOrder
+        - nameSnapshot
+    SessionDto:
+      type: object
+      properties:
+        id:
+          type: string
+        workoutId:
+          type: string
+        clientProfileId:
+          type: string
+        authorTrainerId:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - abandoned
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        abandonedAt:
+          type: string
+          format: date-time
+          nullable: true
+        plannedDurationMinutes:
+          type: number
+          description: Planned session length in minutes copied from template at start
+            (AD-8)
+        exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/SessionExerciseDto"
+      required:
+        - id
+        - workoutId
+        - clientProfileId
+        - authorTrainerId
+        - status
+        - startedAt
+        - plannedDurationMinutes
+        - exercises

@@ -468,6 +468,38 @@ export interface paths {
         patch: operations["WorkoutActionsController_reschedule"];
         trace?: never;
     };
+    "/api/sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SessionsController_getById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workouts/{id}/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["WorkoutSessionController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -547,6 +579,13 @@ export interface components {
             currentStageSortOrder?: number | null;
             stageCount?: number;
         };
+        ClientNextWorkoutDto: {
+            /** Format: date-time */
+            scheduledAt: string;
+            /** @enum {string} */
+            status: "pending" | "attended" | "skipped" | "cancelled";
+            isOverdue: boolean;
+        };
         ClientProfileDto: {
             /** @example clxyz123 */
             id: string;
@@ -570,15 +609,8 @@ export interface components {
             lockStatus?: components["schemas"]["ClientLockStatusDto"] | null;
             /** @description Macrocycle stage pointer when assigned (Story 3.4) */
             macroProgress?: components["schemas"]["ClientMacroProgressSummaryDto"] | null;
-            /** @description Earliest pending workout for pool list (Story 4.4) */
+            /** @description Earliest pending workout for pool row meta (Story 4.4) */
             nextWorkout?: components["schemas"]["ClientNextWorkoutDto"] | null;
-        };
-        ClientNextWorkoutDto: {
-            /** Format: date-time */
-            scheduledAt: string;
-            /** @enum {string} */
-            status: "pending" | "attended" | "skipped" | "cancelled";
-            isOverdue: boolean;
         };
         ClientListResponseDto: {
             clients: components["schemas"]["ClientProfileDto"][];
@@ -790,7 +822,7 @@ export interface components {
             scheduledAt: string;
             /** @enum {string} */
             status: "pending" | "attended" | "skipped" | "cancelled";
-            /** @description Pending workout scheduled before gym-local today (AD-17, BFF-only) */
+            /** @description True when pending and scheduled gym-local day is before today (AD-17, BFF-only) */
             isOverdue: boolean;
             templateId?: string | null;
             templateName?: string | null;
@@ -807,6 +839,35 @@ export interface components {
         RescheduleWorkoutRequestDto: {
             /** Format: date-time */
             scheduledAt: string;
+        };
+        SessionExerciseDto: {
+            id: string;
+            sessionId: string;
+            exerciseId: string;
+            sortOrder: number;
+            plannedSets?: number | null;
+            plannedReps?: number | null;
+            plannedWeightKg?: number | null;
+            /** @description Exercise name frozen at session start (AD-7) */
+            nameSnapshot: string;
+            notes?: string | null;
+        };
+        SessionDto: {
+            id: string;
+            workoutId: string;
+            clientProfileId: string;
+            authorTrainerId: string;
+            /** @enum {string} */
+            status: "active" | "completed" | "abandoned";
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            completedAt?: string | null;
+            /** Format: date-time */
+            abandonedAt?: string | null;
+            /** @description Planned session length in minutes copied from template at start (AD-8) */
+            plannedDurationMinutes: number;
+            exercises: components["schemas"]["SessionExerciseDto"][];
         };
     };
     responses: never;
@@ -2474,6 +2535,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkoutDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    SessionsController_getById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    WorkoutSessionController_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Workout id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDto"];
                 };
             };
             401: {

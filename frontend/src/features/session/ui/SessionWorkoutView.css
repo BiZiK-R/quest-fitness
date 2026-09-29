@@ -1,0 +1,36 @@
+.surface-session {
+  min-height: 100%;
+  background-color: var(--color-surface-session);
+  color: var(--color-ink-on-session);
+  padding: 1rem 1.25rem 2rem;
+}
+
+.surface-session__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.surface-session__timer {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.25rem;
+}
+
+.surface-session__exercise-card {
+  background-color: var(--color-surface-session-raised);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.surface-session__exercise-name {
+  font-size: 1.125rem;
+  margin: 0 0 0.5rem;
+}
+
+.surface-session__targets {
+  margin: 0;
+  opacity: 0.85;
+}
