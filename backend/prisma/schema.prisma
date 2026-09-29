@@ -24,6 +24,7 @@ model User {
   clientProfile      ClientProfile?
   invitesIssued      Invite[]
   clientLocksHeld    ClientLock[]
+  workoutsCreated    Workout[]
 
   @@map("users")
 }
@@ -39,6 +40,7 @@ model ClientProfile {
   invites       Invite[]
   clientLock    ClientLock?
   macroProgress ClientMacroProgress?
+  workouts      Workout[]
 
   @@map("client_profiles")
 }
@@ -123,6 +125,7 @@ model WorkoutTemplate {
   updatedAt       DateTime           @updatedAt @map("updated_at")
   exercises       TemplateExercise[]
   macrocycleStages MacrocycleStage[]
+  workouts         Workout[]
 
   @@map("workout_templates")
 }
@@ -147,9 +150,50 @@ model MacrocycleStage {
   template     WorkoutTemplate       @relation(fields: [templateId], references: [id], onDelete: Restrict)
   sortOrder    Int                   @map("sort_order")
   progressAtStage ClientMacroProgress[] @relation("MacroProgressCurrentStage")
+  sourceWorkouts  Workout[]
 
   @@unique([macrocycleId, sortOrder])
   @@map("macrocycle_stages")
+}
+
+enum WorkoutStatus {
+  pending
+  attended
+  skipped
+  cancelled
+}
+
+model Workout {
+  id              String         @id @default(cuid())
+  clientProfileId String         @map("client_profile_id")
+  clientProfile   ClientProfile  @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  scheduledAt     DateTime       @map("scheduled_at")
+  status          WorkoutStatus  @default(pending)
+  templateId      String?        @map("template_id")
+  template        WorkoutTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  sourceStageId   String?        @map("source_stage_id")
+  sourceStage     MacrocycleStage? @relation(fields: [sourceStageId], references: [id], onDelete: SetNull)
+  createdByUserId String         @map("created_by_user_id")
+  createdByUser   User           @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  @@index([clientProfileId, scheduledAt])
+  @@map("workouts")
+}
+
+model IdempotencyRecord {
+  id             String   @id @default(cuid())
+  idempotencyKey String   @map("idempotency_key")
+  scope          String
+  actorUserId    String   @map("actor_user_id")
+  responseStatus Int      @map("response_status")
+  responseBody   Json     @map("response_body")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([scope, idempotencyKey])
+  @@index([createdAt])
+  @@map("idempotency_records")
 }
 
 model ClientMacroProgress {

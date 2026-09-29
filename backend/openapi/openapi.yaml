@@ -1094,6 +1094,95 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a10
+  /api/clients/{id}/workouts:
+    post:
+      operationId: WorkoutsController_assign
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: id
+          required: true
+          in: path
+          description: Client profile id
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignWorkoutRequestDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkoutDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "409":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: &a11
+        - workouts
+    get:
+      operationId: WorkoutsController_list
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Client profile id
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkoutListResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a11
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -1806,3 +1895,64 @@ components:
       required:
         - name
         - stages
+    AssignWorkoutRequestDto:
+      type: object
+      properties:
+        scheduledAt:
+          type: string
+          format: date-time
+        templateId:
+          type: string
+      required:
+        - scheduledAt
+    WorkoutDto:
+      type: object
+      properties:
+        id:
+          type: string
+        clientProfileId:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - pending
+            - attended
+            - skipped
+            - cancelled
+        templateId:
+          type: string
+          nullable: true
+        templateName:
+          type: string
+          nullable: true
+        sourceStageId:
+          type: string
+          nullable: true
+        createdByUserId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - clientProfileId
+        - scheduledAt
+        - status
+        - createdByUserId
+        - createdAt
+        - updatedAt
+    WorkoutListResponseDto:
+      type: object
+      properties:
+        workouts:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkoutDto"
+      required:
+        - workouts

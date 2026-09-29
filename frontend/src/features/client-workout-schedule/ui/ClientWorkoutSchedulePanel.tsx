@@ -1,0 +1,202 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { apiClient } from '@/shared/api/client';
+import type { components } from '@/shared/api/schema';
+
+type Workout = components['schemas']['WorkoutDto'];
+type WorkoutTemplate = components['schemas']['WorkoutTemplateDto'];
+type MacroProgressSummary = components['schemas']['ClientMacroProgressSummaryDto'];
+
+type Props = {
+  clientId: string;
+  macroProgress: MacroProgressSummary | null | undefined;
+  mutationsDisabled: boolean;
+};
+
+function newIdempotencyKey(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `idem_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
+/** Converts native datetime-local value to UTC ISO string for the BFF. */
+function datetimeLocalToIso(value: string): string {
+  return new Date(value).toISOString();
+}
+
+function formatScheduledAt(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return iso;
+  }
+  return d.toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+export function ClientWorkoutSchedulePanel({
+  clientId,
+  macroProgress,
+  mutationsDisabled,
+}: Props) {
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
+  const [scheduledLocal, setScheduledLocal] = useState('');
+  const [manualTemplateId, setManualTemplateId] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const stagesExhausted = Boolean(macroProgress?.stagesExhausted);
+  const requireManualTemplate = stagesExhausted || !macroProgress?.currentStageId;
+
+  const pendingWorkouts = useMemo(
+    () => workouts.filter((w) => w.status === 'pending'),
+    [workouts],
+  );
+
+  const loadWorkouts = useCallback(async () => {
+    setLoadError(null);
+    const { data, error } = await apiClient.GET('/api/clients/{id}/workouts', {
+      params: { path: { id: clientId } },
+    });
+    if (error || !data) {
+      setLoadError(error?.error?.code ?? 'WORKOUTS_LOAD_FAILED');
+      return;
+    }
+    setWorkouts(data.workouts);
+  }, [clientId]);
+
+  useEffect(() => {
+    void loadWorkouts();
+  }, [loadWorkouts]);
+
+  useEffect(() => {
+    if (!requireManualTemplate) {
+      setTemplates([]);
+      setManualTemplateId('');
+      return;
+    }
+    void apiClient.GET('/api/templates').then(({ data, error }) => {
+      if (error || !data?.templates) {
+        setLoadError(error?.error?.code ?? 'TEMPLATES_LOAD_FAILED');
+        return;
+      }
+      setTemplates(data.templates);
+      if (data.templates.length > 0) {
+        setManualTemplateId((prev) => prev || data.templates[0].id);
+      }
+    });
+  }, [requireManualTemplate]);
+
+  const handleAssign = useCallback(async () => {
+    if (mutationsDisabled || !scheduledLocal) {
+      return;
+    }
+    if (requireManualTemplate && !manualTemplateId) {
+      setActionError('VALIDATION_FAILED');
+      return;
+    }
+
+    setActionError(null);
+    setBusy(true);
+
+    const body: { scheduledAt: string; templateId?: string } = {
+      scheduledAt: datetimeLocalToIso(scheduledLocal),
+    };
+    if (requireManualTemplate) {
+      body.templateId = manualTemplateId;
+    }
+
+    const { data, error } = await apiClient.POST('/api/clients/{id}/workouts', {
+      params: {
+        path: { id: clientId },
+        header: { 'Idempotency-Key': newIdempotencyKey() },
+      },
+      body,
+    });
+
+    setBusy(false);
+
+    if (error || !data) {
+      setActionError(error?.error?.code ?? 'ASSIGN_WORKOUT_FAILED');
+      return;
+    }
+
+    setScheduledLocal('');
+    await loadWorkouts();
+  }, [
+    clientId,
+    loadWorkouts,
+    manualTemplateId,
+    mutationsDisabled,
+    requireManualTemplate,
+    scheduledLocal,
+  ]);
+
+  return (
+    <section aria-labelledby="client-workout-schedule-heading">
+      <h2 id="client-workout-schedule-heading">Расписание тренировок</h2>
+
+      {loadError ? <p role="alert">{loadError}</p> : null}
+      {actionError ? <p role="alert">{actionError}</p> : null}
+
+      {stagesExhausted ? (
+        <p role="status">
+          Этапы кончились — продлите цикл или выберите шаблон тренировки вручную.
+        </p>
+      ) : null}
+
+      {!macroProgress && !mutationsDisabled ? (
+        <p role="status">Назначьте макроцикл или выберите шаблон вручную для тренировки.</p>
+      ) : null}
+
+      <ul>
+        {pendingWorkouts.map((w) => (
+          <li key={w.id}>
+            {formatScheduledAt(w.scheduledAt)}
+            {w.templateName ? ` — ${w.templateName}` : null}
+            {' · '}
+            Ожидание
+          </li>
+        ))}
+      </ul>
+      {pendingWorkouts.length === 0 ? <p>Нет предстоящих тренировок.</p> : null}
+
+      <div>
+        <label htmlFor="workout-scheduled-at">Дата и время</label>
+        <input
+          id="workout-scheduled-at"
+          type="datetime-local"
+          value={scheduledLocal}
+          disabled={mutationsDisabled || busy}
+          onChange={(e) => setScheduledLocal(e.target.value)}
+        />
+      </div>
+
+      {requireManualTemplate ? (
+        <div>
+          <label htmlFor="workout-manual-template">Шаблон</label>
+          <select
+            id="workout-manual-template"
+            value={manualTemplateId}
+            disabled={mutationsDisabled || busy || templates.length === 0}
+            onChange={(e) => setManualTemplateId(e.target.value)}
+          >
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        disabled={mutationsDisabled || busy || !scheduledLocal}
+        onClick={() => void handleAssign()}
+      >
+        Назначить тренировку
+      </button>
+    </section>
+  );
+}

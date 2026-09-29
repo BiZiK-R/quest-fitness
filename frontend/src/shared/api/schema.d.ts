@@ -404,6 +404,22 @@ export interface paths {
         patch: operations["MacrocyclesController_update"];
         trace?: never;
     };
+    "/api/clients/{id}/workouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorkoutsController_list"];
+        put?: never;
+        post: operations["WorkoutsController_assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -704,6 +720,30 @@ export interface components {
             name: string;
             periodicityNote?: string | null;
             stages: components["schemas"]["UpdateMacrocycleStageInputDto"][];
+        };
+        AssignWorkoutRequestDto: {
+            /** Format: date-time */
+            scheduledAt: string;
+            templateId?: string;
+        };
+        WorkoutDto: {
+            id: string;
+            clientProfileId: string;
+            /** Format: date-time */
+            scheduledAt: string;
+            /** @enum {string} */
+            status: "pending" | "attended" | "skipped" | "cancelled";
+            templateId?: string | null;
+            templateName?: string | null;
+            sourceStageId?: string | null;
+            createdByUserId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        WorkoutListResponseDto: {
+            workouts: components["schemas"]["WorkoutDto"][];
         };
     };
     responses: never;
@@ -2122,6 +2162,112 @@ export interface operations {
                 };
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    WorkoutsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Client profile id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkoutListResponseDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    WorkoutsController_assign: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                /** @description Client profile id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignWorkoutRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkoutDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

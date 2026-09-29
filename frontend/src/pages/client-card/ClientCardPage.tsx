@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ClientInvitePanel } from '@/features/invite-share/ui/ClientInvitePanel';
 import { ClientMacroProgressPanel } from '@/features/client-macro-progress/ui/ClientMacroProgressPanel';
+import { ClientWorkoutSchedulePanel } from '@/features/client-workout-schedule/ui/ClientWorkoutSchedulePanel';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
 import { formatLockCountdown } from '@/shared/lib/format-lock-countdown';
@@ -260,6 +261,12 @@ export function ClientCardPage() {
             onProgressChange={(macroProgress) => {
               setClient((prev) => (prev ? { ...prev, macroProgress } : prev));
             }}
+          />
+
+          <ClientWorkoutSchedulePanel
+            clientId={client.id}
+            macroProgress={client.macroProgress}
+            mutationsDisabled={mutationsDisabled}
           />
 
           {me?.role === 'ADMIN' && client.userId ? (
