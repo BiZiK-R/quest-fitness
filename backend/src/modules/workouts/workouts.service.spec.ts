@@ -4,6 +4,7 @@ import { WorkoutStatus } from '@prisma/client';
 import { ErrorCode } from '../../common/errors/error-code.enum';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { ClientsLockService } from '../clients-lock/clients-lock.service';
+import { MembershipDebitHookService } from '../membership/membership-debit-hook.service';
 import { WorkoutIdempotencyService } from './workout-idempotency.service';
 import { WorkoutsService } from './workouts.service';
 
@@ -142,12 +143,18 @@ describe('WorkoutsService.markAttended', () => {
       updatedAt: now,
     });
 
+    const membershipHook = {
+      onWorkoutStarted: vi.fn(),
+      onWorkoutSkipped: vi.fn(),
+    };
+
     const moduleRef = await Test.createTestingModule({
       providers: [
         WorkoutsService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: ClientsLockService, useValue: {} },
         { provide: WorkoutIdempotencyService, useValue: {} },
+        { provide: MembershipDebitHookService, useValue: membershipHook },
       ],
     }).compile();
 
@@ -197,6 +204,78 @@ describe('WorkoutsService.markAttended', () => {
 
     await service.markAttended('wo_1');
     expect(macroProgress.get('cmp_1')?.currentStageId).toBe('stage_1');
+  });
+});
+
+describe('WorkoutsService skip membership debit hook', () => {
+  let service: WorkoutsService;
+  const onWorkoutSkipped = vi.fn(async () => undefined);
+  const workouts = new Map<string, StoredWorkout>();
+
+  const prismaMock = {
+    workout: {
+      findUnique: async ({ where }: { where: { id: string } }) => {
+        const row = workouts.get(where.id);
+        return row ? { ...row, template: null } : null;
+      },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: { status: WorkoutStatus };
+      }) => {
+        const row = workouts.get(where.id)!;
+        const updated = { ...row, status: data.status };
+        workouts.set(where.id, updated);
+        return { ...updated, template: null };
+      },
+    },
+  };
+
+  beforeEach(async () => {
+    onWorkoutSkipped.mockClear();
+    workouts.clear();
+    const now = new Date();
+    workouts.set('wo_skip', {
+      id: 'wo_skip',
+      clientProfileId: 'client_1',
+      scheduledAt: now,
+      status: WorkoutStatus.pending,
+      templateId: 'tpl_1',
+      sourceStageId: null,
+      createdByUserId: 'trainer_1',
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        WorkoutsService,
+        { provide: PrismaService, useValue: prismaMock },
+        {
+          provide: ClientsLockService,
+          useValue: { assertActorHoldsLiveLock: async () => undefined },
+        },
+        {
+          provide: WorkoutIdempotencyService,
+          useValue: { findReplay: async () => null, store: async () => undefined },
+        },
+        {
+          provide: MembershipDebitHookService,
+          useValue: { onWorkoutStarted: vi.fn(), onWorkoutSkipped },
+        },
+      ],
+    }).compile();
+
+    service = moduleRef.get(WorkoutsService);
+  });
+
+  it('calls onWorkoutSkipped after workout status becomes skipped', async () => {
+    await service.skip('wo_skip', 'trainer_1', 'idem-skip');
+
+    expect(onWorkoutSkipped).toHaveBeenCalledOnce();
+    expect(onWorkoutSkipped).toHaveBeenCalledWith('client_1', 'wo_skip');
   });
 });
 
@@ -262,12 +341,18 @@ describe('WorkoutsService skip/cancel do not advance stage', () => {
       assertActorHoldsLiveLock: async () => undefined,
     };
 
+    const membershipHook = {
+      onWorkoutStarted: vi.fn(),
+      onWorkoutSkipped: vi.fn(async () => undefined),
+    };
+
     const moduleRef = await Test.createTestingModule({
       providers: [
         WorkoutsService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: ClientsLockService, useValue: lock },
         { provide: WorkoutIdempotencyService, useValue: idempotency },
+        { provide: MembershipDebitHookService, useValue: membershipHook },
       ],
     }).compile();
 
@@ -298,6 +383,10 @@ describe('WorkoutsService.markAttended errors', () => {
         { provide: PrismaService, useValue: prismaMock },
         { provide: ClientsLockService, useValue: {} },
         { provide: WorkoutIdempotencyService, useValue: {} },
+        {
+          provide: MembershipDebitHookService,
+          useValue: { onWorkoutStarted: vi.fn(), onWorkoutSkipped: vi.fn() },
+        },
       ],
     }).compile();
     const service = moduleRef.get(WorkoutsService);

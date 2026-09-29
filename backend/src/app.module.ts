@@ -17,6 +17,11 @@ import { WorkoutsModule } from './modules/workouts/workouts.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
 import { ModifiersModule } from './modules/modifiers/modifiers.module';
 import { DiaryModule } from './modules/diary/diary.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { NutritionModule } from './modules/nutrition/nutrition.module';
+import { MeasurementsModule } from './modules/measurements/measurements.module';
+import { AchievementsModule } from './modules/achievements/achievements.module';
+import { MembershipModule } from './modules/membership/membership.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 
 @Module({
@@ -37,6 +42,11 @@ import { PrismaModule } from './shared/prisma/prisma.module';
     SessionsModule,
     ModifiersModule,
     DiaryModule,
+    AnalyticsModule,
+    NutritionModule,
+    MeasurementsModule,
+    AchievementsModule,
+    MembershipModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: CsrfGuard },

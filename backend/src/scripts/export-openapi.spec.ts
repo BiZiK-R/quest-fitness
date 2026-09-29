@@ -68,4 +68,21 @@ describe('OpenAPI export contract', () => {
     expect(document.paths).toHaveProperty('/api/macrocycles');
     expect(document.paths).toHaveProperty('/api/macrocycles/{id}');
   });
+
+  it('does not expose Stage 2 domain REST paths (Story 6.4 stubs only)', () => {
+    const document = createOpenApiDocument(app);
+    const paths = Object.keys(document.paths ?? {});
+
+    const forbiddenPrefixes = [
+      '/api/analytics',
+      '/api/nutrition',
+      '/api/measurements',
+      '/api/achievements',
+      '/api/membership',
+    ];
+
+    for (const prefix of forbiddenPrefixes) {
+      expect(paths.some((p) => p === prefix || p.startsWith(`${prefix}/`))).toBe(false);
+    }
+  });
 });

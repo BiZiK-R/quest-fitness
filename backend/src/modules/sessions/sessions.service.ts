@@ -4,6 +4,7 @@ import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-code.enum';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { ClientsLockService } from '../clients-lock/clients-lock.service';
+import { MembershipDebitHookService } from '../membership/membership-debit-hook.service';
 import { WorkoutsService } from '../workouts/workouts.service';
 import { SessionSummaryDto } from './dto/session-summary.dto';
 import { SessionDto } from './dto/session.dto';
@@ -31,6 +32,7 @@ export class SessionsService {
     private readonly prisma: PrismaService,
     private readonly clientsLockService: ClientsLockService,
     private readonly workoutsService: WorkoutsService,
+    private readonly membershipDebitHook: MembershipDebitHookService,
   ) {}
 
   /**
@@ -120,6 +122,8 @@ export class SessionsService {
         include: sessionWithExercisesInclude,
       });
     });
+
+    await this.membershipDebitHook.onWorkoutStarted(workout.clientProfileId, workout.id);
 
     return toSessionDto(created);
   }

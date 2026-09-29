@@ -4,6 +4,7 @@ import { Prisma, SessionStatus } from '@prisma/client';
 import { ErrorCode } from '../../common/errors/error-code.enum';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { ClientsLockService } from '../clients-lock/clients-lock.service';
+import { MembershipDebitHookService } from '../membership/membership-debit-hook.service';
 import { WorkoutsService } from '../workouts/workouts.service';
 import { SessionsService } from './sessions.service';
 
@@ -244,6 +245,10 @@ describe('SessionsService sets upsert', () => {
         {
           provide: WorkoutsService,
           useValue: { markAttended: vi.fn() },
+        },
+        {
+          provide: MembershipDebitHookService,
+          useValue: { onWorkoutStarted: vi.fn(), onWorkoutSkipped: vi.fn() },
         },
       ],
     }).compile();

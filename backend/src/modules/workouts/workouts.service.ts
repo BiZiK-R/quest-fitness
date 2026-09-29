@@ -7,6 +7,7 @@ import { PrismaService } from '../../shared/prisma/prisma.service';
 import { buildClientWorkoutsOverview } from './build-client-workouts-overview';
 import { ClientWorkoutsOverviewDto } from './dto/client-workouts-overview.dto';
 import { ClientsLockService } from '../clients-lock/clients-lock.service';
+import { MembershipDebitHookService } from '../membership/membership-debit-hook.service';
 import { AssignWorkoutRequestDto } from './dto/assign-workout-request.dto';
 import { RescheduleWorkoutRequestDto } from './dto/reschedule-workout-request.dto';
 import { WorkoutDto } from './dto/workout.dto';
@@ -28,6 +29,7 @@ export class WorkoutsService {
     private readonly prisma: PrismaService,
     private readonly clientsLockService: ClientsLockService,
     private readonly idempotencyService: WorkoutIdempotencyService,
+    private readonly membershipDebitHook: MembershipDebitHookService,
   ) {}
 
   async assign(
@@ -323,6 +325,11 @@ export class WorkoutsService {
 
     const dto = toWorkoutDto(row);
     await this.idempotencyService.store(scope, trimmedKey, actorUserId, 200, dto);
+
+    if (targetStatus === WorkoutStatus.skipped) {
+      await this.membershipDebitHook.onWorkoutSkipped(existing.clientProfileId, workoutId);
+    }
+
     return dto;
   }
 
