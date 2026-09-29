@@ -29,6 +29,7 @@ services:
       SEED_ADMIN_LOGIN: ${SEED_ADMIN_LOGIN}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
       NODE_ENV: ${NODE_ENV:-production}
+      APP_ENV: ${APP_ENV:-local}
     expose:
       - '3000'
 

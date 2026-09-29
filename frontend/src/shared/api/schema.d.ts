@@ -20,6 +20,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AuthController_login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AuthController_logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AuthController_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -30,6 +78,44 @@ export interface components {
              * @enum {string}
              */
             status: "ok";
+        };
+        LoginRequestDto: {
+            /** @example adminuser */
+            login: string;
+            /**
+             * Format: password
+             * @example SecretPass1!
+             */
+            password: string;
+        };
+        LoginResponseDto: {
+            /** @description CSRF token for mutating requests (header x-csrf-token) */
+            csrfToken: string;
+        };
+        /** @enum {string} */
+        ErrorCode: "VALIDATION_FAILED" | "UNAUTHENTICATED" | "FORBIDDEN_ROLE" | "CSRF_INVALID" | "NOT_FOUND" | "CLIENT_LOCKED" | "LOCK_REQUIRED" | "TEMPLATE_VERSION_CONFLICT" | "INVITE_EXPIRED" | "INVITE_ALREADY_CONSUMED" | "SESSION_ABANDONED" | "SESSION_ALREADY_ACTIVE" | "WORKOUT_STATUS_CONFLICT" | "RATE_LIMITED" | "INTERNAL_ERROR";
+        ErrorBodyDto: {
+            code: components["schemas"]["ErrorCode"];
+            message: string;
+            details?: {
+                [key: string]: unknown;
+            };
+        };
+        ErrorEnvelopeDto: {
+            error: components["schemas"]["ErrorBodyDto"];
+        };
+        LogoutResponseDto: {
+            /** @example true */
+            ok: boolean;
+        };
+        MeResponseDto: {
+            /** @example adminuser */
+            login: string;
+            /**
+             * @example ADMIN
+             * @enum {string}
+             */
+            role: "ADMIN" | "TRAINER" | "CLIENT";
         };
     };
     responses: never;
@@ -55,6 +141,107 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponseDto"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    AuthController_logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogoutResponseDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    AuthController_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponseDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
                 };
             };
         };

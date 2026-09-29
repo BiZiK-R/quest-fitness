@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -10,6 +10,7 @@ const canonicalOpenApiPath = resolve(
   '../../../../backend/openapi/openapi.yaml',
 );
 const codegenScript = resolve(import.meta.dirname, '../../../scripts/codegen.mjs');
+const schemaPath = resolve(import.meta.dirname, './schema.d.ts');
 
 describe('OpenAPI codegen gate', () => {
   it('assertOpenApiPresent throws when YAML is missing', () => {
@@ -33,6 +34,13 @@ describe('OpenAPI codegen gate', () => {
 
   it('committed canonical openapi.yaml exists for frontend codegen', () => {
     expect(() => assertOpenApiPresent(canonicalOpenApiPath)).not.toThrow();
+  });
+
+  it('generated schema includes auth API paths', () => {
+    const schema = readFileSync(schemaPath, 'utf8');
+    expect(schema).toContain('"/api/auth/login"');
+    expect(schema).toContain('"/api/auth/logout"');
+    expect(schema).toContain('"/api/auth/me"');
   });
 
   it('codegen.mjs exits non-zero when contract path is missing', () => {

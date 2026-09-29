@@ -13,6 +13,79 @@ paths:
                 $ref: "#/components/schemas/HealthResponseDto"
       tags:
         - health
+  /api/auth/login:
+    post:
+      operationId: AuthController_login
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequestDto"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponseDto"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: &a1
+        - auth
+  /api/auth/logout:
+    post:
+      operationId: AuthController_logout
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a1
+  /api/auth/me:
+    get:
+      operationId: AuthController_me
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a1
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -32,3 +105,90 @@ components:
             - ok
       required:
         - status
+    LoginRequestDto:
+      type: object
+      properties:
+        login:
+          type: string
+          example: adminuser
+          minLength: 3
+          maxLength: 32
+        password:
+          type: string
+          example: SecretPass1!
+          minLength: 8
+          format: password
+      required:
+        - login
+        - password
+    LoginResponseDto:
+      type: object
+      properties:
+        csrfToken:
+          type: string
+          description: CSRF token for mutating requests (header x-csrf-token)
+      required:
+        - csrfToken
+    ErrorCode:
+      type: string
+      enum:
+        - VALIDATION_FAILED
+        - UNAUTHENTICATED
+        - FORBIDDEN_ROLE
+        - CSRF_INVALID
+        - NOT_FOUND
+        - CLIENT_LOCKED
+        - LOCK_REQUIRED
+        - TEMPLATE_VERSION_CONFLICT
+        - INVITE_EXPIRED
+        - INVITE_ALREADY_CONSUMED
+        - SESSION_ABANDONED
+        - SESSION_ALREADY_ACTIVE
+        - WORKOUT_STATUS_CONFLICT
+        - RATE_LIMITED
+        - INTERNAL_ERROR
+    ErrorBodyDto:
+      type: object
+      properties:
+        code:
+          allOf:
+            - $ref: "#/components/schemas/ErrorCode"
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - code
+        - message
+    ErrorEnvelopeDto:
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorBodyDto"
+      required:
+        - error
+    LogoutResponseDto:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+      required:
+        - ok
+    MeResponseDto:
+      type: object
+      properties:
+        login:
+          type: string
+          example: adminuser
+        role:
+          type: string
+          enum:
+            - ADMIN
+            - TRAINER
+            - CLIENT
+          example: ADMIN
+      required:
+        - login
+        - role

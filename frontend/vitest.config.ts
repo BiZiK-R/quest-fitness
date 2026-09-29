@@ -6,6 +6,8 @@ export default mergeConfig(
   defineConfig({
     test: {
       environment: 'node',
+      environmentMatchGlobs: [['**/*.spec.tsx', 'jsdom']],
+      setupFiles: ['./vitest.setup.ts'],
     },
   }),
 );

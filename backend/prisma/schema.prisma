@@ -13,12 +13,25 @@ enum UserRole {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  login        String   @unique
-  passwordHash String   @map("password_hash")
+  id           String        @id @default(cuid())
+  login        String        @unique
+  passwordHash String        @map("password_hash")
   role         UserRole
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  authSessions AuthSession[]
 
   @@map("users")
+}
+
+model AuthSession {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  csrfToken String   @map("csrf_token")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("auth_sessions")
 }
