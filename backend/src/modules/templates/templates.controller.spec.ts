@@ -55,6 +55,7 @@ type StoredTemplateExercise = {
   plannedReps: number | null;
   plannedWeightKg: { toNumber: () => number } | null;
   notes: string | null;
+  supersetGroupId: string | null;
 };
 
 function sessionCookieHeader(setCookie: string | string[] | undefined): string {
@@ -391,6 +392,7 @@ describe('TemplatesController (HTTP)', () => {
           plannedReps?: number | null;
           plannedWeightKg?: number | null;
           notes?: string | null;
+          supersetGroupId?: string | null;
         }>;
       }) => {
         for (const item of data) {
@@ -407,6 +409,7 @@ describe('TemplatesController (HTTP)', () => {
                 ? { toNumber: () => item.plannedWeightKg as number }
                 : null,
             notes: item.notes ?? null,
+            supersetGroupId: item.supersetGroupId ?? null,
           });
         }
         return { count: data.length };

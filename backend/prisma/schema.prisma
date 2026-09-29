@@ -224,9 +224,10 @@ model SessionExercise {
   plannedSets     Int?     @map("planned_sets")
   plannedReps     Int?     @map("planned_reps")
   plannedWeightKg Decimal? @map("planned_weight_kg") @db.Decimal(10, 2)
-  nameSnapshot    String   @map("name_snapshot")
-  notes           String?
-  sets            Set[]
+  nameSnapshot      String   @map("name_snapshot")
+  notes             String?
+  supersetGroupId   String?  @map("superset_group_id")
+  sets              Set[]
 
   @@unique([sessionId, sortOrder])
   @@map("session_exercises")
@@ -284,8 +285,9 @@ model TemplateExercise {
   sortOrder       Int             @map("sort_order")
   plannedSets     Int?            @map("planned_sets")
   plannedReps     Int?            @map("planned_reps")
-  plannedWeightKg Decimal?        @map("planned_weight_kg") @db.Decimal(10, 2)
-  notes           String?
+  plannedWeightKg   Decimal?        @map("planned_weight_kg") @db.Decimal(10, 2)
+  notes             String?
+  supersetGroupId   String?         @map("superset_group_id")
 
   @@unique([templateId, sortOrder])
   @@map("template_exercises")

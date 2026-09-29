@@ -58,6 +58,7 @@ type StoredTemplateExercise = {
   plannedReps: number | null;
   plannedWeightKg: { toNumber: () => number } | null;
   notes: string | null;
+  supersetGroupId: string | null;
 };
 
 type StoredExercise = {
@@ -89,6 +90,7 @@ type StoredSessionExercise = {
   plannedWeightKg: { toNumber: () => number } | null;
   nameSnapshot: string;
   notes: string | null;
+  supersetGroupId: string | null;
 };
 
 type StoredLoggedSet = {
@@ -391,6 +393,7 @@ describe('SessionsController (HTTP)', () => {
           plannedWeightKg: unknown;
           nameSnapshot: string;
           notes: string | null;
+          supersetGroupId: string | null;
         }>;
       }) => {
         for (const item of data) {
@@ -408,6 +411,7 @@ describe('SessionsController (HTTP)', () => {
                 : null,
             nameSnapshot: item.nameSnapshot,
             notes: item.notes,
+            supersetGroupId: item.supersetGroupId ?? null,
           });
         }
         return { count: data.length };
@@ -570,6 +574,7 @@ describe('SessionsController (HTTP)', () => {
       plannedReps: 10,
       plannedWeightKg: { toNumber: () => 60 },
       notes: null,
+      supersetGroupId: null,
     });
     templateExercises.set('te_2', {
       id: 'te_2',
@@ -580,6 +585,7 @@ describe('SessionsController (HTTP)', () => {
       plannedReps: 8,
       plannedWeightKg: null,
       notes: 'глубоко',
+      supersetGroupId: null,
     });
 
     workouts.set('wo_pending_1', {
@@ -658,6 +664,46 @@ describe('SessionsController (HTTP)', () => {
 
     expect(second.status).toBe(409);
     expect(second.body.error?.code).toBe(ErrorCode.SESSION_ALREADY_ACTIVE);
+  });
+
+  it('POST start copies supersetGroupId from template exercises to session snapshot', async () => {
+    templateExercises.set('te_1', {
+      id: 'te_1',
+      templateId: 'tpl_1',
+      exerciseId: 'ex_1',
+      sortOrder: 0,
+      plannedSets: 3,
+      plannedReps: 10,
+      plannedWeightKg: { toNumber: () => 60 },
+      notes: null,
+      supersetGroupId: 'superset_alpha',
+    });
+    templateExercises.set('te_2', {
+      id: 'te_2',
+      templateId: 'tpl_1',
+      exerciseId: 'ex_2',
+      sortOrder: 1,
+      plannedSets: 4,
+      plannedReps: 8,
+      plannedWeightKg: null,
+      notes: 'глубоко',
+      supersetGroupId: 'superset_alpha',
+    });
+
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/api/workouts/wo_pending_1/session')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken);
+
+    expect(res.status).toBe(201);
+    expect(res.body.exercises[0].supersetGroupId).toBe('superset_alpha');
+    expect(res.body.exercises[1].supersetGroupId).toBe('superset_alpha');
   });
 
   it('GET session returns snapshot unchanged after template exercise rename', async () => {

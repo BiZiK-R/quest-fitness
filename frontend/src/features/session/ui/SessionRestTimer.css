@@ -1,0 +1,39 @@
+.session-rest-timer {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-session-raised);
+  border: 1px solid var(--color-border-session);
+}
+
+.session-rest-timer__label {
+  margin: 0 0 0.5rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.125rem;
+}
+
+.session-rest-timer--reduced-motion .session-rest-timer__label {
+  transition: none;
+}
+
+.session-rest-timer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.session-rest-timer__btn {
+  min-height: var(--spacing-touch-min);
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-session);
+  background: transparent;
+  color: var(--color-ink-on-session);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.session-rest-timer__btn:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-accent-apricot);
+  outline-offset: var(--focus-ring-offset);
+}

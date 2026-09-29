@@ -3,6 +3,14 @@ import type { components } from '@/shared/api/schema';
 import { deleteSessionSet, upsertSessionSet } from '../api/session-set-api';
 import { setSyncIndicatorLabel, type SetSyncState } from '../lib/set-sync-state';
 import { useSessionDurationCountdown } from '../lib/use-session-duration-countdown';
+import {
+  computeRestEndsAt,
+  exerciseIndexAfterSetConfirm,
+  findExerciseIndexById,
+  REST_EXTEND_SECONDS,
+  shouldStartRestAfterSet,
+} from '../lib/rest-after-set';
+import { SessionRestTimer } from './SessionRestTimer';
 import { SessionSetLogger, type SessionSetLoggerValues } from './SessionSetLogger';
 import './SessionWorkoutView.css';
 
@@ -74,6 +82,7 @@ export function SessionWorkoutView({ session }: Props) {
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [pendingSetId, setPendingSetId] = useState<string | null>(null);
   const [syncState, setSyncState] = useState<SetSyncState>('saved');
+  const [restEndsAtMs, setRestEndsAtMs] = useState<number | null>(null);
   const inFlightRef = useRef(false);
 
   const isActive = session.status === 'active';
@@ -133,7 +142,19 @@ export function SessionWorkoutView({ session }: Props) {
       setPendingSetId(null);
       setEditingSetId(null);
       setSyncState('saved');
-      setLoggerValues(loggerDefaultsForExercise(selectedExercise));
+
+      const currentIndex = findExerciseIndexById(sortedExercises, selectedExerciseId);
+      const nextIndex = exerciseIndexAfterSetConfirm(sortedExercises, currentIndex);
+      if (nextIndex !== currentIndex && sortedExercises[nextIndex]) {
+        setSelectedExerciseId(sortedExercises[nextIndex].id);
+        setLoggerValues(loggerDefaultsForExercise(sortedExercises[nextIndex]));
+      } else {
+        setLoggerValues(loggerDefaultsForExercise(selectedExercise));
+      }
+
+      if (shouldStartRestAfterSet(sortedExercises, currentIndex)) {
+        setRestEndsAtMs(computeRestEndsAt(Date.now()));
+      }
     },
     [
       editingSetId,
@@ -143,8 +164,19 @@ export function SessionWorkoutView({ session }: Props) {
       selectedExercise,
       selectedExerciseId,
       session.id,
+      sortedExercises,
     ],
   );
+
+  const handleSkipRest = () => {
+    setRestEndsAtMs(null);
+  };
+
+  const handleExtendRest = () => {
+    setRestEndsAtMs((prev) =>
+      prev != null ? prev + REST_EXTEND_SECONDS * 1000 : null,
+    );
+  };
 
   const handleConfirm = () => {
     if (inFlightRef.current) {
@@ -254,6 +286,14 @@ export function SessionWorkoutView({ session }: Props) {
           disabled={syncState === 'saving'}
           onChange={setLoggerValues}
           onConfirm={handleConfirm}
+        />
+      ) : null}
+
+      {isActive && restEndsAtMs != null ? (
+        <SessionRestTimer
+          endsAtMs={restEndsAtMs}
+          onSkip={handleSkipRest}
+          onExtend={handleExtendRest}
         />
       ) : null}
 

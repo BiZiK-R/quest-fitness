@@ -25,6 +25,9 @@ export class TemplateExerciseDto {
 
   @ApiPropertyOptional({ type: String, nullable: true })
   notes!: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true })
+  supersetGroupId!: string | null;
 }
 
 export class TemplateExerciseInputDto {
@@ -60,4 +63,9 @@ export class TemplateExerciseInputDto {
   @IsOptional()
   @IsString()
   notes?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true })
+  @IsOptional()
+  @IsString()
+  supersetGroupId?: string | null;
 }

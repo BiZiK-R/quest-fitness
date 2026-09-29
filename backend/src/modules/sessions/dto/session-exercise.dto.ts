@@ -27,4 +27,11 @@ export class SessionExerciseDto {
 
   @ApiPropertyOptional({ type: String, nullable: true })
   notes!: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    description: 'Superset group id frozen at session start (AD-8)',
+  })
+  supersetGroupId!: string | null;
 }

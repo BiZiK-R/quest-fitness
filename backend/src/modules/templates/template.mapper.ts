@@ -10,6 +10,7 @@ type TemplateExerciseRow = {
   plannedReps: number | null;
   plannedWeightKg: Prisma.Decimal | null;
   notes: string | null;
+  supersetGroupId: string | null;
   exercise?: { name: string } | null;
 };
 
@@ -42,6 +43,7 @@ function toTemplateExerciseDto(row: TemplateExerciseRow): TemplateExerciseDto {
     plannedReps: row.plannedReps,
     plannedWeightKg: decimalToNumber(row.plannedWeightKg),
     notes: row.notes,
+    supersetGroupId: row.supersetGroupId,
   };
 }
 

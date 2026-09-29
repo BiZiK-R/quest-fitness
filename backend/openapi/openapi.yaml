@@ -2002,6 +2002,9 @@ components:
         notes:
           type: string
           nullable: true
+        supersetGroupId:
+          type: string
+          nullable: true
       required:
         - id
         - exerciseId
@@ -2067,6 +2070,9 @@ components:
           type: number
           nullable: true
         notes:
+          type: string
+          nullable: true
+        supersetGroupId:
           type: string
           nullable: true
       required:
@@ -2335,6 +2341,10 @@ components:
         notes:
           type: string
           nullable: true
+        supersetGroupId:
+          type: string
+          nullable: true
+          description: Superset group id frozen at session start (AD-8)
       required:
         - id
         - sessionId

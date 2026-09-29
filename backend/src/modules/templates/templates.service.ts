@@ -130,6 +130,7 @@ export class TemplatesService {
       plannedReps: item.plannedReps ?? null,
       plannedWeightKg: item.plannedWeightKg ?? null,
       notes: item.notes ?? null,
+      supersetGroupId: item.supersetGroupId ?? null,
     };
   }
 

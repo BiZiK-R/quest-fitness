@@ -41,9 +41,36 @@ const baseSession = {
       plannedWeightKg: 60,
       nameSnapshot: 'Жим лёжа',
       notes: null,
+      supersetGroupId: null,
     },
   ],
 };
+
+const savedSetPayload = {
+  id: '550e8400-e29b-41d4-a716-446655440099',
+  sessionId: 'sess_1',
+  sessionExerciseId: 'se_1',
+  sequenceIndex: 1,
+  weightKg: 60,
+  reps: 10,
+  rpe: 0,
+  createdAt: '2026-10-01T10:01:00.000Z',
+  updatedAt: '2026-10-01T10:01:00.000Z',
+};
+
+async function confirmSetAndWait(options?: { fakeTimers?: boolean }) {
+  fireEvent.click(screen.getByTestId('session-set-confirm'));
+  if (options?.fakeTimers) {
+    await act(async () => {
+      await Promise.resolve();
+    });
+  } else {
+    await waitFor(() => {
+      expect(screen.getByTestId('session-set-sync-indicator')).toHaveTextContent('сохранено');
+    });
+  }
+  expect(screen.getByTestId('session-set-sync-indicator')).toHaveTextContent('сохранено');
+}
 
 describe('SessionWorkoutView', () => {
   afterEach(() => {
@@ -210,6 +237,141 @@ describe('SessionWorkoutView', () => {
 
     expect(screen.getByTestId('session-set-tape')).toBeInTheDocument();
     expect(screen.getByText(/#1/)).toBeInTheDocument();
+  });
+
+  it('starts rest timer after solo exercise set is saved', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-01T10:00:00.000Z'));
+    vi.mocked(sessionSetApi.upsertSessionSet).mockResolvedValue({
+      data: savedSetPayload,
+      error: undefined,
+    });
+
+    render(<SessionWorkoutView session={baseSession} />);
+    await confirmSetAndWait({ fakeTimers: true });
+
+    expect(screen.getByTestId('session-rest-timer')).toBeInTheDocument();
+    expect(screen.getByTestId('session-rest-timer-label')).toHaveTextContent('1:30');
+    expect(screen.getByTestId('session-set-logger')).toBeInTheDocument();
+  });
+
+  it('skips rest and +30 extends endsAt from wall clock', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-01T10:00:00.000Z'));
+    vi.mocked(sessionSetApi.upsertSessionSet).mockResolvedValue({
+      data: savedSetPayload,
+      error: undefined,
+    });
+
+    render(<SessionWorkoutView session={baseSession} />);
+    await confirmSetAndWait({ fakeTimers: true });
+
+    fireEvent.click(screen.getByTestId('session-rest-extend'));
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(screen.getByTestId('session-rest-timer-label')).toHaveTextContent('1:00');
+
+    fireEvent.click(screen.getByTestId('session-rest-skip'));
+    expect(screen.queryByTestId('session-rest-timer')).not.toBeInTheDocument();
+  });
+
+  it('mid-superset advances exercise without rest timer', async () => {
+    vi.mocked(sessionSetApi.upsertSessionSet).mockResolvedValue({
+      data: savedSetPayload,
+      error: undefined,
+    });
+
+    const supersetSession = {
+      ...baseSession,
+      exercises: [
+        {
+          id: 'se_1',
+          sessionId: 'sess_1',
+          exerciseId: 'ex_1',
+          sortOrder: 0,
+          plannedSets: 3,
+          plannedReps: 10,
+          plannedWeightKg: 60,
+          nameSnapshot: 'Жим',
+          notes: null,
+          supersetGroupId: 'grp_1',
+        },
+        {
+          id: 'se_2',
+          sessionId: 'sess_1',
+          exerciseId: 'ex_2',
+          sortOrder: 1,
+          plannedSets: 3,
+          plannedReps: 8,
+          plannedWeightKg: 40,
+          nameSnapshot: 'Тяга',
+          notes: null,
+          supersetGroupId: 'grp_1',
+        },
+      ],
+    };
+
+    render(<SessionWorkoutView session={supersetSession} />);
+    await confirmSetAndWait();
+
+    expect(screen.queryByTestId('session-rest-timer')).not.toBeInTheDocument();
+    expect(screen.getByText('Тяга')).toBeInTheDocument();
+    expect(document.querySelector('.surface-session__exercise-card--selected')).toHaveTextContent(
+      'Тяга',
+    );
+  });
+
+  it('starts rest after last exercise in superset round', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-01T10:00:00.000Z'));
+    vi.mocked(sessionSetApi.upsertSessionSet).mockImplementation(async (_sid, _id, body) => ({
+      data: {
+        ...savedSetPayload,
+        sessionExerciseId: body.sessionExerciseId,
+      },
+      error: undefined,
+    }));
+
+    const supersetSession = {
+      ...baseSession,
+      exercises: [
+        {
+          id: 'se_1',
+          sessionId: 'sess_1',
+          exerciseId: 'ex_1',
+          sortOrder: 0,
+          plannedSets: 3,
+          plannedReps: 10,
+          plannedWeightKg: 60,
+          nameSnapshot: 'Жим',
+          notes: null,
+          supersetGroupId: 'grp_1',
+        },
+        {
+          id: 'se_2',
+          sessionId: 'sess_1',
+          exerciseId: 'ex_2',
+          sortOrder: 1,
+          plannedSets: 3,
+          plannedReps: 8,
+          plannedWeightKg: 40,
+          nameSnapshot: 'Тяга',
+          notes: null,
+          supersetGroupId: 'grp_1',
+        },
+      ],
+    };
+
+    render(<SessionWorkoutView session={supersetSession} />);
+    await confirmSetAndWait({ fakeTimers: true });
+    expect(screen.queryByTestId('session-rest-timer')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('session-set-confirm'));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.getByTestId('session-rest-timer-label')).toHaveTextContent('1:30');
   });
 
   it('Enter inside logger confirms set', async () => {

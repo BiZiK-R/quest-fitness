@@ -94,6 +94,7 @@ export class SessionsService {
             plannedWeightKg: te.plannedWeightKg,
             nameSnapshot: te.exercise.name,
             notes: te.notes,
+            supersetGroupId: te.supersetGroupId,
           })),
         });
       }

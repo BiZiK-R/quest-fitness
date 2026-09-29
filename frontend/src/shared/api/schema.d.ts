@@ -749,6 +749,7 @@ export interface components {
             plannedReps?: number | null;
             plannedWeightKg?: number | null;
             notes?: string | null;
+            supersetGroupId?: string | null;
         };
         WorkoutTemplateDto: {
             id: string;
@@ -773,6 +774,7 @@ export interface components {
             plannedReps?: number | null;
             plannedWeightKg?: number | null;
             notes?: string | null;
+            supersetGroupId?: string | null;
         };
         CreateWorkoutTemplateRequestDto: {
             name: string;
@@ -867,6 +869,8 @@ export interface components {
             /** @description Exercise name frozen at session start (AD-7) */
             nameSnapshot: string;
             notes?: string | null;
+            /** @description Superset group id frozen at session start (AD-8) */
+            supersetGroupId?: string | null;
         };
         SetDto: {
             /** @description Client-generated set id (UUID) */

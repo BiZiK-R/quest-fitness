@@ -49,6 +49,7 @@ export function toSessionExerciseDto(row: SessionExerciseRow): SessionExerciseDt
     plannedWeightKg: decimalToNumber(row.plannedWeightKg),
     nameSnapshot: row.nameSnapshot,
     notes: row.notes,
+    supersetGroupId: row.supersetGroupId,
   };
 }
 
