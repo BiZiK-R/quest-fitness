@@ -5,11 +5,19 @@ import { SessionGuard } from './common/guards/session.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { ClientsModule } from './modules/clients/clients.module';
+import { InvitesModule } from './modules/invites/invites.module';
 import { TrainerModule } from './modules/trainer/trainer.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule, HealthModule, AuthModule, TrainerModule, ClientsModule],
+  imports: [
+    PrismaModule,
+    HealthModule,
+    AuthModule,
+    TrainerModule,
+    ClientsModule,
+    InvitesModule,
+  ],
   providers: [
     { provide: APP_GUARD, useClass: CsrfGuard },
     { provide: APP_GUARD, useClass: SessionGuard },

@@ -165,6 +165,77 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a2
+  /api/clients/{clientId}/invites:
+    post:
+      operationId: InvitesController_issue
+      parameters:
+        - name: clientId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueInviteResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: &a3
+        - invites
+  /api/clients/{clientId}/invites/active:
+    get:
+      operationId: InvitesController_activeStatus
+      parameters:
+        - name: clientId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiveInviteStatusDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a3
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -332,3 +403,43 @@ components:
             $ref: "#/components/schemas/ClientProfileDto"
       required:
         - clients
+    IssueInviteResponseDto:
+      type: object
+      properties:
+        inviteUrl:
+          type: string
+          example: /invite/abc123opaque
+          description: Относительный путь для SPA; origin добавляет FE
+        token:
+          type: string
+          description: Plain token — возвращается один раз при выдаче
+        expiresAt:
+          type: string
+          format: date-time
+        expiresAtLabel:
+          type: string
+          example: до 30 сентября 2026 г., 18:00
+          description: Отображение срока в GYM_TIMEZONE (AD-17)
+      required:
+        - inviteUrl
+        - token
+        - expiresAt
+        - expiresAtLabel
+    ActiveInviteStatusDto:
+      type: object
+      properties:
+        hasActive:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        expiresAtLabel:
+          type: string
+          nullable: true
+          example: null
+      required:
+        - hasActive
+        - expiresAt
+        - expiresAtLabel

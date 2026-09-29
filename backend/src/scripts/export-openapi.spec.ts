@@ -52,6 +52,13 @@ describe('OpenAPI export contract', () => {
     const clientSchema =
       clientsPost?.requestBody?.content?.['application/json']?.schema;
     expect(JSON.stringify(clientSchema)).not.toMatch(/ownerTrainerId/i);
+    expect(document.paths).toHaveProperty('/api/clients/{clientId}/invites');
+    const invitePost =
+      document.paths?.['/api/clients/{clientId}/invites']?.post;
+    expect(invitePost?.responses?.['201']).toBeDefined();
+    expect(document.paths).toHaveProperty(
+      '/api/clients/{clientId}/invites/active',
+    );
     const loginPost = document.paths?.['/api/auth/login']?.post;
     expect(loginPost?.requestBody).toBeDefined();
   });

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, setCsrfToken } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
+import { ClientInvitePanel } from '@/features/invite-share/ui/ClientInvitePanel';
 import { PageMeta } from '@/shared/ui/PageMeta';
 
 type ClientProfile = components['schemas']['ClientProfileDto'];
@@ -13,6 +14,7 @@ export function PoolPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inviteClientId, setInviteClientId] = useState<string | null>(null);
 
   const loadClients = useCallback(async () => {
     setLoadError(null);
@@ -83,7 +85,26 @@ export function PoolPage() {
 
       <ul aria-label="Список клиентов в пуле">
         {clients.map((client) => (
-          <li key={client.id}>{client.displayName}</li>
+          <li key={client.id}>
+            {client.displayName}
+            <button
+              type="button"
+              onClick={() =>
+                setInviteClientId((current) =>
+                  current === client.id ? null : client.id,
+                )
+              }
+            >
+              Пригласить
+            </button>
+            {inviteClientId === client.id ? (
+              <ClientInvitePanel
+                clientId={client.id}
+                clientDisplayName={client.displayName}
+                onClose={() => setInviteClientId(null)}
+              />
+            ) : null}
+          </li>
         ))}
       </ul>
 
