@@ -9,6 +9,9 @@ import { PrismaService } from '../../shared/prisma/prisma.service';
 import { computeLockExpiresAt, isLockExpired } from '../clients-lock/client-lock.util';
 import { ClientsLockService } from '../clients-lock/clients-lock.service';
 import { ClientMacroProgressService } from '../client-macro-progress/client-macro-progress.service';
+import { WorkoutStatus } from '@prisma/client';
+import { toWorkoutDto } from '../workouts/workout.mapper';
+import { pickEarliestPendingByClient } from '../workouts/pick-earliest-pending-workout';
 import { ClientProfileDto } from './dto/client-profile.dto';
 
 @Injectable()
@@ -37,6 +40,24 @@ export class ClientsService {
       where: { clientId: { in: rows.map((row) => row.id) } },
     });
     const lockByClientId = new Map(locks.map((lock) => [lock.clientId, lock]));
+    const clientIds = rows.map((row) => row.id);
+    const pendingWorkouts = await this.prisma.workout.findMany({
+      where: { clientProfileId: { in: clientIds }, status: WorkoutStatus.pending },
+      orderBy: [{ scheduledAt: 'asc' }, { id: 'asc' }],
+      select: {
+        clientProfileId: true,
+        scheduledAt: true,
+        status: true,
+        id: true,
+        templateId: true,
+        sourceStageId: true,
+        createdByUserId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    const nextByClient = pickEarliestPendingByClient(pendingWorkouts);
+
     return rows.map((row) => {
       const lock = lockByClientId.get(row.id);
       const lockStatus =
@@ -46,7 +67,18 @@ export class ClientsService {
               expiresAt: computeLockExpiresAt(lock.lastActivityAt).toISOString(),
             }
           : null;
-      return this.toDto(row, lockStatus);
+      const nextRow = nextByClient.get(row.id);
+      const nextWorkout = nextRow
+        ? (() => {
+            const dto = toWorkoutDto(nextRow);
+            return {
+              scheduledAt: dto.scheduledAt,
+              status: dto.status,
+              isOverdue: dto.isOverdue,
+            };
+          })()
+        : null;
+      return this.toDto(row, lockStatus, null, nextWorkout);
     });
   }
 
@@ -94,6 +126,7 @@ export class ClientsService {
     row: ClientProfile,
     lockStatus: ClientProfileDto['lockStatus'] = null,
     macroProgress: ClientProfileDto['macroProgress'] = null,
+    nextWorkout: ClientProfileDto['nextWorkout'] = null,
   ): ClientProfileDto {
     return {
       id: row.id,
@@ -104,6 +137,7 @@ export class ClientsService {
       updatedAt: row.updatedAt.toISOString(),
       lockStatus: lockStatus ?? null,
       macroProgress: macroProgress ?? null,
+      nextWorkout: nextWorkout ?? null,
     };
   }
 }

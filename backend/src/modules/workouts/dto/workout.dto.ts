@@ -14,6 +14,12 @@ export class WorkoutDto {
   @ApiProperty({ enum: WorkoutStatus })
   status!: WorkoutStatus;
 
+  @ApiProperty({
+    type: Boolean,
+    description: 'True when pending and scheduled gym-local day is before today (AD-17, BFF-only)',
+  })
+  isOverdue!: boolean;
+
   @ApiPropertyOptional({ type: String, nullable: true })
   templateId!: string | null;
 

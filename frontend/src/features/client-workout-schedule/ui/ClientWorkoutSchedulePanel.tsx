@@ -6,6 +6,7 @@ import {
   WorkoutSkipCancelConfirmDialog,
 } from './WorkoutSkipCancelConfirmDialog';
 import { WorkoutRescheduleSheet } from './WorkoutRescheduleSheet';
+import { WorkoutScheduleRow } from './WorkoutScheduleRow';
 
 type Workout = components['schemas']['WorkoutDto'];
 type WorkoutTemplate = components['schemas']['WorkoutTemplateDto'];
@@ -61,8 +62,11 @@ export function ClientWorkoutSchedulePanel({
   const stagesExhausted = Boolean(macroProgress?.stagesExhausted);
   const requireManualTemplate = stagesExhausted || !macroProgress?.currentStageId;
 
-  const pendingWorkouts = useMemo(
-    () => workouts.filter((w) => w.status === 'pending'),
+  const sortedWorkouts = useMemo(
+    () =>
+      [...workouts].sort(
+        (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
+      ),
     [workouts],
   );
 
@@ -226,42 +230,21 @@ export function ClientWorkoutSchedulePanel({
       ) : null}
 
       <ul>
-        {pendingWorkouts.map((w) => (
-          <li key={w.id}>
-            {formatScheduledAt(w.scheduledAt)}
-            {w.templateName ? ` — ${w.templateName}` : null}
-            {' · '}
-            Ожидание
-            {!mutationsDisabled ? (
-              <>
-                {' '}
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => openRescheduleForWorkout(w.id)}
-                >
-                  Перенести
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setConfirmTarget({ workoutId: w.id, action: 'skip' })}
-                >
-                  Пропустить
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setConfirmTarget({ workoutId: w.id, action: 'cancel' })}
-                >
-                  Отменить
-                </button>
-              </>
-            ) : null}
-          </li>
+        {sortedWorkouts.map((w) => (
+          <WorkoutScheduleRow
+            key={w.id}
+            workout={w}
+            formattedScheduledAt={formatScheduledAt(w.scheduledAt)}
+            showStartStub={w.status === 'pending' && !mutationsDisabled}
+            showPendingActions={w.status === 'pending' && !mutationsDisabled}
+            busy={busy}
+            onReschedule={() => openRescheduleForWorkout(w.id)}
+            onSkip={() => setConfirmTarget({ workoutId: w.id, action: 'skip' })}
+            onCancel={() => setConfirmTarget({ workoutId: w.id, action: 'cancel' })}
+          />
         ))}
       </ul>
-      {pendingWorkouts.length === 0 ? <p>Нет предстоящих тренировок.</p> : null}
+      {sortedWorkouts.length === 0 ? <p>Нет тренировок в расписании.</p> : null}
 
       <div>
         <label htmlFor="workout-scheduled-at">Дата и время</label>

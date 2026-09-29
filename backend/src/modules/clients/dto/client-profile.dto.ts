@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ClientMacroProgressSummaryDto } from '../../client-macro-progress/dto/client-macro-progress-summary.dto';
 import { ClientLockStatusDto } from '../../clients-lock/dto/client-lock-status.dto';
+import { ClientNextWorkoutDto } from './client-next-workout.dto';
 
 export class ClientProfileDto {
   @ApiProperty({ type: String, example: 'clxyz123' })
@@ -45,4 +46,11 @@ export class ClientProfileDto {
     description: 'Macrocycle stage pointer when assigned (Story 3.4)',
   })
   macroProgress?: ClientMacroProgressSummaryDto | null;
+
+  @ApiPropertyOptional({
+    type: () => ClientNextWorkoutDto,
+    nullable: true,
+    description: 'Earliest pending workout for pool row meta (Story 4.4)',
+  })
+  nextWorkout?: ClientNextWorkoutDto | null;
 }

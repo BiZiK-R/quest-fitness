@@ -150,7 +150,63 @@ export class WorkoutsService {
       orderBy: [{ scheduledAt: 'asc' }, { id: 'asc' }],
       include: workoutWithTemplateInclude,
     });
-    return rows.map(toWorkoutDto);
+    return rows.map((row) => toWorkoutDto(row));
+  }
+
+  /**
+   * Epic 5 entry: pending → attended; advances macro stage when source matches pointer (AD-7).
+   */
+  async markAttended(workoutId: string): Promise<WorkoutDto> {
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.workout.findUnique({
+        where: { id: workoutId },
+        include: workoutWithTemplateInclude,
+      });
+      if (!existing) {
+        throw new AppException(ErrorCode.NOT_FOUND, 'Workout not found', 404);
+      }
+      if (existing.status !== WorkoutStatus.pending) {
+        throw new AppException(
+          ErrorCode.WORKOUT_STATUS_CONFLICT,
+          'Workout status transition not allowed',
+          409,
+        );
+      }
+
+      const row = await tx.workout.update({
+        where: { id: workoutId },
+        data: { status: WorkoutStatus.attended },
+        include: workoutWithTemplateInclude,
+      });
+
+      if (existing.sourceStageId) {
+        const progress = await tx.clientMacroProgress.findUnique({
+          where: { clientProfileId: existing.clientProfileId },
+        });
+        if (progress && progress.currentStageId === existing.sourceStageId) {
+          const currentStage = await tx.macrocycleStage.findUnique({
+            where: { id: existing.sourceStageId },
+          });
+          if (currentStage) {
+            const macrocycleStages = await tx.macrocycleStage.findMany({
+              where: { macrocycleId: currentStage.macrocycleId },
+              orderBy: { sortOrder: 'asc' },
+            });
+            const currentIndex = macrocycleStages.findIndex((s) => s.id === existing.sourceStageId);
+            const nextStage =
+              currentIndex >= 0 && currentIndex < macrocycleStages.length - 1
+                ? macrocycleStages[currentIndex + 1]
+                : null;
+            await tx.clientMacroProgress.update({
+              where: { clientProfileId: existing.clientProfileId },
+              data: { currentStageId: nextStage?.id ?? null },
+            });
+          }
+        }
+      }
+
+      return toWorkoutDto(row);
+    });
   }
 
   private async resolveTemplate(

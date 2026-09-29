@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as argon2 from 'argon2';
 import request from 'supertest';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { User, UserRole, WorkoutStatus } from '@prisma/client';
 import { AppModule } from '../../app.module';
 import { ErrorCode } from '../../common/errors/error-code.enum';
@@ -414,6 +414,11 @@ describe('WorkoutsController (HTTP)', () => {
     await app.close();
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+    delete process.env.GYM_TIMEZONE;
+  });
+
   beforeEach(() => {
     sessions.clear();
     clientProfiles.clear();
@@ -606,6 +611,39 @@ describe('WorkoutsController (HTTP)', () => {
     expect(listRes.status).toBe(200);
     expect(listRes.body.workouts).toHaveLength(1);
     expect(listRes.body.workouts[0].status).toBe('pending');
+    expect(listRes.body.workouts[0].isOverdue).toBe(false);
+  });
+
+  it('GET list sets isOverdue for pending past gym-local day', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-02T20:00:00.000Z'));
+    process.env.GYM_TIMEZONE = 'Europe/Moscow';
+
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    workouts.set('wo_overdue', {
+      id: 'wo_overdue',
+      clientProfileId: 'client_pool_1',
+      scheduledAt: new Date('2026-10-01T10:00:00.000Z'),
+      status: WorkoutStatus.pending,
+      templateId: 'tpl_1',
+      sourceStageId: 'stage_1',
+      createdByUserId: trainerUser.id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const listRes = await request(app.getHttpServer())
+      .get('/api/clients/client_pool_1/workouts')
+      .set('Cookie', cookiePairs);
+
+    expect(listRes.status).toBe(200);
+    const hit = listRes.body.workouts.find((w: { id: string }) => w.id === 'wo_overdue');
+    expect(hit?.isOverdue).toBe(true);
   });
 
   function seedPendingWorkout(id: string): void {
@@ -622,6 +660,42 @@ describe('WorkoutsController (HTTP)', () => {
       updatedAt: now,
     });
   }
+
+  it('POST skip does not advance macro currentStageId', async () => {
+    seedPendingWorkout('wo_skip_no_advance');
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/api/workouts/wo_skip_no_advance/skip')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .set('Idempotency-Key', 'skip-no-advance');
+
+    expect(res.status).toBe(200);
+    expect(macroProgress.get('cmp_1')?.currentStageId).toBe('stage_1');
+  });
+
+  it('POST cancel does not advance macro currentStageId', async () => {
+    seedPendingWorkout('wo_cancel_no_advance');
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/api/workouts/wo_cancel_no_advance/cancel')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .set('Idempotency-Key', 'cancel-no-advance');
+
+    expect(res.status).toBe(200);
+    expect(macroProgress.get('cmp_1')?.currentStageId).toBe('stage_1');
+  });
 
   it('POST skip pending workout returns skipped status', async () => {
     seedPendingWorkout('wo_skip_1');

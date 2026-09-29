@@ -1527,6 +1527,11 @@ components:
           type: object
           allOf:
             - $ref: "#/components/schemas/ClientMacroProgressSummaryDto"
+        nextWorkout:
+          nullable: true
+          description: Earliest pending workout for pool list (Story 4.4)
+          allOf:
+            - $ref: "#/components/schemas/ClientNextWorkoutDto"
       required:
         - id
         - displayName
@@ -1534,6 +1539,25 @@ components:
         - deactivatedAt
         - createdAt
         - updatedAt
+    ClientNextWorkoutDto:
+      type: object
+      properties:
+        scheduledAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - pending
+            - attended
+            - skipped
+            - cancelled
+        isOverdue:
+          type: boolean
+      required:
+        - scheduledAt
+        - status
+        - isOverdue
     ClientListResponseDto:
       type: object
       properties:
@@ -2065,6 +2089,9 @@ components:
             - attended
             - skipped
             - cancelled
+        isOverdue:
+          type: boolean
+          description: Pending workout scheduled before gym-local today (AD-17, BFF-only)
         templateId:
           type: string
           nullable: true
@@ -2087,6 +2114,7 @@ components:
         - clientProfileId
         - scheduledAt
         - status
+        - isOverdue
         - createdByUserId
         - createdAt
         - updatedAt

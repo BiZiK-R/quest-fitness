@@ -58,6 +58,11 @@ describe('PoolPage', () => {
             deactivatedAt: null,
             createdAt: '2026-09-29T00:00:00.000Z',
             updatedAt: '2026-09-29T00:00:00.000Z',
+            nextWorkout: {
+              scheduledAt: '2026-11-01T10:00:00.000Z',
+              status: 'pending',
+              isOverdue: true,
+            },
           },
         ],
       },
@@ -78,6 +83,8 @@ describe('PoolPage', () => {
     });
 
     expect(clientModule.apiClient.GET).toHaveBeenCalledWith('/api/clients');
+    expect(screen.getByText(/Ожидание/)).toBeInTheDocument();
+    expect(screen.getByText(/Просрочена/)).toBeInTheDocument();
   });
 
   it('shows copy confirmation after invite link copy', async () => {

@@ -14,6 +14,7 @@ import type { components } from '@/shared/api/schema';
 import { useInterval } from '@/shared/lib/use-interval';
 import { PageMeta } from '@/shared/ui/PageMeta';
 import { ClientRow } from '@/widgets/client-row/ui/ClientRow';
+import { formatNextWorkoutMeta } from './format-next-workout-meta';
 
 type ClientProfile = components['schemas']['ClientProfileDto'];
 type MeResponse = components['schemas']['MeResponseDto'];
@@ -184,6 +185,9 @@ export function PoolPage() {
             <ClientRow
               id={client.id}
               displayName={client.displayName}
+              nextWorkoutMeta={
+                client.nextWorkout ? formatNextWorkoutMeta(client.nextWorkout) : null
+              }
               lockHolderLabel={
                 client.lockStatus
                   ? `Занят: ${client.lockStatus.holderTrainerId}`

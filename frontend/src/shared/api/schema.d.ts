@@ -570,6 +570,15 @@ export interface components {
             lockStatus?: components["schemas"]["ClientLockStatusDto"] | null;
             /** @description Macrocycle stage pointer when assigned (Story 3.4) */
             macroProgress?: components["schemas"]["ClientMacroProgressSummaryDto"] | null;
+            /** @description Earliest pending workout for pool list (Story 4.4) */
+            nextWorkout?: components["schemas"]["ClientNextWorkoutDto"] | null;
+        };
+        ClientNextWorkoutDto: {
+            /** Format: date-time */
+            scheduledAt: string;
+            /** @enum {string} */
+            status: "pending" | "attended" | "skipped" | "cancelled";
+            isOverdue: boolean;
         };
         ClientListResponseDto: {
             clients: components["schemas"]["ClientProfileDto"][];
@@ -781,6 +790,8 @@ export interface components {
             scheduledAt: string;
             /** @enum {string} */
             status: "pending" | "attended" | "skipped" | "cancelled";
+            /** @description Pending workout scheduled before gym-local today (AD-17, BFF-only) */
+            isOverdue: boolean;
             templateId?: string | null;
             templateName?: string | null;
             sourceStageId?: string | null;

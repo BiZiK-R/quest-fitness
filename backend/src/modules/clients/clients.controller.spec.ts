@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import * as argon2 from 'argon2';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { User, UserRole } from '@prisma/client';
+import { User, UserRole, WorkoutStatus } from '@prisma/client';
 import { AppModule } from '../../app.module';
 import { ErrorCode } from '../../common/errors/error-code.enum';
 import { configureApp } from '../../shared/bootstrap/configure-app';
@@ -65,6 +65,20 @@ describe('ClientsController (HTTP)', () => {
   let clientUser: TestUserRecord;
   const sessions = new Map<string, StoredSession>();
   const clientProfiles = new Map<string, StoredClientProfile>();
+  const workouts = new Map<
+    string,
+    {
+      id: string;
+      clientProfileId: string;
+      scheduledAt: Date;
+      status: WorkoutStatus;
+      templateId: string | null;
+      sourceStageId: string | null;
+      createdByUserId: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }
+  >();
 
   const usersById = () =>
     new Map([adminUser, trainerUser, clientUser].map((u) => [u.id, u as User]));
@@ -228,6 +242,30 @@ describe('ClientsController (HTTP)', () => {
     clientMacroProgress: {
       findUnique: async () => null,
     },
+    workout: {
+      findMany: async ({
+        where,
+        orderBy,
+      }: {
+        where: {
+          clientProfileId?: { in: string[] };
+          status?: WorkoutStatus;
+        };
+        orderBy?: Array<{ scheduledAt: 'asc' | 'desc' }>;
+      }) => {
+        let rows = [...workouts.values()];
+        if (where.clientProfileId?.in) {
+          rows = rows.filter((w) => where.clientProfileId!.in.includes(w.clientProfileId));
+        }
+        if (where.status) {
+          rows = rows.filter((w) => w.status === where.status);
+        }
+        if (orderBy?.[0]?.scheduledAt === 'asc') {
+          rows = rows.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
+        }
+        return rows;
+      },
+    },
   };
 
   beforeAll(async () => {
@@ -276,6 +314,7 @@ describe('ClientsController (HTTP)', () => {
   beforeEach(() => {
     sessions.clear();
     clientProfiles.clear();
+    workouts.clear();
   });
 
   it('trainer creates client profile in pool without owner field', async () => {
@@ -296,6 +335,56 @@ describe('ClientsController (HTTP)', () => {
     expect(createRes.body.id).toBeTypeOf('string');
     expect(createRes.body).not.toHaveProperty('ownerTrainerId');
     expect(Object.keys(createRes.body)).not.toContain('ownerTrainerId');
+  });
+
+  it('list includes nextWorkout meta for earliest pending', async () => {
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const createRes = await request(app.getHttpServer())
+      .post('/api/clients')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({ displayName: 'С метой' });
+
+    const clientId = createRes.body.id as string;
+    const now = new Date();
+    workouts.set('wo_late', {
+      id: 'wo_late',
+      clientProfileId: clientId,
+      scheduledAt: new Date('2026-12-01T10:00:00.000Z'),
+      status: WorkoutStatus.pending,
+      templateId: null,
+      sourceStageId: null,
+      createdByUserId: trainerUser.id,
+      createdAt: now,
+      updatedAt: now,
+    });
+    workouts.set('wo_early', {
+      id: 'wo_early',
+      clientProfileId: clientId,
+      scheduledAt: new Date('2026-11-01T10:00:00.000Z'),
+      status: WorkoutStatus.pending,
+      templateId: null,
+      sourceStageId: null,
+      createdByUserId: trainerUser.id,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const listRes = await request(app.getHttpServer())
+      .get('/api/clients')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken);
+
+    expect(listRes.status).toBe(200);
+    const client = listRes.body.clients.find((c: { id: string }) => c.id === clientId);
+    expect(client?.nextWorkout?.scheduledAt).toBe('2026-11-01T10:00:00.000Z');
+    expect(client?.nextWorkout?.status).toBe('pending');
+    expect(client?.nextWorkout?.isOverdue).toBeTypeOf('boolean');
   });
 
   it('list includes created clients for trainer', async () => {

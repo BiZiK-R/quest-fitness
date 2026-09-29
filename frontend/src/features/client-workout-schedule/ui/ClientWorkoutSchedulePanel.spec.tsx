@@ -27,6 +27,7 @@ const pendingWorkout = {
   clientProfileId: clientId,
   scheduledAt: '2026-10-15T10:00:00.000Z',
   status: 'pending' as const,
+  isOverdue: false,
   templateId: 'tpl1',
   templateName: 'Силовая A',
   sourceStageId: 'st1',
@@ -207,6 +208,52 @@ describe('ClientWorkoutSchedulePanel skip/cancel', () => {
     await waitFor(() => {
       expect(screen.getByText(new RegExp(formattedNew.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeInTheDocument();
     });
+  });
+
+  it('shows status pill, overdue label from API, and Start stub for holder', async () => {
+    vi.mocked(clientModule.apiClient.GET).mockImplementation(async (path) => {
+      if (path === '/api/clients/{id}/workouts') {
+        return {
+          data: {
+            workouts: [
+              pendingWorkout,
+              {
+                ...pendingWorkout,
+                id: 'wo_attended',
+                status: 'attended' as const,
+                isOverdue: false,
+              },
+              {
+                ...pendingWorkout,
+                id: 'wo_overdue',
+                isOverdue: true,
+              },
+            ],
+          },
+          error: undefined,
+          response: new Response(null, { status: 200 }),
+        };
+      }
+      return { data: undefined, error: undefined, response: new Response(null, { status: 404 }) };
+    });
+
+    render(
+      <ClientWorkoutSchedulePanel
+        clientId={clientId}
+        macroProgress={{ currentStageId: 'st1', stagesExhausted: false }}
+        mutationsDisabled={false}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Ожидание').length).toBeGreaterThanOrEqual(1);
+    });
+
+    expect(screen.getByText('Пришёл')).toBeInTheDocument();
+    expect(screen.getByText('Просрочена')).toBeInTheDocument();
+
+    const startButton = screen.getAllByRole('button', { name: /Начать/i })[0];
+    expect(startButton).toBeDisabled();
   });
 
   it('hides skip/cancel actions when mutations disabled', async () => {
