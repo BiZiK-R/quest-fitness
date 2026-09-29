@@ -4,6 +4,7 @@ import { resolvePostLoginPath } from '@/shared/auth/resolvePostLoginPath';
 import { apiClient, setCsrfToken } from '@/shared/api/client';
 import { postLogin } from '@/shared/api/login';
 import type { components } from '@/shared/api/schema';
+import { PageMeta } from '@/shared/ui/PageMeta';
 
 type ErrorCode = components['schemas']['ErrorCode'];
 
@@ -47,7 +48,8 @@ export function LoginPage() {
   }
 
   return (
-    <main>
+    <>
+      <PageMeta title="Вход — Quest Fitness" robots="noindex,nofollow" />
       <h1>Вход</h1>
       <form onSubmit={(event) => void handleSubmit(event)}>
         <div>
@@ -84,6 +86,6 @@ export function LoginPage() {
           Войти
         </button>
       </form>
-    </main>
+    </>
   );
 }

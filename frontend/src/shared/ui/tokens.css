@@ -1,0 +1,59 @@
+/**
+ * Design tokens — source: DESIGN.md (Quest Fitness — Гильдия)
+ */
+:root {
+  /* Colors */
+  --color-surface-app: #faf7f4;
+  --color-surface-card: #ffffff;
+  --color-surface-cream: #f6ebdd;
+  --color-surface-sunken: #f1ebe6;
+  --color-ink-primary: #241c20;
+  --color-ink-muted: #6e5d60;
+  --color-ink-soon: #7a6b6d;
+  --color-ink-inverse: #ffffff;
+  --color-accent-red: #c33f46;
+  --color-accent-red-pressed: #a7333a;
+  --color-accent-apricot: #efb68c;
+  --color-ink-error: #8b3a3e;
+  --color-border-hairline: #bfafb1;
+  --color-border-control: #8f8083;
+  --color-border-subtle: #e3d9d5;
+  --color-surface-session: #241c20;
+  --color-surface-session-raised: #302428;
+  --color-surface-session-sunken: #1b1416;
+  --color-ink-on-session: #f6ebdd;
+  --color-ink-on-session-muted: #bfafb1;
+  --color-border-session: #3d2e32;
+
+  /* Typography */
+  --font-family: 'Rubik', system-ui, sans-serif;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Spacing */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 24px;
+  --spacing-6: 32px;
+  --spacing-7: 48px;
+  --spacing-gutter: 16px;
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-wide: 24px;
+  --spacing-touch-min: 48px;
+  --spacing-control-md: 48px;
+  --spacing-control-lg: 56px;
+  --spacing-content-max: 640px;
+  --breakpoint-md: 768px;
+
+  /* Focus ring (light surfaces) */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-inner: var(--color-ink-inverse);
+  --focus-ring-outer: var(--color-ink-primary);
+}

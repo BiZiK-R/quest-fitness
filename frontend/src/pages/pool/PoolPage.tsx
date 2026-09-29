@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { apiClient, setCsrfToken } from '@/shared/api/client';
+import { PageMeta } from '@/shared/ui/PageMeta';
 
 export function PoolPage() {
   const navigate = useNavigate();
@@ -11,11 +12,12 @@ export function PoolPage() {
   }
 
   return (
-    <main>
+    <>
+      <PageMeta title="Пул клиентов — Quest Fitness" robots="noindex,nofollow" />
       <h1>Пул клиентов</h1>
       <button type="button" onClick={() => void handleLogout()}>
         Выйти
       </button>
-    </main>
+    </>
   );
 }
