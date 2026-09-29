@@ -86,6 +86,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a1
+  /api/trainer/ping:
+    get:
+      operationId: TrainerPingController_ping
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrainerPingResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags:
+        - trainer
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -111,6 +136,7 @@ components:
         login:
           type: string
           example: adminuser
+          description: Логин (lowercase) или телефон E.164 / RU-формат
           minLength: 3
           maxLength: 32
         password:
@@ -192,3 +218,11 @@ components:
       required:
         - login
         - role
+    TrainerPingResponseDto:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+      required:
+        - ok

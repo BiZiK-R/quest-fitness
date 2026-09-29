@@ -42,5 +42,8 @@ describe('OpenAPI export contract', () => {
     expect(document.paths).toHaveProperty('/api/auth/login');
     expect(document.paths).toHaveProperty('/api/auth/logout');
     expect(document.paths).toHaveProperty('/api/auth/me');
+    expect(document.paths).toHaveProperty('/api/trainer/ping');
+    const loginPost = document.paths?.['/api/auth/login']?.post;
+    expect(loginPost?.requestBody).toBeDefined();
   });
 });

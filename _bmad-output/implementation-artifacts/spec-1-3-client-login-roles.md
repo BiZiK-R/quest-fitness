@@ -2,8 +2,8 @@
 title: 'Story 1.3 — Вход Клиента и разграничение ролей'
 type: 'feature'
 created: '2026-09-29'
-status: 'draft'
-baseline_commit: ''
+status: 'done'
+baseline_commit: '2a9dc7e'
 review_loop_iteration: 0
 context:
   - '{project-root}/_bmad-output/implementation-artifacts/epic-1-context.md'
@@ -47,11 +47,11 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] Prisma phoneE164 + migrate
-- [ ] Auth login by login OR phone; client landing
-- [ ] RolesGuard FORBIDDEN_ROLE on trainer-only sample route
-- [ ] FE client login + cabinet/workouts stub + copy «Обратитесь к тренеру»
-- [ ] OpenAPI + tests green
+- [x] Prisma phoneE164 + migrate
+- [x] Auth login by login OR phone; client landing
+- [x] RolesGuard FORBIDDEN_ROLE on trainer-only sample route
+- [x] FE client login + cabinet/workouts stub + copy «Обратитесь к тренеру»
+- [x] OpenAPI + tests green
 
 **Acceptance Criteria:**
 - Given client, when login or phone+password, then session; landing Кабинет→Тренировки

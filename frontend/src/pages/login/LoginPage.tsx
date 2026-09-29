@@ -1,7 +1,8 @@
 import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { setCsrfToken } from '@/shared/api/client';
-import { postTrainerLogin } from '@/shared/api/login';
+import { resolvePostLoginPath } from '@/shared/auth/resolvePostLoginPath';
+import { apiClient, setCsrfToken } from '@/shared/api/client';
+import { postLogin } from '@/shared/api/login';
 import type { components } from '@/shared/api/schema';
 
 type ErrorCode = components['schemas']['ErrorCode'];
@@ -23,18 +24,26 @@ export function LoginPage() {
     setErrorCode(null);
     setSubmitting(true);
 
-    const result = await postTrainerLogin({ login, password });
-
-    setSubmitting(false);
+    const result = await postLogin({ login, password });
 
     if (!result.ok) {
+      setSubmitting(false);
       const code = result.error.error?.code;
       setErrorCode(code ? (ERROR_MESSAGES[code] ?? code) : 'UNKNOWN_ERROR');
       return;
     }
 
     setCsrfToken(result.data.csrfToken);
-    navigate('/pool', { replace: true });
+
+    const meResult = await apiClient.GET('/api/auth/me');
+    setSubmitting(false);
+
+    if (!meResult.data) {
+      setErrorCode('UNAUTHENTICATED');
+      return;
+    }
+
+    navigate(resolvePostLoginPath(meResult.data.role), { replace: true });
   }
 
   return (
@@ -42,7 +51,7 @@ export function LoginPage() {
       <h1>Вход</h1>
       <form onSubmit={(event) => void handleSubmit(event)}>
         <div>
-          <label htmlFor="login">Логин</label>
+          <label htmlFor="login">Логин или телефон</label>
           <input
             id="login"
             name="login"
@@ -65,6 +74,9 @@ export function LoginPage() {
             disabled={submitting}
           />
         </div>
+        <p>
+          Забыли пароль? <span>Обратитесь к тренеру</span>
+        </p>
         {errorCode ? (
           <p role="alert">{errorCode}</p>
         ) : null}

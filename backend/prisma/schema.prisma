@@ -15,6 +15,7 @@ enum UserRole {
 model User {
   id           String        @id @default(cuid())
   login        String        @unique
+  phoneE164    String?       @unique @map("phone_e164")
   passwordHash String        @map("password_hash")
   role         UserRole
   createdAt    DateTime      @default(now()) @map("created_at")

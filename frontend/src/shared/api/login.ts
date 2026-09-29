@@ -1,17 +1,20 @@
 import { apiClient } from './client';
 import type { components } from './schema';
 
-export type TrainerLoginCredentials = {
+export type LoginCredentials = {
   login: string;
   password: string;
 };
 
+/** @deprecated use LoginCredentials */
+export type TrainerLoginCredentials = LoginCredentials;
+
 type LoginResponse = components['schemas']['LoginResponseDto'];
 type ErrorEnvelope = components['schemas']['ErrorEnvelopeDto'];
 
-/** Trainer/admin login against BFF. */
-export async function postTrainerLogin(
-  credentials: TrainerLoginCredentials,
+/** Login (логин или телефон) для любой роли. */
+export async function postLogin(
+  credentials: LoginCredentials,
 ): Promise<
   | { ok: true; data: LoginResponse }
   | { ok: false; error: ErrorEnvelope }
@@ -33,3 +36,6 @@ export async function postTrainerLogin(
     error: { error: { code: 'INTERNAL_ERROR', message: 'Empty login response' } },
   };
 }
+
+/** @deprecated use postLogin */
+export const postTrainerLogin = postLogin;

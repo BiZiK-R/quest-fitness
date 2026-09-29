@@ -68,6 +68,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/trainer/ping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["TrainerPingController_ping"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -80,7 +96,10 @@ export interface components {
             status: "ok";
         };
         LoginRequestDto: {
-            /** @example adminuser */
+            /**
+             * @description Логин (lowercase) или телефон E.164 / RU-формат
+             * @example adminuser
+             */
             login: string;
             /**
              * Format: password
@@ -116,6 +135,10 @@ export interface components {
              * @enum {string}
              */
             role: "ADMIN" | "TRAINER" | "CLIENT";
+        };
+        TrainerPingResponseDto: {
+            /** @example true */
+            ok: boolean;
         };
     };
     responses: never;
@@ -237,6 +260,41 @@ export interface operations {
                 };
             };
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    TrainerPingController_ping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainerPingResponseDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
