@@ -5,6 +5,7 @@ import { SessionGuard } from './common/guards/session.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { ClientsModule } from './modules/clients/clients.module';
+import { ClientsLockModule } from './modules/clients-lock/clients-lock.module';
 import { InvitesModule } from './modules/invites/invites.module';
 import { TrainerModule } from './modules/trainer/trainer.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
@@ -16,6 +17,7 @@ import { PrismaModule } from './shared/prisma/prisma.module';
     AuthModule,
     TrainerModule,
     ClientsModule,
+    ClientsLockModule,
     InvitesModule,
   ],
   providers: [

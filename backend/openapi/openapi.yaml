@@ -200,6 +200,112 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a2
+  /api/clients/{id}/lock:
+    post:
+      operationId: ClientsLockController_acquire
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientLockResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: &a3
+        - clients-lock
+    delete:
+      operationId: ClientsLockController_release
+      parameters:
+        - name: force
+          required: false
+          in: query
+          schema:
+            type: boolean
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lock released
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a3
+  /api/clients/{id}/lock/heartbeat:
+    post:
+      operationId: ClientsLockController_heartbeat
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientLockResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a3
   /api/clients/{clientId}/invites:
     post:
       operationId: InvitesController_issue
@@ -234,7 +340,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: &a3
+      tags: &a4
         - invites
   /api/clients/{clientId}/invites/active:
     get:
@@ -270,7 +376,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a3
+      tags: *a4
   /api/invites/{token}:
     get:
       operationId: PublicInvitesController_preview
@@ -287,7 +393,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/InvitePreviewDto"
-      tags: &a4
+      tags: &a5
         - invites
   /api/invites/{token}/register:
     post:
@@ -323,7 +429,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a4
+      tags: *a5
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -418,6 +524,9 @@ components:
     MeResponseDto:
       type: object
       properties:
+        id:
+          type: string
+          example: cluser123
         login:
           type: string
           example: adminuser
@@ -429,6 +538,7 @@ components:
             - CLIENT
           example: ADMIN
       required:
+        - id
         - login
         - role
     TrainerPingResponseDto:
@@ -450,6 +560,17 @@ components:
           maxLength: 128
       required:
         - displayName
+    ClientLockStatusDto:
+      type: object
+      properties:
+        holderTrainerId:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+        - holderTrainerId
+        - expiresAt
     ClientProfileDto:
       type: object
       properties:
@@ -475,6 +596,12 @@ components:
         updatedAt:
           type: string
           format: date-time
+        lockStatus:
+          nullable: true
+          description: Live lock held by another trainer; null when free or expired
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/ClientLockStatusDto"
       required:
         - id
         - displayName
@@ -491,6 +618,17 @@ components:
             $ref: "#/components/schemas/ClientProfileDto"
       required:
         - clients
+    ClientLockResponseDto:
+      type: object
+      properties:
+        holderTrainerId:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+        - holderTrainerId
+        - expiresAt
     IssueInviteResponseDto:
       type: object
       properties:

@@ -45,6 +45,14 @@ type StoredInvite = {
   createdAt: Date;
 };
 
+type StoredClientLock = {
+  clientId: string;
+  holderTrainerId: string;
+  lastActivityAt: Date;
+  activeSessionId: string | null;
+  createdAt: Date;
+};
+
 function sessionCookieHeader(setCookie: string | string[] | undefined): string {
   return (setCookie ?? [])
     .map((raw) => raw.split(';')[0] ?? '')
@@ -79,6 +87,7 @@ describe('InvitesController (HTTP)', () => {
   const sessions = new Map<string, StoredSession>();
   const clientProfiles = new Map<string, StoredClientProfile>();
   const invites = new Map<string, StoredInvite>();
+  const clientLocks = new Map<string, StoredClientLock>();
 
   const usersById = () =>
     new Map([trainerUser, clientUser].map((u) => [u.id, u as User]));
@@ -175,6 +184,11 @@ describe('InvitesController (HTTP)', () => {
     clientProfile: {
       findUnique: async ({ where }: { where: { id: string } }) => {
         return clientProfiles.get(where.id) ?? null;
+      },
+    },
+    clientLock: {
+      findUnique: async ({ where }: { where: { clientId: string } }) => {
+        return clientLocks.get(where.clientId) ?? null;
       },
     },
     invite: {
@@ -302,6 +316,7 @@ describe('InvitesController (HTTP)', () => {
     sessions.clear();
     clientProfiles.clear();
     invites.clear();
+    clientLocks.clear();
     const now = new Date();
     clientProfiles.set('client_pool_1', {
       id: 'client_pool_1',
@@ -311,6 +326,30 @@ describe('InvitesController (HTTP)', () => {
       createdAt: now,
       updatedAt: now,
     });
+    clientLocks.set('client_pool_1', {
+      clientId: 'client_pool_1',
+      holderTrainerId: trainerUser.id,
+      lastActivityAt: now,
+      activeSessionId: null,
+      createdAt: now,
+    });
+  });
+
+  it('issue without live lock returns LOCK_REQUIRED', async () => {
+    clientLocks.clear();
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const issueRes = await request(app.getHttpServer())
+      .post('/api/clients/client_pool_1/invites')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken);
+
+    expect(issueRes.status).toBe(409);
+    expect(issueRes.body.error?.code).toBe(ErrorCode.LOCK_REQUIRED);
   });
 
   it('issue stores sha256 hash not plaintext token', async () => {

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ClientLockStatusDto } from '../../clients-lock/dto/client-lock-status.dto';
 
 export class ClientProfileDto {
   @ApiProperty({ type: String, example: 'clxyz123' })
@@ -28,4 +29,12 @@ export class ClientProfileDto {
 
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt!: string;
+
+  @ApiProperty({
+    type: () => ClientLockStatusDto,
+    nullable: true,
+    required: false,
+    description: 'Live lock held by another trainer; null when free or expired',
+  })
+  lockStatus?: ClientLockStatusDto | null;
 }

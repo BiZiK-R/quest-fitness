@@ -16,6 +16,7 @@ import {
 } from '../../shared/timezone/gym-timezone';
 import { ActiveInviteStatusDto } from './dto/active-invite-status.dto';
 import { IssueInviteResponseDto } from './dto/issue-invite-response.dto';
+import { ClientsLockService } from '../clients-lock/clients-lock.service';
 
 const INVITE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -33,6 +34,7 @@ export class InvitesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sessionService: SessionService,
+    private readonly clientsLockService: ClientsLockService,
   ) {}
 
   async issue(
@@ -45,6 +47,8 @@ export class InvitesService {
     if (!client) {
       throw new AppException(ErrorCode.NOT_FOUND, 'Client not found', 404);
     }
+
+    await this.clientsLockService.assertActorHoldsLiveLock(clientProfileId, issuedByUserId);
 
     const now = new Date();
     await this.prisma.invite.updateMany({

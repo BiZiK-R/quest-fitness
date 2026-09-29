@@ -184,6 +184,10 @@ describe('ClientsController (HTTP)', () => {
         return clientProfiles.get(where.id) ?? null;
       },
     },
+    clientLock: {
+      findUnique: async () => null,
+      findMany: async () => [],
+    },
   };
 
   beforeAll(async () => {

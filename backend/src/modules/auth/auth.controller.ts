@@ -79,6 +79,6 @@ export class AuthController {
   @ApiUnauthorizedResponse({ type: () => ErrorEnvelopeDto })
   me(@Req() req: Request): MeResponseDto {
     const user = req.user!;
-    return { login: user.login, role: user.role };
+    return { id: user.id, login: user.login, role: user.role };
   }
 }

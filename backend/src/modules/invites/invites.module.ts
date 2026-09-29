@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthModule } from '../auth/auth.module';
+import { ClientsLockModule } from '../clients-lock/clients-lock.module';
 import { InvitesController } from './invites.controller';
 import { InvitesService } from './invites.service';
 import { PublicInvitesController } from './public-invites.controller';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, ClientsLockModule],
   controllers: [InvitesController, PublicInvitesController],
   providers: [InvitesService, RolesGuard],
 })

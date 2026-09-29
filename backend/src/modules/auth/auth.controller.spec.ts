@@ -224,6 +224,7 @@ describe('AuthController (HTTP)', () => {
 
     expect(meRes.status).toBe(200);
     expect(meRes.body).toEqual({
+      id: clientUser.id,
       login: clientUser.login,
       role: 'CLIENT',
     });

@@ -164,7 +164,15 @@ export function PoolPage() {
       <ul aria-label="Список клиентов в пуле" className="pool-page__list">
         {filteredClients.map((client) => (
           <li key={client.id} className="pool-page__list-item">
-            <ClientRow id={client.id} displayName={client.displayName} />
+            <ClientRow
+              id={client.id}
+              displayName={client.displayName}
+              lockHolderLabel={
+                client.lockStatus
+                  ? `Занят: ${client.lockStatus.holderTrainerId}`
+                  : null
+              }
+            />
             <button
               type="button"
               onClick={() =>
