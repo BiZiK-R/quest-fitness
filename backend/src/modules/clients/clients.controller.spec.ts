@@ -180,6 +180,9 @@ describe('ClientsController (HTTP)', () => {
           (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
         );
       },
+      findUnique: async ({ where }: { where: { id: string } }) => {
+        return clientProfiles.get(where.id) ?? null;
+      },
     },
   };
 
@@ -299,5 +302,76 @@ describe('ClientsController (HTTP)', () => {
 
   it('sets session cookie on login (sanity)', () => {
     expect(SESSION_COOKIE_NAME).toBe('qf_session');
+  });
+
+  it('trainer gets client profile by id', async () => {
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const createRes = await request(app.getHttpServer())
+      .post('/api/clients')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({ displayName: 'Карточка Тест' });
+
+    const clientId = createRes.body.id as string;
+
+    const getRes = await request(app.getHttpServer())
+      .get(`/api/clients/${clientId}`)
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken);
+
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.id).toBe(clientId);
+    expect(getRes.body.displayName).toBe('Карточка Тест');
+  });
+
+  it('returns NOT_FOUND when client id is missing', async () => {
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const getRes = await request(app.getHttpServer())
+      .get('/api/clients/client_missing_xyz')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken);
+
+    expect(getRes.status).toBe(404);
+    expect(getRes.body.error?.code).toBe(ErrorCode.NOT_FOUND);
+  });
+
+  it('client role cannot get client profile by id (FORBIDDEN_ROLE)', async () => {
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const createRes = await request(app.getHttpServer())
+      .post('/api/clients')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({ displayName: 'Закрытый' });
+
+    const clientId = createRes.body.id as string;
+
+    const clientSession = await loginAndGetSession(
+      app,
+      clientUser.login,
+      CLIENT_TEST_PASSWORD,
+    );
+
+    const getRes = await request(app.getHttpServer())
+      .get(`/api/clients/${clientId}`)
+      .set('Cookie', clientSession.cookiePairs)
+      .set('x-csrf-token', clientSession.csrfToken);
+
+    expect(getRes.status).toBe(403);
+    expect(getRes.body.error?.code).toBe(ErrorCode.FORBIDDEN_ROLE);
   });
 });

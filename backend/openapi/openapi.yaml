@@ -165,6 +165,41 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a2
+  /api/clients/{id}:
+    get:
+      operationId: ClientsController_getById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientProfileDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a2
   /api/clients/{clientId}/invites:
     post:
       operationId: InvitesController_issue

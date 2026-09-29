@@ -7,11 +7,13 @@ import { PoolPage } from './PoolPage';
 import * as clientModule from '@/shared/api/client';
 import * as clipboardModule from '@/shared/lib/copy-to-clipboard';
 
+const navigateMock = vi.fn();
+
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>();
   return {
     ...actual,
-    useNavigate: () => vi.fn(),
+    useNavigate: () => navigateMock,
   };
 });
 
@@ -42,6 +44,7 @@ describe('PoolPage', () => {
   });
 
   beforeEach(() => {
+    navigateMock.mockReset();
     vi.mocked(clientModule.apiClient.GET).mockReset();
     vi.mocked(clientModule.apiClient.POST).mockReset();
     vi.mocked(clipboardModule.copyToClipboard).mockReset();
@@ -161,5 +164,78 @@ describe('PoolPage', () => {
         body: { displayName: 'Новый клиент' },
       });
     });
+  });
+
+  it('shows guild empty copy when pool has no clients', async () => {
+    vi.mocked(clientModule.apiClient.GET).mockResolvedValue({
+      data: { clients: [] },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+
+    render(
+      <MemoryRouter>
+        <PoolPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Гильдия пока собирается')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Добавить клиента' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows search miss copy when filter matches nobody', async () => {
+    vi.mocked(clientModule.apiClient.GET).mockResolvedValue({
+      data: {
+        clients: [
+          {
+            id: 'cl_a',
+            displayName: 'Анна',
+            userId: null,
+            deactivatedAt: null,
+            createdAt: '2026-09-29T00:00:00.000Z',
+            updatedAt: '2026-09-29T00:00:00.000Z',
+          },
+        ],
+      },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <PoolPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Анна')).toBeInTheDocument();
+    });
+
+    await user.type(screen.getByLabelText(/поиск клиента/i), 'zzz');
+
+    expect(screen.getByText('Никого не нашли')).toBeInTheDocument();
+  });
+
+  it('navigates to client card when client row is clicked', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <PoolPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Клиент из списка')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Клиент из списка' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/clients/cl_list_1');
   });
 });

@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBody,
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
+  ApiParam,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -44,5 +46,22 @@ export class ClientsController {
   async list(): Promise<ClientListResponseDto> {
     const clients = await this.clientsService.listPool();
     return { clients };
+  }
+
+  /**
+   * Returns a client profile for read-only card view.
+   * Never acquires or mutates ClientLock (AD-6).
+   */
+  @Get(':id')
+  @RequireSession()
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.ADMIN)
+  @ApiParam({ name: 'id', type: String })
+  @ApiOkResponse({ type: ClientProfileDto })
+  @ApiUnauthorizedResponse({ type: () => ErrorEnvelopeDto })
+  @ApiForbiddenResponse({ type: () => ErrorEnvelopeDto })
+  @ApiNotFoundResponse({ type: () => ErrorEnvelopeDto })
+  async getById(@Param('id') id: string): Promise<ClientProfileDto> {
+    return this.clientsService.getById(id);
   }
 }

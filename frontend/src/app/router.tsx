@@ -4,6 +4,7 @@ import { RootRedirect } from '@/pages/home/RootRedirect';
 import { LoginPage } from '@/pages/login/LoginPage';
 import { CabinetWorkoutsPage } from '@/pages/cabinet/CabinetWorkoutsPage';
 import { PoolPage } from '@/pages/pool/PoolPage';
+import { ClientCardPage } from '@/pages/client-card/ClientCardPage';
 import { InviteRegisterPage } from '@/pages/invite/InviteRegisterPage';
 
 export const appRouter = createBrowserRouter([
@@ -14,6 +15,7 @@ export const appRouter = createBrowserRouter([
       { path: '/login', element: <LoginPage /> },
       { path: '/invite/:token', element: <InviteRegisterPage /> },
       { path: '/pool', element: <PoolPage /> },
+      { path: '/clients/:id', element: <ClientCardPage /> },
       { path: '/cabinet/workouts', element: <CabinetWorkoutsPage /> },
     ],
   },
