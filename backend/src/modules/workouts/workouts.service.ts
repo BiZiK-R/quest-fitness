@@ -8,6 +8,8 @@ import { AssignWorkoutRequestDto } from './dto/assign-workout-request.dto';
 import { WorkoutDto } from './dto/workout.dto';
 import {
   assignWorkoutIdempotencyScope,
+  cancelWorkoutIdempotencyScope,
+  skipWorkoutIdempotencyScope,
 } from './workout-idempotency.constants';
 import { WorkoutIdempotencyService } from './workout-idempotency.service';
 import { toWorkoutDto } from './workout.mapper';
@@ -72,6 +74,34 @@ export class WorkoutsService {
     return dto;
   }
 
+  async skip(
+    workoutId: string,
+    actorUserId: string,
+    idempotencyKey: string | undefined,
+  ): Promise<WorkoutDto> {
+    return this.transitionPendingWorkout(
+      workoutId,
+      actorUserId,
+      idempotencyKey,
+      skipWorkoutIdempotencyScope(workoutId),
+      WorkoutStatus.skipped,
+    );
+  }
+
+  async cancel(
+    workoutId: string,
+    actorUserId: string,
+    idempotencyKey: string | undefined,
+  ): Promise<WorkoutDto> {
+    return this.transitionPendingWorkout(
+      workoutId,
+      actorUserId,
+      idempotencyKey,
+      cancelWorkoutIdempotencyScope(workoutId),
+      WorkoutStatus.cancelled,
+    );
+  }
+
   async listForClient(clientId: string): Promise<WorkoutDto[]> {
     await this.ensureClientExists(clientId);
     const rows = await this.prisma.workout.findMany({
@@ -112,6 +142,59 @@ export class WorkoutsService {
       templateId: progress.currentStage.templateId,
       sourceStageId: progress.currentStage.id,
     };
+  }
+
+  private async transitionPendingWorkout(
+    workoutId: string,
+    actorUserId: string,
+    idempotencyKey: string | undefined,
+    scope: string,
+    targetStatus: typeof WorkoutStatus.skipped | typeof WorkoutStatus.cancelled,
+  ): Promise<WorkoutDto> {
+    const trimmedKey = idempotencyKey?.trim();
+    if (!trimmedKey) {
+      throw new AppException(
+        ErrorCode.VALIDATION_FAILED,
+        'Idempotency-Key header is required',
+        400,
+      );
+    }
+
+    const replay = await this.idempotencyService.findReplay(scope, trimmedKey);
+    if (replay) {
+      return replay.responseBody as WorkoutDto;
+    }
+
+    const existing = await this.prisma.workout.findUnique({
+      where: { id: workoutId },
+      include: workoutWithTemplateInclude,
+    });
+    if (!existing) {
+      throw new AppException(ErrorCode.NOT_FOUND, 'Workout not found', 404);
+    }
+
+    await this.clientsLockService.assertActorHoldsLiveLock(
+      existing.clientProfileId,
+      actorUserId,
+    );
+
+    if (existing.status !== WorkoutStatus.pending) {
+      throw new AppException(
+        ErrorCode.WORKOUT_STATUS_CONFLICT,
+        'Workout status transition not allowed',
+        409,
+      );
+    }
+
+    const row = await this.prisma.workout.update({
+      where: { id: workoutId },
+      data: { status: targetStatus },
+      include: workoutWithTemplateInclude,
+    });
+
+    const dto = toWorkoutDto(row);
+    await this.idempotencyService.store(scope, trimmedKey, actorUserId, 200, dto);
+    return dto;
   }
 
   private async ensureClientExists(clientId: string): Promise<void> {

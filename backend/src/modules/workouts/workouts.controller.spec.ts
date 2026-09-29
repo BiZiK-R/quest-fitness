@@ -288,15 +288,64 @@ describe('WorkoutsController (HTTP)', () => {
         orderBy,
       }: {
         where: { clientProfileId: string };
-        orderBy?: { scheduledAt: 'asc' | 'desc' };
+        orderBy?: { scheduledAt: 'asc' | 'desc' } | Array<{ scheduledAt?: 'asc' | 'desc'; id?: 'asc' | 'desc' }>;
       }) => {
         let rows = [...workouts.values()].filter(
           (w) => w.clientProfileId === where.clientProfileId,
         );
-        if (orderBy?.scheduledAt === 'asc') {
+        const primaryOrder = Array.isArray(orderBy) ? orderBy[0] : orderBy;
+        if (primaryOrder?.scheduledAt === 'asc') {
           rows = rows.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
         }
         return rows;
+      },
+      findUnique: async ({
+        where,
+        include,
+      }: {
+        where: { id: string };
+        include?: { template?: { select: { name: true } } };
+      }) => {
+        const row = workouts.get(where.id);
+        if (!row) {
+          return null;
+        }
+        if (include?.template && row.templateId) {
+          const template = templates.get(row.templateId);
+          return { ...row, template: template ? { name: template.name } : null };
+        }
+        if (include?.template) {
+          return { ...row, template: null };
+        }
+        return { ...row };
+      },
+      update: async ({
+        where,
+        data,
+        include,
+      }: {
+        where: { id: string };
+        data: { status?: WorkoutStatus };
+        include?: { template?: { select: { name: true } } };
+      }) => {
+        const row = workouts.get(where.id);
+        if (!row) {
+          throw new Error('Workout not found');
+        }
+        const updated: StoredWorkout = {
+          ...row,
+          ...data,
+          updatedAt: new Date(),
+        };
+        workouts.set(where.id, updated);
+        if (include?.template && updated.templateId) {
+          const template = templates.get(updated.templateId);
+          return { ...updated, template: template ? { name: template.name } : null };
+        }
+        if (include?.template) {
+          return { ...updated, template: null };
+        }
+        return updated;
       },
     },
     idempotencyRecord: {
@@ -557,6 +606,143 @@ describe('WorkoutsController (HTTP)', () => {
     expect(listRes.status).toBe(200);
     expect(listRes.body.workouts).toHaveLength(1);
     expect(listRes.body.workouts[0].status).toBe('pending');
+  });
+
+  function seedPendingWorkout(id: string): void {
+    const now = new Date();
+    workouts.set(id, {
+      id,
+      clientProfileId: 'client_pool_1',
+      scheduledAt: new Date('2026-10-10T09:00:00.000Z'),
+      status: WorkoutStatus.pending,
+      templateId: 'tpl_1',
+      sourceStageId: 'stage_1',
+      createdByUserId: trainerUser.id,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  it('POST skip pending workout returns skipped status', async () => {
+    seedPendingWorkout('wo_skip_1');
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/api/workouts/wo_skip_1/skip')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .set('Idempotency-Key', 'skip-1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('skipped');
+    expect(workouts.get('wo_skip_1')?.status).toBe(WorkoutStatus.skipped);
+  });
+
+  it('POST cancel pending workout returns cancelled status', async () => {
+    seedPendingWorkout('wo_cancel_1');
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/api/workouts/wo_cancel_1/cancel')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .set('Idempotency-Key', 'cancel-1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('cancelled');
+  });
+
+  it('POST skip without lock returns LOCK_REQUIRED', async () => {
+    seedPendingWorkout('wo_skip_no_lock');
+    clientLocks.clear();
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/api/workouts/wo_skip_no_lock/skip')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .set('Idempotency-Key', 'skip-no-lock');
+
+    expect(res.status).toBe(409);
+    expect(res.body.error?.code).toBe(ErrorCode.LOCK_REQUIRED);
+  });
+
+  it('POST skip non-pending returns WORKOUT_STATUS_CONFLICT', async () => {
+    seedPendingWorkout('wo_skip_conflict');
+    workouts.get('wo_skip_conflict')!.status = WorkoutStatus.attended;
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/api/workouts/wo_skip_conflict/skip')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .set('Idempotency-Key', 'skip-conflict');
+
+    expect(res.status).toBe(409);
+    expect(res.body.error?.code).toBe(ErrorCode.WORKOUT_STATUS_CONFLICT);
+  });
+
+  it('POST skip replays Idempotency-Key without double transition', async () => {
+    seedPendingWorkout('wo_skip_idem');
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const first = await request(app.getHttpServer())
+      .post('/api/workouts/wo_skip_idem/skip')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .set('Idempotency-Key', 'skip-idem-replay');
+
+    expect(first.status).toBe(200);
+
+    workouts.get('wo_skip_idem')!.status = WorkoutStatus.pending;
+
+    const second = await request(app.getHttpServer())
+      .post('/api/workouts/wo_skip_idem/skip')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .set('Idempotency-Key', 'skip-idem-replay');
+
+    expect(second.status).toBe(200);
+    expect(second.body.status).toBe('skipped');
+    expect(workouts.get('wo_skip_idem')?.status).toBe(WorkoutStatus.pending);
+  });
+
+  it('client role cannot skip (FORBIDDEN_ROLE)', async () => {
+    seedPendingWorkout('wo_skip_client');
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      clientUser.login,
+      CLIENT_TEST_PASSWORD,
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/api/workouts/wo_skip_client/skip')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .set('Idempotency-Key', 'client-skip');
+
+    expect(res.status).toBe(403);
+    expect(res.body.error?.code).toBe(ErrorCode.FORBIDDEN_ROLE);
   });
 
   it('client role cannot assign (FORBIDDEN_ROLE)', async () => {

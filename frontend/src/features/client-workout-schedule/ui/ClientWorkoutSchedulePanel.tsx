@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
+import {
+  WORKOUT_SKIP_CANCEL_CONFIRM_MESSAGE,
+  WorkoutSkipCancelConfirmDialog,
+} from './WorkoutSkipCancelConfirmDialog';
 
 type Workout = components['schemas']['WorkoutDto'];
 type WorkoutTemplate = components['schemas']['WorkoutTemplateDto'];
@@ -44,6 +48,10 @@ export function ClientWorkoutSchedulePanel({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState<{
+    workoutId: string;
+    action: 'skip' | 'cancel';
+  } | null>(null);
 
   const stagesExhausted = Boolean(macroProgress?.stagesExhausted);
   const requireManualTemplate = stagesExhausted || !macroProgress?.currentStageId;
@@ -86,6 +94,34 @@ export function ClientWorkoutSchedulePanel({
       }
     });
   }, [requireManualTemplate]);
+
+  const executeSkipOrCancel = useCallback(
+    async (workoutId: string, action: 'skip' | 'cancel') => {
+      setActionError(null);
+      setBusy(true);
+
+      const path =
+        action === 'skip' ? '/api/workouts/{id}/skip' : '/api/workouts/{id}/cancel';
+
+      const { data, error } = await apiClient.POST(path, {
+        params: {
+          path: { id: workoutId },
+          header: { 'Idempotency-Key': newIdempotencyKey() },
+        },
+      });
+
+      setBusy(false);
+
+      if (error || !data) {
+        setActionError(error?.error?.code ?? 'WORKOUT_STATUS_CHANGE_FAILED');
+        return;
+      }
+
+      setConfirmTarget(null);
+      await loadWorkouts();
+    },
+    [loadWorkouts],
+  );
 
   const handleAssign = useCallback(async () => {
     if (mutationsDisabled || !scheduledLocal) {
@@ -156,6 +192,25 @@ export function ClientWorkoutSchedulePanel({
             {w.templateName ? ` — ${w.templateName}` : null}
             {' · '}
             Ожидание
+            {!mutationsDisabled ? (
+              <>
+                {' '}
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setConfirmTarget({ workoutId: w.id, action: 'skip' })}
+                >
+                  Пропустить
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setConfirmTarget({ workoutId: w.id, action: 'cancel' })}
+                >
+                  Отменить
+                </button>
+              </>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -197,6 +252,17 @@ export function ClientWorkoutSchedulePanel({
       >
         Назначить тренировку
       </button>
+
+      {confirmTarget ? (
+        <WorkoutSkipCancelConfirmDialog
+          action={confirmTarget.action}
+          onConfirm={() => void executeSkipOrCancel(confirmTarget.workoutId, confirmTarget.action)}
+          onReschedule={() => setConfirmTarget(null)}
+          onDismiss={() => setConfirmTarget(null)}
+        />
+      ) : null}
     </section>
   );
 }
+
+export { WORKOUT_SKIP_CANCEL_CONFIRM_MESSAGE };
