@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { completeSession } from '@/features/session/api/session-complete-api';
 import { SessionWorkoutView } from '@/features/session/ui/SessionWorkoutView';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
@@ -9,8 +10,10 @@ type SessionDto = components['schemas']['SessionDto'];
 
 export function SessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
+  const navigate = useNavigate();
   const [session, setSession] = useState<SessionDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [completeBusy, setCompleteBusy] = useState(false);
 
   const loadSession = useCallback(async () => {
     if (!sessionId) {
@@ -32,6 +35,20 @@ export function SessionPage() {
   useEffect(() => {
     void loadSession();
   }, [loadSession]);
+
+  const handleComplete = useCallback(async () => {
+    if (!sessionId) {
+      return;
+    }
+    setCompleteBusy(true);
+    const { data, error } = await completeSession(sessionId);
+    setCompleteBusy(false);
+    if (error || !data) {
+      setLoadError('SESSION_COMPLETE_FAILED');
+      return;
+    }
+    navigate(`/sessions/${sessionId}/summary`, { state: { summary: data } });
+  }, [navigate, sessionId]);
 
   if (loadError) {
     return (
@@ -55,7 +72,11 @@ export function SessionPage() {
   return (
     <>
       <PageMeta title="Сессия" />
-      <SessionWorkoutView session={session} />
+      <SessionWorkoutView
+        session={session}
+        onComplete={() => void handleComplete()}
+        completeBusy={completeBusy}
+      />
     </>
   );
 }

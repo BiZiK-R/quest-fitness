@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBody,
   ApiConflictResponse,
@@ -15,6 +15,7 @@ import { RequireSession } from '../../common/decorators/require-session.decorato
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ErrorEnvelopeDto } from '../../common/errors/dto/error-envelope.dto';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { SessionSummaryDto } from './dto/session-summary.dto';
 import { SessionDto } from './dto/session.dto';
 import { SetDto } from './dto/set.dto';
 import { UpsertSetRequestDto } from './dto/upsert-set-request.dto';
@@ -36,6 +37,20 @@ export class SessionsController {
   @ApiNotFoundResponse({ type: () => ErrorEnvelopeDto })
   async getById(@Param('id') sessionId: string, @Req() req: Request): Promise<SessionDto> {
     return this.sessionsService.getById(sessionId, req.user!.id);
+  }
+
+  @Post(':id/complete')
+  @RequireSession()
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.ADMIN)
+  @ApiParam({ name: 'id', type: String, description: 'Session id' })
+  @ApiOkResponse({ type: SessionSummaryDto })
+  @ApiUnauthorizedResponse({ type: () => ErrorEnvelopeDto })
+  @ApiForbiddenResponse({ type: () => ErrorEnvelopeDto })
+  @ApiNotFoundResponse({ type: () => ErrorEnvelopeDto })
+  @ApiConflictResponse({ type: () => ErrorEnvelopeDto })
+  async complete(@Param('id') sessionId: string, @Req() req: Request): Promise<SessionSummaryDto> {
+    return this.sessionsService.complete(sessionId, req.user!.id, req.user!.role);
   }
 
   @Put(':sessionId/sets/:setId')

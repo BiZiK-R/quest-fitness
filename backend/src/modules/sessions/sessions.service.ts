@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Session, SessionStatus, WorkoutStatus } from '@prisma/client';
+import { Prisma, Session, SessionStatus, UserRole, WorkoutStatus } from '@prisma/client';
 import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-code.enum';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { ClientsLockService } from '../clients-lock/clients-lock.service';
+import { WorkoutsService } from '../workouts/workouts.service';
+import { SessionSummaryDto } from './dto/session-summary.dto';
 import { SessionDto } from './dto/session.dto';
 import { SetDto } from './dto/set.dto';
 import { UpsertSetRequestDto } from './dto/upsert-set-request.dto';
+import { buildSessionSummary } from './lib/session-summary.builder';
 import { DEFAULT_SESSION_DURATION_MINUTES } from './sessions.constants';
 import { toSessionDto, toSetDto } from './session.mapper';
 
@@ -27,6 +30,7 @@ export class SessionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly clientsLockService: ClientsLockService,
+    private readonly workoutsService: WorkoutsService,
   ) {}
 
   /**
@@ -204,6 +208,65 @@ export class SessionsService {
     return toSetDto(row);
   }
 
+  /**
+   * Completes an active session: attended workout, lock release, tonnage summary (AD-15, AD-7, AD-20).
+   */
+  async complete(
+    sessionId: string,
+    actorUserId: string,
+    actorRole: UserRole,
+  ): Promise<SessionSummaryDto> {
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        exercises: { orderBy: { sortOrder: 'asc' } },
+        sets: true,
+      },
+    });
+    if (!session) {
+      throw new AppException(ErrorCode.NOT_FOUND, 'Session not found', 404);
+    }
+
+    if (session.status === SessionStatus.abandoned) {
+      throw new AppException(ErrorCode.SESSION_ABANDONED, 'Session was abandoned', 409);
+    }
+
+    if (session.status === SessionStatus.completed) {
+      return this.buildSummaryForSession(sessionId, session.clientProfileId, session);
+    }
+
+    await this.clientsLockService.assertActorHoldsLiveLock(session.clientProfileId, actorUserId);
+
+    if (session.status !== SessionStatus.active) {
+      throw new AppException(ErrorCode.WORKOUT_STATUS_CONFLICT, 'Session is not active', 409);
+    }
+
+    const completedAt = new Date();
+    await this.prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        status: SessionStatus.completed,
+        completedAt,
+      },
+    });
+
+    await this.workoutsService.markAttended(session.workoutId);
+    await this.clientsLockService.release(session.clientProfileId, actorUserId, actorRole, false);
+
+    const refreshed = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        exercises: { orderBy: { sortOrder: 'asc' } },
+        sets: true,
+      },
+    });
+    if (!refreshed) {
+      throw new AppException(ErrorCode.NOT_FOUND, 'Session not found', 404);
+    }
+
+    return this.buildSummaryForSession(sessionId, refreshed.clientProfileId, refreshed);
+  }
+
   /** Removes a logged set while the session is active (AD-15 terminal immutability). */
   async deleteSet(sessionId: string, setId: string, actorUserId: string): Promise<void> {
     const session = await this.loadSessionForMutation(sessionId, actorUserId);
@@ -246,5 +309,43 @@ export class SessionsService {
     if (session.status !== SessionStatus.active) {
       throw new AppException(ErrorCode.WORKOUT_STATUS_CONFLICT, 'Session is not active', 409);
     }
+  }
+
+  private async buildSummaryForSession(
+    sessionId: string,
+    clientProfileId: string,
+    session: {
+      exercises: Array<{
+        id: string;
+        exerciseId: string;
+        sortOrder: number;
+        nameSnapshot: string;
+      }>;
+      sets: Array<{
+        sessionExerciseId: string;
+        weightKg: Prisma.Decimal | null;
+        reps: number | null;
+      }>;
+    },
+  ): Promise<SessionSummaryDto> {
+    const priorCompletedSessions = await this.prisma.session.findMany({
+      where: {
+        clientProfileId,
+        status: SessionStatus.completed,
+        id: { not: sessionId },
+      },
+      orderBy: { completedAt: 'desc' },
+      include: {
+        exercises: true,
+        sets: true,
+      },
+    });
+
+    return buildSessionSummary({
+      sessionId,
+      exercises: session.exercises,
+      sets: session.sets,
+      priorCompletedSessions,
+    });
   }
 }

@@ -4,6 +4,7 @@ import { Prisma, SessionStatus } from '@prisma/client';
 import { ErrorCode } from '../../common/errors/error-code.enum';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { ClientsLockService } from '../clients-lock/clients-lock.service';
+import { WorkoutsService } from '../workouts/workouts.service';
 import { SessionsService } from './sessions.service';
 
 type StoredSession = {
@@ -239,6 +240,10 @@ describe('SessionsService sets upsert', () => {
         {
           provide: ClientsLockService,
           useValue: { assertActorHoldsLiveLock: vi.fn(async () => undefined) },
+        },
+        {
+          provide: WorkoutsService,
+          useValue: { markAttended: vi.fn() },
         },
       ],
     }).compile();

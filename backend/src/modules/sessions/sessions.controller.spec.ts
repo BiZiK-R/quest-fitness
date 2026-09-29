@@ -259,10 +259,47 @@ describe('SessionsController (HTTP)', () => {
         clientLocks.set(where.clientId, updated);
         return updated;
       },
+      delete: async ({ where }: { where: { clientId: string } }) => {
+        clientLocks.delete(where.clientId);
+        return { clientId: where.clientId };
+      },
     },
     workout: {
-      findUnique: async ({ where }: { where: { id: string } }) => {
-        return workouts.get(where.id) ?? null;
+      findUnique: async ({
+        where,
+        include,
+      }: {
+        where: { id: string };
+        include?: { template?: { select: { name: true } } };
+      }) => {
+        const row = workouts.get(where.id);
+        if (!row) {
+          return null;
+        }
+        if (include?.template) {
+          return { ...row, template: { name: 'Шаблон' } };
+        }
+        return row;
+      },
+      update: async ({
+        where,
+        data,
+        include,
+      }: {
+        where: { id: string };
+        data: { status?: WorkoutStatus };
+        include?: { template?: { select: { name: true } } };
+      }) => {
+        const row = workouts.get(where.id);
+        if (!row) {
+          throw new Error('Workout not found');
+        }
+        const updated = { ...row, ...data, updatedAt: new Date() };
+        workouts.set(where.id, updated);
+        if (include?.template) {
+          return { ...updated, template: { name: 'Шаблон' } };
+        }
+        return updated;
       },
     },
     workoutTemplate: {
@@ -378,6 +415,54 @@ describe('SessionsController (HTTP)', () => {
           throw new Error('Session not found');
         }
         return row;
+      },
+      findMany: async ({
+        where,
+        orderBy,
+        include,
+      }: {
+        where: {
+          clientProfileId: string;
+          status: SessionStatus;
+          id?: { not: string };
+        };
+        orderBy?: { completedAt: 'desc' };
+        include?: { exercises?: boolean; sets?: { orderBy: { sequenceIndex: 'asc' } } };
+      }) => {
+        let rows = [...trainingSessions.values()].filter(
+          (s) =>
+            s.clientProfileId === where.clientProfileId &&
+            s.status === where.status &&
+            (where.id?.not ? s.id !== where.id.not : true),
+        );
+        if (orderBy?.completedAt === 'desc') {
+          rows = rows.sort(
+            (a, b) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0),
+          );
+        }
+        return Promise.all(
+          rows.map((row) =>
+            prismaMock.session.findUnique({
+              where: { id: row.id },
+              include: include as { exercises?: boolean; sets?: { orderBy: { sequenceIndex: 'asc' } } },
+            }),
+          ),
+        ).then((results) => results.filter(Boolean));
+      },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: { status?: SessionStatus; completedAt?: Date | null };
+      }) => {
+        const row = trainingSessions.get(where.id);
+        if (!row) {
+          throw new Error('Session not found');
+        }
+        const updated = { ...row, ...data, updatedAt: new Date() };
+        trainingSessions.set(where.id, updated);
+        return updated;
       },
     },
     sessionExercise: {
@@ -867,5 +952,44 @@ describe('SessionsController (HTTP)', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.error?.code).toBe(ErrorCode.VALIDATION_FAILED);
+  });
+
+  it('POST complete marks session completed, workout attended, releases lock, returns summary', async () => {
+    const { sessionId, csrfToken, cookiePairs, sessionExerciseId } = await startActiveSession();
+
+    await request(app.getHttpServer())
+      .put(`/api/sessions/${sessionId}/sets/550e8400-e29b-41d4-a716-446655440020`)
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({ sessionExerciseId, weightKg: 50, reps: 10 });
+
+    const res = await request(app.getHttpServer())
+      .post(`/api/sessions/${sessionId}/complete`)
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken);
+
+    expect(res.status).toBe(201);
+    expect(res.body.setCount).toBe(1);
+    expect(res.body.totalTonnageKg).toBe(500);
+    expect(res.body.perExercise[0].firstTime).toBe(true);
+    expect(res.body.perExercise[0].growthPercent).toBeNull();
+
+    expect(trainingSessions.get(sessionId)?.status).toBe(SessionStatus.completed);
+    expect(workouts.get('wo_pending_1')?.status).toBe(WorkoutStatus.attended);
+    expect(clientLocks.has('client_pool_1')).toBe(false);
+  });
+
+  it('POST complete on abandoned session returns SESSION_ABANDONED', async () => {
+    const { sessionId, csrfToken, cookiePairs } = await startActiveSession();
+    const session = trainingSessions.get(sessionId)!;
+    trainingSessions.set(sessionId, { ...session, status: SessionStatus.abandoned });
+
+    const res = await request(app.getHttpServer())
+      .post(`/api/sessions/${sessionId}/complete`)
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken);
+
+    expect(res.status).toBe(409);
+    expect(res.body.error?.code).toBe(ErrorCode.SESSION_ABANDONED);
   });
 });

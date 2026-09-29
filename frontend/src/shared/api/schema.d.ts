@@ -484,6 +484,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["SessionsController_complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions/{sessionId}/sets/{setId}": {
         parameters: {
             query?: never;
@@ -942,6 +958,22 @@ export interface components {
             plannedDurationMinutes: number;
             exercises: components["schemas"]["SessionExerciseDto"][];
             sets: components["schemas"]["SetDto"][];
+        };
+        SessionExerciseSummaryDto: {
+            exerciseId: string;
+            nameSnapshot: string;
+            setCount: number;
+            tonnageKg: number;
+            /** @description Tonnage growth vs last completed session for this exercise; null on first time */
+            growthPercent?: number | null;
+            /** @description True when client has no prior completed session for this exerciseId */
+            firstTime: boolean;
+        };
+        SessionSummaryDto: {
+            sessionId: string;
+            setCount: number;
+            totalTonnageKg: number;
+            perExercise: components["schemas"]["SessionExerciseSummaryDto"][];
         };
         UpsertSetRequestDto: {
             sessionExerciseId: string;
@@ -2711,6 +2743,60 @@ export interface operations {
                 };
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    SessionsController_complete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionSummaryDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -23,6 +23,8 @@ type SetDto = components['schemas']['SetDto'];
 
 type Props = {
   session: SessionDto;
+  onComplete?: () => void;
+  completeBusy?: boolean;
 };
 
 function formatTargets(exercise: SessionExercise): string {
@@ -72,7 +74,7 @@ function formatSetLine(set: SetDto): string {
   return parts.join(' ');
 }
 
-export function SessionWorkoutView({ session }: Props) {
+export function SessionWorkoutView({ session, onComplete, completeBusy }: Props) {
   const { label } = useSessionDurationCountdown({
     startedAtIso: session.startedAt,
     plannedDurationMinutes: session.plannedDurationMinutes,
@@ -444,6 +446,18 @@ export function SessionWorkoutView({ session }: Props) {
             );
           })}
         </ul>
+      ) : null}
+
+      {isActive && onComplete ? (
+        <button
+          type="button"
+          className="surface-session__complete"
+          data-testid="session-complete-button"
+          disabled={completeBusy || syncState === 'saving'}
+          onClick={() => onComplete()}
+        >
+          Завершить
+        </button>
       ) : null}
     </div>
   );

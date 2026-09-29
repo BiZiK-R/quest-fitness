@@ -397,6 +397,12 @@ describe('SessionWorkoutView', () => {
     expect(screen.getByTestId('session-rest-timer-label')).toHaveTextContent('1:30');
   });
 
+  it('shows Завершить when onComplete is provided for active session', () => {
+    const onComplete = vi.fn();
+    render(<SessionWorkoutView session={baseSession} onComplete={onComplete} />);
+    expect(screen.getByTestId('session-complete-button')).toHaveTextContent('Завершить');
+  });
+
   it('opens modifier sheet and shows label on set tape', async () => {
     vi.mocked(sessionSetApi.upsertSessionSet).mockResolvedValueOnce({
       data: savedSetPayload,

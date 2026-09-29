@@ -11,6 +11,7 @@ import { CatalogPage } from '@/pages/catalog/CatalogPage';
 import { TemplatesPage } from '@/pages/templates/TemplatesPage';
 import { MacrocyclesPage } from '@/pages/macrocycles/MacrocyclesPage';
 import { SessionPage } from '@/pages/session/SessionPage';
+import { SessionSummaryPage } from '@/pages/session/SessionSummaryPage';
 
 export const appRouter = createBrowserRouter([
   { path: '/', element: <RootRedirect /> },
@@ -26,6 +27,7 @@ export const appRouter = createBrowserRouter([
       { path: '/admin/trainers', element: <AdminTrainersPage /> },
       { path: '/clients/:id', element: <ClientCardPage /> },
       { path: '/sessions/:sessionId', element: <SessionPage /> },
+      { path: '/sessions/:sessionId/summary', element: <SessionSummaryPage /> },
       { path: '/cabinet/workouts', element: <CabinetWorkoutsPage /> },
     ],
   },
