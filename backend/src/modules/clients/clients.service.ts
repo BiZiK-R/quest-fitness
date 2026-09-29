@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import * as argon2 from 'argon2';
 import { ClientProfile } from '@prisma/client';
 import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-code.enum';
+import { ARGON2_OPTIONS } from '../../shared/password/argon2-options';
+import { generateTemporaryPassword } from '../../shared/password/generate-temporary-password';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { computeLockExpiresAt, isLockExpired } from '../clients-lock/client-lock.util';
 import { ClientsLockService } from '../clients-lock/clients-lock.service';
@@ -58,6 +61,30 @@ export class ClientsService {
     }
     const lockStatus = await this.clientsLockService.getLiveLockStatus(id);
     return this.toDto(row, lockStatus);
+  }
+
+  /**
+   * Admin-only: новый временный пароль для связанного User клиента (Story 2.6).
+   */
+  async resetClientPassword(clientId: string): Promise<{ temporaryPassword: string }> {
+    const profile = await this.prisma.clientProfile.findUnique({
+      where: { id: clientId },
+    });
+    if (!profile) {
+      throw new AppException(ErrorCode.NOT_FOUND, 'Client not found', 404);
+    }
+    if (!profile.userId) {
+      throw new AppException(ErrorCode.NOT_FOUND, 'Client has no linked user', 404);
+    }
+
+    const temporaryPassword = generateTemporaryPassword();
+    const passwordHash = await argon2.hash(temporaryPassword, ARGON2_OPTIONS);
+    await this.prisma.user.update({
+      where: { id: profile.userId },
+      data: { passwordHash },
+    });
+
+    return { temporaryPassword };
   }
 
   private toDto(

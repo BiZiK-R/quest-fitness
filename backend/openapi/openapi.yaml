@@ -165,6 +165,42 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a2
+  /api/clients/{id}/reset-password:
+    post:
+      operationId: ClientsController_resetPassword
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Client profile id
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetClientPasswordResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a2
   /api/clients/{id}:
     get:
       operationId: ClientsController_getById
@@ -430,6 +466,95 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a5
+  /api/admin/trainers:
+    post:
+      operationId: AdminTrainersController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTrainerRequestDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffUserDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: &a6
+        - admin
+    get:
+      operationId: AdminTrainersController_list
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffListResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a6
+  /api/admin/trainers/{id}/promote:
+    post:
+      operationId: AdminTrainersController_promote
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffUserDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a6
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -618,6 +743,15 @@ components:
             $ref: "#/components/schemas/ClientProfileDto"
       required:
         - clients
+    ResetClientPasswordResponseDto:
+      type: object
+      properties:
+        temporaryPassword:
+          type: string
+          description: Временный пароль — показывается один раз (Story 2.6)
+          minLength: 8
+      required:
+        - temporaryPassword
     ClientLockResponseDto:
       type: object
       properties:
@@ -700,3 +834,45 @@ components:
         - phone
         - login
         - password
+    CreateTrainerRequestDto:
+      type: object
+      properties:
+        login:
+          type: string
+          example: newtrainer
+          minLength: 3
+          maxLength: 32
+        password:
+          type: string
+          example: SecretPass1!
+          minLength: 8
+          format: password
+      required:
+        - login
+        - password
+    StaffUserDto:
+      type: object
+      properties:
+        id:
+          type: string
+        login:
+          type: string
+        role:
+          type: string
+          enum:
+            - ADMIN
+            - TRAINER
+            - CLIENT
+      required:
+        - id
+        - login
+        - role
+    StaffListResponseDto:
+      type: object
+      properties:
+        trainers:
+          type: array
+          items:
+            $ref: "#/components/schemas/StaffUserDto"
+      required:
+        - trainers

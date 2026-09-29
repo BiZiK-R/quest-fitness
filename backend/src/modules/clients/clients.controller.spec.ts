@@ -16,6 +16,7 @@ import {
 import { SESSION_COOKIE_NAME } from '../auth/auth.constants';
 
 const TRAINER_PASSWORD = 'TrainerPass1!';
+const ADMIN_PASSWORD = 'AdminPass1!';
 
 type StoredSession = {
   id: string;
@@ -59,13 +60,14 @@ async function loginAndGetSession(
 
 describe('ClientsController (HTTP)', () => {
   let app: INestApplication;
+  let adminUser: TestUserRecord;
   let trainerUser: TestUserRecord;
   let clientUser: TestUserRecord;
   const sessions = new Map<string, StoredSession>();
   const clientProfiles = new Map<string, StoredClientProfile>();
 
   const usersById = () =>
-    new Map([trainerUser, clientUser].map((u) => [u.id, u as User]));
+    new Map([adminUser, trainerUser, clientUser].map((u) => [u.id, u as User]));
 
   function buildUserLookup(users: TestUserRecord[]) {
     return {
@@ -106,6 +108,26 @@ describe('ClientsController (HTTP)', () => {
         }
         return null;
       },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: { passwordHash?: string };
+      }) => {
+        const list = [adminUser, trainerUser, clientUser];
+        const idx = list.findIndex((u) => u.id === where.id);
+        if (idx === -1) {
+          throw new Error('user not found');
+        }
+        if (data.passwordHash !== undefined) {
+          list[idx] = { ...list[idx], passwordHash: data.passwordHash };
+          if (list[idx].id === clientUser.id) {
+            clientUser = list[idx];
+          }
+        }
+        return { ...list[idx], updatedAt: new Date() };
+      },
     };
   }
 
@@ -115,7 +137,7 @@ describe('ClientsController (HTTP)', () => {
     $connect: async () => undefined,
     $disconnect: async () => undefined,
     get user() {
-      return buildUserLookup([trainerUser, clientUser]);
+      return buildUserLookup([adminUser, trainerUser, clientUser]);
     },
     authSession: {
       create: async ({
@@ -183,6 +205,21 @@ describe('ClientsController (HTTP)', () => {
       findUnique: async ({ where }: { where: { id: string } }) => {
         return clientProfiles.get(where.id) ?? null;
       },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: { userId?: string | null };
+      }) => {
+        const row = clientProfiles.get(where.id);
+        if (!row) {
+          throw new Error('client not found');
+        }
+        const updated = { ...row, ...data, updatedAt: new Date() };
+        clientProfiles.set(where.id, updated);
+        return updated;
+      },
     },
     clientLock: {
       findUnique: async () => null,
@@ -195,6 +232,17 @@ describe('ClientsController (HTTP)', () => {
       type: argon2.argon2id,
       memoryCost: 65536,
     });
+    const adminHash = await argon2.hash(ADMIN_PASSWORD, {
+      type: argon2.argon2id,
+      memoryCost: 65536,
+    });
+    adminUser = {
+      id: 'user_admin_1',
+      login: 'adminuser',
+      phoneE164: null,
+      passwordHash: adminHash,
+      role: UserRole.ADMIN,
+    };
     trainerUser = {
       id: 'user_trainer_1',
       login: 'traineruser',
@@ -377,5 +425,83 @@ describe('ClientsController (HTTP)', () => {
 
     expect(getRes.status).toBe(403);
     expect(getRes.body.error?.code).toBe(ErrorCode.FORBIDDEN_ROLE);
+  });
+
+  it('admin resets linked client password and returns temporary password once', async () => {
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      adminUser.login,
+      ADMIN_PASSWORD,
+    );
+
+    const createRes = await request(app.getHttpServer())
+      .post('/api/clients')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({ displayName: 'С паролем' });
+
+    const clientId = createRes.body.id as string;
+    clientProfiles.set(clientId, {
+      ...clientProfiles.get(clientId)!,
+      userId: clientUser.id,
+    });
+
+    const resetRes = await request(app.getHttpServer())
+      .post(`/api/clients/${clientId}/reset-password`)
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({});
+
+    expect(resetRes.status).toBe(200);
+    expect(resetRes.body.temporaryPassword).toBeTypeOf('string');
+    expect((resetRes.body.temporaryPassword as string).length).toBeGreaterThanOrEqual(8);
+
+    const loginRes = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ login: clientUser.login, password: resetRes.body.temporaryPassword });
+
+    expect(loginRes.status).toBe(200);
+  });
+
+  it('reset password returns NOT_FOUND when client has no linked user', async () => {
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      adminUser.login,
+      ADMIN_PASSWORD,
+    );
+
+    const createRes = await request(app.getHttpServer())
+      .post('/api/clients')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({ displayName: 'Без аккаунта' });
+
+    const clientId = createRes.body.id as string;
+
+    const resetRes = await request(app.getHttpServer())
+      .post(`/api/clients/${clientId}/reset-password`)
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({});
+
+    expect(resetRes.status).toBe(404);
+    expect(resetRes.body.error?.code).toBe(ErrorCode.NOT_FOUND);
+  });
+
+  it('trainer cannot reset client password (FORBIDDEN_ROLE)', async () => {
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const resetRes = await request(app.getHttpServer())
+      .post('/api/clients/client_any/reset-password')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({});
+
+    expect(resetRes.status).toBe(403);
+    expect(resetRes.body.error?.code).toBe(ErrorCode.FORBIDDEN_ROLE);
   });
 });

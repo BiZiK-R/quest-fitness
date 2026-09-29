@@ -6,7 +6,7 @@ import {
   useState,
   type FormEvent,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { TrainerMenuSheet } from '@/features/trainer-menu/ui/TrainerMenuSheet';
 import { ClientInvitePanel } from '@/features/invite-share/ui/ClientInvitePanel';
 import { apiClient, setCsrfToken } from '@/shared/api/client';
@@ -16,6 +16,7 @@ import { PageMeta } from '@/shared/ui/PageMeta';
 import { ClientRow } from '@/widgets/client-row/ui/ClientRow';
 
 type ClientProfile = components['schemas']['ClientProfileDto'];
+type MeResponse = components['schemas']['MeResponseDto'];
 
 const POOL_POLL_MS = 30_000;
 
@@ -31,6 +32,7 @@ export function PoolPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inviteClientId, setInviteClientId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [me, setMe] = useState<MeResponse | null>(null);
 
   const loadClients = useCallback(async () => {
     setLoadError(null);
@@ -45,6 +47,14 @@ export function PoolPage() {
   useEffect(() => {
     void loadClients();
   }, [loadClients]);
+
+  useEffect(() => {
+    void apiClient.GET('/api/auth/me').then(({ data }) => {
+      if (data) {
+        setMe(data);
+      }
+    });
+  }, []);
 
   useInterval(() => {
     void loadClients();
@@ -111,12 +121,19 @@ export function PoolPage() {
       <PageMeta title="Пул клиентов — Quest Fitness" robots="noindex,nofollow" />
       <div className="pool-page__toolbar">
         <h1>Пул клиентов</h1>
+        {me?.role === 'ADMIN' ? (
+          <Link to="/admin/trainers">Тренеры</Link>
+        ) : null}
         <button type="button" onClick={() => setMenuOpen(true)}>
           Меню
         </button>
       </div>
 
-      <TrainerMenuSheet open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <TrainerMenuSheet
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        showAdminTrainersLink={me?.role === 'ADMIN'}
+      />
 
       <label htmlFor="pool-search">Поиск клиента</label>
       <input

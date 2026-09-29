@@ -21,6 +21,8 @@ export function ClientCardPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lockActionError, setLockActionError] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [resetError, setResetError] = useState<string | null>(null);
   const [countdownNow, setCountdownNow] = useState(() => Date.now());
   const isHolderRef = useRef(false);
 
@@ -144,6 +146,24 @@ export function ClientCardPage() {
     }
   }
 
+  async function handleResetPassword() {
+    if (!id) {
+      return;
+    }
+    setResetError(null);
+    setTempPassword(null);
+    const { data, error } = await apiClient.POST('/api/clients/{id}/reset-password', {
+      params: { path: { id } },
+    });
+    if (error) {
+      setResetError(error.error?.code ?? 'RESET_FAILED');
+      return;
+    }
+    if (data?.temporaryPassword) {
+      setTempPassword(data.temporaryPassword);
+    }
+  }
+
   async function handleReleaseClient() {
     if (!id) {
       return;
@@ -179,6 +199,7 @@ export function ClientCardPage() {
 
       {loadError ? <p role="alert">{loadError}</p> : null}
       {lockActionError ? <p role="alert">{lockActionError}</p> : null}
+      {resetError ? <p role="alert">{resetError}</p> : null}
 
       {lockedByOther && liveLock ? (
         <div role="status" className="client-card__lock-banner">
@@ -229,6 +250,19 @@ export function ClientCardPage() {
               clientDisplayName={client.displayName}
               onClose={() => setInviteOpen(false)}
             />
+          ) : null}
+
+          {me?.role === 'ADMIN' && client.userId ? (
+            <>
+              <button type="button" onClick={() => void handleResetPassword()}>
+                Сбросить пароль
+              </button>
+              {tempPassword ? (
+                <p role="status">
+                  Временный пароль (показан один раз): <strong>{tempPassword}</strong>
+                </p>
+              ) : null}
+            </>
           ) : null}
         </>
       ) : null}

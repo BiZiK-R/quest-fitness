@@ -8,6 +8,7 @@ import { ClientsModule } from './modules/clients/clients.module';
 import { ClientsLockModule } from './modules/clients-lock/clients-lock.module';
 import { InvitesModule } from './modules/invites/invites.module';
 import { TrainerModule } from './modules/trainer/trainer.module';
+import { UsersModule } from './modules/users/users.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { PrismaModule } from './shared/prisma/prisma.module';
     ClientsModule,
     ClientsLockModule,
     InvitesModule,
+    UsersModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: CsrfGuard },

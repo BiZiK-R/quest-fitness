@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBody,
   ApiCreatedResponse,
@@ -18,6 +18,7 @@ import { ClientsService } from './clients.service';
 import { ClientListResponseDto } from './dto/client-list-response.dto';
 import { ClientProfileDto } from './dto/client-profile.dto';
 import { CreateClientRequestDto } from './dto/create-client-request.dto';
+import { ResetClientPasswordResponseDto } from './dto/reset-client-password-response.dto';
 
 @ApiTags('clients')
 @Controller('clients')
@@ -46,6 +47,22 @@ export class ClientsController {
   async list(): Promise<ClientListResponseDto> {
     const clients = await this.clientsService.listPool();
     return { clients };
+  }
+
+  @HttpCode(200)
+  @Post(':id/reset-password')
+  @RequireSession()
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiParam({ name: 'id', type: String, description: 'Client profile id' })
+  @ApiOkResponse({ type: ResetClientPasswordResponseDto })
+  @ApiUnauthorizedResponse({ type: () => ErrorEnvelopeDto })
+  @ApiForbiddenResponse({ type: () => ErrorEnvelopeDto })
+  @ApiNotFoundResponse({ type: () => ErrorEnvelopeDto })
+  async resetPassword(
+    @Param('id') id: string,
+  ): Promise<ResetClientPasswordResponseDto> {
+    return this.clientsService.resetClientPassword(id);
   }
 
   /**

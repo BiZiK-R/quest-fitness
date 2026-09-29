@@ -1,13 +1,19 @@
 import { useEffect, useId, useRef } from 'react';
+import { Link } from 'react-router-dom';
 
 export type TrainerMenuSheetProps = {
   open: boolean;
   onClose: () => void;
+  showAdminTrainersLink?: boolean;
 };
 
 const STUB_ITEMS = ['Каталог', 'Шаблоны', 'Макроциклы'] as const;
 
-export function TrainerMenuSheet({ open, onClose }: TrainerMenuSheetProps) {
+export function TrainerMenuSheet({
+  open,
+  onClose,
+  showAdminTrainersLink = false,
+}: TrainerMenuSheetProps) {
   const titleId = useId();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -41,6 +47,13 @@ export function TrainerMenuSheet({ open, onClose }: TrainerMenuSheetProps) {
         onClick={(event) => event.stopPropagation()}
       >
         <h2 id={titleId}>Меню тренера</h2>
+        {showAdminTrainersLink ? (
+          <p>
+            <Link to="/admin/trainers" onClick={onClose}>
+              Тренеры
+            </Link>
+          </p>
+        ) : null}
         <ul>
           {STUB_ITEMS.map((label) => (
             <li key={label}>
