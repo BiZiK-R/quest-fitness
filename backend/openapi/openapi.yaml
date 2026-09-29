@@ -111,6 +111,60 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags:
         - trainer
+  /api/clients:
+    post:
+      operationId: ClientsController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClientRequestDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientProfileDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: &a2
+        - clients
+    get:
+      operationId: ClientsController_list
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientListResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a2
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -226,3 +280,55 @@ components:
           example: true
       required:
         - ok
+    CreateClientRequestDto:
+      type: object
+      properties:
+        displayName:
+          type: string
+          example: Иван Пуловой
+          description: Отображаемое имя слота клиента в общем пуле
+          minLength: 1
+          maxLength: 128
+      required:
+        - displayName
+    ClientProfileDto:
+      type: object
+      properties:
+        id:
+          type: string
+          example: clxyz123
+        displayName:
+          type: string
+          example: Иван Пуловой
+        userId:
+          type: string
+          nullable: true
+          example: null
+          description: Привязка к User после регистрации по инвайту (Story 2.2)
+        deactivatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - displayName
+        - userId
+        - deactivatedAt
+        - createdAt
+        - updatedAt
+    ClientListResponseDto:
+      type: object
+      properties:
+        clients:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientProfileDto"
+      required:
+        - clients

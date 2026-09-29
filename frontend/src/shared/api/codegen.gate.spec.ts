@@ -42,6 +42,8 @@ describe('OpenAPI codegen gate', () => {
     expect(schema).toContain('"/api/auth/logout"');
     expect(schema).toContain('"/api/auth/me"');
     expect(schema).toContain('"/api/trainer/ping"');
+    expect(schema).toContain('"/api/clients"');
+    expect(schema).not.toMatch(/ownerTrainerId/);
   });
 
   it('codegen.mjs exits non-zero when contract path is missing', () => {

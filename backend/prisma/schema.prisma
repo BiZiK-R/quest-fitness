@@ -13,16 +13,29 @@ enum UserRole {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  login        String        @unique
-  phoneE164    String?       @unique @map("phone_e164")
-  passwordHash String        @map("password_hash")
-  role         UserRole
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
-  authSessions AuthSession[]
+  id            String         @id @default(cuid())
+  login         String         @unique
+  phoneE164     String?        @unique @map("phone_e164")
+  passwordHash  String         @map("password_hash")
+  role          UserRole
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  authSessions  AuthSession[]
+  clientProfile ClientProfile?
 
   @@map("users")
+}
+
+model ClientProfile {
+  id            String    @id @default(cuid())
+  displayName   String    @map("display_name")
+  userId        String?   @unique @map("user_id")
+  user          User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  deactivatedAt DateTime? @map("deactivated_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("client_profiles")
 }
 
 model AuthSession {
