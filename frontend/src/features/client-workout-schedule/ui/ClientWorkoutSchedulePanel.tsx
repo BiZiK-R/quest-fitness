@@ -5,6 +5,7 @@ import {
   WORKOUT_SKIP_CANCEL_CONFIRM_MESSAGE,
   WorkoutSkipCancelConfirmDialog,
 } from './WorkoutSkipCancelConfirmDialog';
+import { WorkoutRescheduleSheet } from './WorkoutRescheduleSheet';
 
 type Workout = components['schemas']['WorkoutDto'];
 type WorkoutTemplate = components['schemas']['WorkoutTemplateDto'];
@@ -52,6 +53,10 @@ export function ClientWorkoutSchedulePanel({
     workoutId: string;
     action: 'skip' | 'cancel';
   } | null>(null);
+  const [rescheduleTarget, setRescheduleTarget] = useState<{
+    workoutId: string;
+    scheduledAt: string;
+  } | null>(null);
 
   const stagesExhausted = Boolean(macroProgress?.stagesExhausted);
   const requireManualTemplate = stagesExhausted || !macroProgress?.currentStageId;
@@ -94,6 +99,41 @@ export function ClientWorkoutSchedulePanel({
       }
     });
   }, [requireManualTemplate]);
+
+  const openRescheduleForWorkout = useCallback(
+    (workoutId: string) => {
+      const workout = workouts.find((w) => w.id === workoutId);
+      if (!workout) {
+        return;
+      }
+      setConfirmTarget(null);
+      setRescheduleTarget({ workoutId, scheduledAt: workout.scheduledAt });
+    },
+    [workouts],
+  );
+
+  const executeReschedule = useCallback(
+    async (workoutId: string, scheduledAtIso: string) => {
+      setActionError(null);
+      setBusy(true);
+
+      const { data, error } = await apiClient.PATCH('/api/workouts/{id}', {
+        params: { path: { id: workoutId } },
+        body: { scheduledAt: scheduledAtIso },
+      });
+
+      setBusy(false);
+
+      if (error || !data) {
+        setActionError(error?.error?.code ?? 'WORKOUT_RESCHEDULE_FAILED');
+        return;
+      }
+
+      setRescheduleTarget(null);
+      await loadWorkouts();
+    },
+    [loadWorkouts],
+  );
 
   const executeSkipOrCancel = useCallback(
     async (workoutId: string, action: 'skip' | 'cancel') => {
@@ -198,6 +238,13 @@ export function ClientWorkoutSchedulePanel({
                 <button
                   type="button"
                   disabled={busy}
+                  onClick={() => openRescheduleForWorkout(w.id)}
+                >
+                  Перенести
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
                   onClick={() => setConfirmTarget({ workoutId: w.id, action: 'skip' })}
                 >
                   Пропустить
@@ -257,8 +304,17 @@ export function ClientWorkoutSchedulePanel({
         <WorkoutSkipCancelConfirmDialog
           action={confirmTarget.action}
           onConfirm={() => void executeSkipOrCancel(confirmTarget.workoutId, confirmTarget.action)}
-          onReschedule={() => setConfirmTarget(null)}
+          onReschedule={() => openRescheduleForWorkout(confirmTarget.workoutId)}
           onDismiss={() => setConfirmTarget(null)}
+        />
+      ) : null}
+
+      {rescheduleTarget ? (
+        <WorkoutRescheduleSheet
+          initialScheduledAtIso={rescheduleTarget.scheduledAt}
+          busy={busy}
+          onSubmit={(iso) => void executeReschedule(rescheduleTarget.workoutId, iso)}
+          onDismiss={() => setRescheduleTarget(null)}
         />
       ) : null}
     </section>

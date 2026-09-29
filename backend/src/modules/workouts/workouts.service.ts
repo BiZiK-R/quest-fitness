@@ -5,6 +5,7 @@ import { ErrorCode } from '../../common/errors/error-code.enum';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { ClientsLockService } from '../clients-lock/clients-lock.service';
 import { AssignWorkoutRequestDto } from './dto/assign-workout-request.dto';
+import { RescheduleWorkoutRequestDto } from './dto/reschedule-workout-request.dto';
 import { WorkoutDto } from './dto/workout.dto';
 import {
   assignWorkoutIdempotencyScope,
@@ -100,6 +101,46 @@ export class WorkoutsService {
       cancelWorkoutIdempotencyScope(workoutId),
       WorkoutStatus.cancelled,
     );
+  }
+
+  async reschedule(
+    workoutId: string,
+    actorUserId: string,
+    body: RescheduleWorkoutRequestDto,
+  ): Promise<WorkoutDto> {
+    const existing = await this.prisma.workout.findUnique({
+      where: { id: workoutId },
+      include: workoutWithTemplateInclude,
+    });
+    if (!existing) {
+      throw new AppException(ErrorCode.NOT_FOUND, 'Workout not found', 404);
+    }
+
+    await this.clientsLockService.assertActorHoldsLiveLock(
+      existing.clientProfileId,
+      actorUserId,
+    );
+
+    if (existing.status !== WorkoutStatus.pending) {
+      throw new AppException(
+        ErrorCode.WORKOUT_STATUS_CONFLICT,
+        'Workout status transition not allowed',
+        409,
+      );
+    }
+
+    const scheduledAt = new Date(body.scheduledAt);
+    if (Number.isNaN(scheduledAt.getTime())) {
+      throw new AppException(ErrorCode.VALIDATION_FAILED, 'Invalid scheduledAt', 400);
+    }
+
+    const row = await this.prisma.workout.update({
+      where: { id: workoutId },
+      data: { scheduledAt },
+      include: workoutWithTemplateInclude,
+    });
+
+    return toWorkoutDto(row);
   }
 
   async listForClient(clientId: string): Promise<WorkoutDto[]> {

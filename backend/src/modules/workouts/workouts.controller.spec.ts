@@ -325,7 +325,7 @@ describe('WorkoutsController (HTTP)', () => {
         include,
       }: {
         where: { id: string };
-        data: { status?: WorkoutStatus };
+        data: { status?: WorkoutStatus; scheduledAt?: Date };
         include?: { template?: { select: { name: true } } };
       }) => {
         const row = workouts.get(where.id);
@@ -743,6 +743,65 @@ describe('WorkoutsController (HTTP)', () => {
 
     expect(res.status).toBe(403);
     expect(res.body.error?.code).toBe(ErrorCode.FORBIDDEN_ROLE);
+  });
+
+  it('PATCH reschedule pending workout updates scheduledAt and keeps pending', async () => {
+    seedPendingWorkout('wo_reschedule_1');
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const res = await request(app.getHttpServer())
+      .patch('/api/workouts/wo_reschedule_1')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({ scheduledAt: '2026-11-01T14:30:00.000Z' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('pending');
+    expect(res.body.scheduledAt).toBe('2026-11-01T14:30:00.000Z');
+    expect(workouts.get('wo_reschedule_1')?.status).toBe(WorkoutStatus.pending);
+    expect(macroProgress.get('cmp_1')?.currentStageId).toBe('stage_1');
+  });
+
+  it('PATCH reschedule without lock returns LOCK_REQUIRED', async () => {
+    seedPendingWorkout('wo_reschedule_no_lock');
+    clientLocks.clear();
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const res = await request(app.getHttpServer())
+      .patch('/api/workouts/wo_reschedule_no_lock')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({ scheduledAt: '2026-11-02T10:00:00.000Z' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error?.code).toBe(ErrorCode.LOCK_REQUIRED);
+  });
+
+  it('PATCH reschedule non-pending returns WORKOUT_STATUS_CONFLICT', async () => {
+    seedPendingWorkout('wo_reschedule_conflict');
+    workouts.get('wo_reschedule_conflict')!.status = WorkoutStatus.skipped;
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+
+    const res = await request(app.getHttpServer())
+      .patch('/api/workouts/wo_reschedule_conflict')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({ scheduledAt: '2026-11-03T10:00:00.000Z' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error?.code).toBe(ErrorCode.WORKOUT_STATUS_CONFLICT);
   });
 
   it('client role cannot assign (FORBIDDEN_ROLE)', async () => {
