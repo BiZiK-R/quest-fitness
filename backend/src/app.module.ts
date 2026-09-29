@@ -9,6 +9,7 @@ import { ClientsLockModule } from './modules/clients-lock/clients-lock.module';
 import { InvitesModule } from './modules/invites/invites.module';
 import { TrainerModule } from './modules/trainer/trainer.module';
 import { UsersModule } from './modules/users/users.module';
+import { ExercisesModule } from './modules/exercises/exercises.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { PrismaModule } from './shared/prisma/prisma.module';
     ClientsLockModule,
     InvitesModule,
     UsersModule,
+    ExercisesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: CsrfGuard },

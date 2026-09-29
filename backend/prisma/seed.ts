@@ -4,23 +4,15 @@ import {
   hashAdminPassword,
   readAdminSeedCredentials,
 } from './seed-credentials';
+import { seedMuscleGroups } from './seed-muscle-groups';
 
 /**
- * Создаёт администратора из SEED_ADMIN_LOGIN / SEED_ADMIN_PASSWORD.
- * Без обеих переменных seed пропускает создание (без дефолтного пароля в репо).
+ * Seed: мышечные группы всегда (при DATABASE_URL); админ — только из env (без дефолтного пароля).
  */
 async function main(): Promise<void> {
-  const credentials = readAdminSeedCredentials();
-  if (!credentials) {
-    console.warn(
-      '[seed] Пропуск администратора: задайте SEED_ADMIN_LOGIN и SEED_ADMIN_PASSWORD в окружении.',
-    );
-    return;
-  }
-
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
-    throw new Error('[seed] DATABASE_URL is required when seeding admin user');
+    throw new Error('[seed] DATABASE_URL is required');
   }
 
   const prisma = new PrismaClient({
@@ -28,6 +20,16 @@ async function main(): Promise<void> {
   });
 
   try {
+    await seedMuscleGroups(prisma);
+
+    const credentials = readAdminSeedCredentials();
+    if (!credentials) {
+      console.warn(
+        '[seed] Пропуск администратора: задайте SEED_ADMIN_LOGIN и SEED_ADMIN_PASSWORD в окружении.',
+      );
+      return;
+    }
+
     const passwordHash = await hashAdminPassword(credentials.password);
 
     await prisma.user.upsert({

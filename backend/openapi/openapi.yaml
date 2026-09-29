@@ -555,6 +555,173 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a6
+  /api/exercises:
+    get:
+      operationId: ExercisesController_list
+      parameters:
+        - name: includeArchived
+          required: false
+          in: query
+          description: Include soft-deleted exercises (admin/trainer catalog)
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExerciseListResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: &a7
+        - exercises
+    post:
+      operationId: ExercisesController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExerciseRequestDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExerciseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a7
+  /api/exercises/{id}:
+    patch:
+      operationId: ExercisesController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateExerciseRequestDto"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExerciseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a7
+  /api/exercises/{id}/archive:
+    post:
+      operationId: ExercisesController_archive
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExerciseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a7
+  /api/muscle-groups:
+    get:
+      operationId: MuscleGroupsController_list
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MuscleGroupListResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags:
+        - exercises
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -876,3 +1043,92 @@ components:
             $ref: "#/components/schemas/StaffUserDto"
       required:
         - trainers
+    ExerciseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          example: Жим лёжа
+        archivedAt:
+          type: string
+          format: date-time
+          nullable: true
+        missingMuscleGroupsWarning:
+          type: boolean
+          description: true, если у упражнения нет ни основной, ни дополнительных мышечных
+            групп
+        primaryMuscleGroupId:
+          type: string
+          nullable: true
+        secondaryMuscleGroupIds:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - missingMuscleGroupsWarning
+        - secondaryMuscleGroupIds
+    ExerciseListResponseDto:
+      type: object
+      properties:
+        exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExerciseDto"
+      required:
+        - exercises
+    CreateExerciseRequestDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        primaryMuscleGroupId:
+          type: string
+        secondaryMuscleGroupIds:
+          type: array
+          items:
+            type: string
+      required:
+        - name
+    UpdateExerciseRequestDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        primaryMuscleGroupId:
+          type: string
+          nullable: true
+        secondaryMuscleGroupIds:
+          type: array
+          items:
+            type: string
+    MuscleGroupDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          example: Грудь
+        sortOrder:
+          type: number
+          nullable: true
+      required:
+        - id
+        - name
+    MuscleGroupListResponseDto:
+      type: object
+      properties:
+        muscleGroups:
+          type: array
+          items:
+            $ref: "#/components/schemas/MuscleGroupDto"
+      required:
+        - muscleGroups

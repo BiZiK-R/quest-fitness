@@ -7,7 +7,7 @@ export type TrainerMenuSheetProps = {
   showAdminTrainersLink?: boolean;
 };
 
-const STUB_ITEMS = ['Каталог', 'Шаблоны', 'Макроциклы'] as const;
+const STUB_ITEMS = ['Шаблоны', 'Макроциклы'] as const;
 
 export function TrainerMenuSheet({
   open,
@@ -55,6 +55,11 @@ export function TrainerMenuSheet({
           </p>
         ) : null}
         <ul>
+          <li>
+            <Link to="/catalog" onClick={onClose}>
+              Каталог
+            </Link>
+          </li>
           {STUB_ITEMS.map((label) => (
             <li key={label}>
               <span aria-disabled="true">{label} — скоро</span>
