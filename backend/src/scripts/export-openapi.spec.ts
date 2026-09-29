@@ -59,6 +59,8 @@ describe('OpenAPI export contract', () => {
     expect(document.paths).toHaveProperty(
       '/api/clients/{clientId}/invites/active',
     );
+    expect(document.paths).toHaveProperty('/api/invites/{token}/register');
+    expect(document.paths).toHaveProperty('/api/invites/{token}');
     const loginPost = document.paths?.['/api/auth/login']?.post;
     expect(loginPost?.requestBody).toBeDefined();
   });

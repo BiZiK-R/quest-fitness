@@ -236,6 +236,59 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a3
+  /api/invites/{token}:
+    get:
+      operationId: PublicInvitesController_preview
+      parameters:
+        - name: token
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitePreviewDto"
+      tags: &a4
+        - invites
+  /api/invites/{token}/register:
+    post:
+      operationId: PublicInvitesController_register
+      parameters:
+        - name: token
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteRegisterRequestDto"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponseDto"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "409":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a4
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -443,3 +496,34 @@ components:
         - hasActive
         - expiresAt
         - expiresAtLabel
+    InvitePreviewDto:
+      type: object
+      properties:
+        valid:
+          type: boolean
+      required:
+        - valid
+    InviteRegisterRequestDto:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Иван Петров
+        phone:
+          type: string
+          example: "+79161234567"
+          description: Телефон (E.164 или RU-формат)
+        login:
+          type: string
+          example: ivan_client
+          minLength: 3
+          maxLength: 32
+        password:
+          type: string
+          minLength: 8
+          format: password
+      required:
+        - name
+        - phone
+        - login
+        - password
