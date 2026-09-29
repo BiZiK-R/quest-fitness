@@ -68,6 +68,11 @@ export function TrainerMenuSheet({
               Макроциклы
             </Link>
           </li>
+          <li>
+            <Link to="/admin/panel" onClick={onClose}>
+              Админ-панель
+            </Link>
+          </li>
         </ul>
         <button ref={closeButtonRef} type="button" onClick={onClose}>
           Закрыть

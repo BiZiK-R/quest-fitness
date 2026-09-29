@@ -1,0 +1,12 @@
+.cabinet-soon-stub h1 {
+  margin: 0 0 var(--spacing-3);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 30px;
+  color: var(--color-ink-primary);
+}
+
+.cabinet-soon-stub__line {
+  margin: 0;
+  color: var(--color-ink-muted);
+}

@@ -1,8 +1,15 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ShellLayout } from '@/app/layout/ShellLayout';
+import { CabinetLayout } from '@/app/layout/CabinetLayout';
 import { RootRedirect } from '@/pages/home/RootRedirect';
 import { LoginPage } from '@/pages/login/LoginPage';
 import { CabinetWorkoutsPage } from '@/pages/cabinet/CabinetWorkoutsPage';
+import { CabinetAnalyticsSoonPage } from '@/pages/cabinet/CabinetAnalyticsSoonPage';
+import { CabinetNutritionSoonPage } from '@/pages/cabinet/CabinetNutritionSoonPage';
+import { CabinetMeasurementsSoonPage } from '@/pages/cabinet/CabinetMeasurementsSoonPage';
+import { CabinetAchievementsSoonPage } from '@/pages/cabinet/CabinetAchievementsSoonPage';
+import { CabinetMembershipSoonPage } from '@/pages/cabinet/CabinetMembershipSoonPage';
+import { AdminPanelSoonPage } from '@/pages/admin-panel/AdminPanelSoonPage';
 import { PoolPage } from '@/pages/pool/PoolPage';
 import { ClientCardPage } from '@/pages/client-card/ClientCardPage';
 import { InviteRegisterPage } from '@/pages/invite/InviteRegisterPage';
@@ -29,14 +36,27 @@ export const appRouter = createBrowserRouter([
       { path: '/templates', element: <TemplatesPage /> },
       { path: '/macrocycles', element: <MacrocyclesPage /> },
       { path: '/admin/trainers', element: <AdminTrainersPage /> },
+      { path: '/admin/panel', element: <AdminPanelSoonPage /> },
       { path: '/clients/:id', element: <ClientCardPage /> },
       { path: '/clients/:clientId/diary', element: <TrainerClientDiaryPage /> },
       { path: '/clients/:clientId/diary/:sessionId', element: <TrainerClientDiaryDetailPage /> },
       { path: '/sessions/:sessionId', element: <SessionPage /> },
       { path: '/sessions/:sessionId/summary', element: <SessionSummaryPage /> },
-      { path: '/cabinet/workouts', element: <CabinetWorkoutsPage /> },
-      { path: '/cabinet/diary', element: <CabinetDiaryPage /> },
-      { path: '/cabinet/diary/:sessionId', element: <CabinetDiaryDetailPage /> },
+      {
+        path: '/cabinet',
+        element: <CabinetLayout />,
+        children: [
+          { index: true, element: <Navigate to="workouts" replace /> },
+          { path: 'workouts', element: <CabinetWorkoutsPage /> },
+          { path: 'analytics', element: <CabinetAnalyticsSoonPage /> },
+          { path: 'nutrition', element: <CabinetNutritionSoonPage /> },
+          { path: 'measurements', element: <CabinetMeasurementsSoonPage /> },
+          { path: 'achievements', element: <CabinetAchievementsSoonPage /> },
+          { path: 'membership', element: <CabinetMembershipSoonPage /> },
+          { path: 'diary', element: <CabinetDiaryPage /> },
+          { path: 'diary/:sessionId', element: <CabinetDiaryDetailPage /> },
+        ],
+      },
     ],
   },
 ]);
