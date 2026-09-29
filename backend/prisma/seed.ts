@@ -5,6 +5,7 @@ import {
   readAdminSeedCredentials,
 } from './seed-credentials';
 import { seedMuscleGroups } from './seed-muscle-groups';
+import { seedSetModifiers } from './seed-set-modifiers';
 
 /**
  * Seed: мышечные группы всегда (при DATABASE_URL); админ — только из env (без дефолтного пароля).
@@ -21,6 +22,7 @@ async function main(): Promise<void> {
 
   try {
     await seedMuscleGroups(prisma);
+    await seedSetModifiers(prisma);
 
     const credentials = readAdminSeedCredentials();
     if (!credentials) {

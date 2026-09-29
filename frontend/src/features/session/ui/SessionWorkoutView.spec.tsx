@@ -1,12 +1,18 @@
 import React from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as modifiersApi from '../api/modifiers-api';
 import * as sessionSetApi from '../api/session-set-api';
 import { SessionWorkoutView } from './SessionWorkoutView';
 
 vi.mock('../api/session-set-api', () => ({
   upsertSessionSet: vi.fn(),
   deleteSessionSet: vi.fn(),
+}));
+
+vi.mock('../api/modifiers-api', () => ({
+  listModifiers: vi.fn(),
+  createModifier: vi.fn(),
 }));
 
 const baseSession = {
@@ -27,6 +33,7 @@ const baseSession = {
     weightKg: number | null;
     reps: number | null;
     rpe: number | null;
+    modifier: { id: string; name: string; colorToken: string } | null;
     createdAt: string;
     updatedAt: string;
   }>,
@@ -54,6 +61,7 @@ const savedSetPayload = {
   weightKg: 60,
   reps: 10,
   rpe: 0,
+  modifier: null,
   createdAt: '2026-10-01T10:01:00.000Z',
   updatedAt: '2026-10-01T10:01:00.000Z',
 };
@@ -82,6 +90,21 @@ describe('SessionWorkoutView', () => {
   beforeEach(() => {
     vi.mocked(sessionSetApi.upsertSessionSet).mockReset();
     vi.mocked(sessionSetApi.deleteSessionSet).mockReset();
+    vi.mocked(modifiersApi.listModifiers).mockReset();
+    vi.mocked(modifiersApi.listModifiers).mockResolvedValue({
+      data: [
+        {
+          id: 'mod_cat_1',
+          name: 'Дроп',
+          colorToken: 'mod-teal',
+          isPreset: false,
+          archivedAt: null,
+          createdAt: '2026-10-01T10:00:00.000Z',
+          updatedAt: '2026-10-01T10:00:00.000Z',
+        },
+      ],
+      error: null,
+    });
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('550e8400-e29b-41d4-a716-446655440099');
   });
 
@@ -374,6 +397,35 @@ describe('SessionWorkoutView', () => {
     expect(screen.getByTestId('session-rest-timer-label')).toHaveTextContent('1:30');
   });
 
+  it('opens modifier sheet and shows label on set tape', async () => {
+    vi.mocked(sessionSetApi.upsertSessionSet).mockResolvedValueOnce({
+      data: savedSetPayload,
+      error: undefined,
+    });
+
+    render(<SessionWorkoutView session={baseSession} />);
+    await confirmSetAndWait();
+
+    vi.mocked(sessionSetApi.upsertSessionSet).mockResolvedValueOnce({
+      data: {
+        ...savedSetPayload,
+        modifier: { id: 'mod_cat_1', name: 'Дроп', colorToken: 'mod-teal' },
+      },
+      error: undefined,
+    });
+
+    fireEvent.click(screen.getByTestId(`session-set-modifier-open-${savedSetPayload.id}`));
+    expect(screen.getByTestId('set-modifier-sheet')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('set-modifier-pick-mod_cat_1'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId(`session-set-modifier-${savedSetPayload.id}`)).toHaveTextContent(
+        'Дроп',
+      );
+    });
+  });
+
   it('Enter inside logger confirms set', async () => {
     vi.mocked(sessionSetApi.upsertSessionSet).mockResolvedValue({
       data: {
@@ -384,6 +436,7 @@ describe('SessionWorkoutView', () => {
         weightKg: 60,
         reps: 10,
         rpe: 0,
+        modifier: null,
         createdAt: '2026-10-01T10:01:00.000Z',
         updatedAt: '2026-10-01T10:01:00.000Z',
       },

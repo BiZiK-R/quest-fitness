@@ -1498,6 +1498,95 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags:
         - sessions
+  /api/modifiers:
+    get:
+      operationId: ModifiersController_list
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetModifierListResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: &a14
+        - modifiers
+    post:
+      operationId: ModifiersController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSetModifierRequestDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetModifierDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a14
+  /api/modifiers/{id}/archive:
+    post:
+      operationId: ModifiersController_archive
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetModifierDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a14
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -2351,6 +2440,19 @@ components:
         - exerciseId
         - sortOrder
         - nameSnapshot
+    SetModifierSummaryDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        colorToken:
+          type: string
+      required:
+        - id
+        - name
+        - colorToken
     SetDto:
       type: object
       properties:
@@ -2373,6 +2475,11 @@ components:
         rpe:
           type: number
           nullable: true
+        modifier:
+          nullable: true
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/SetModifierSummaryDto"
         createdAt:
           type: string
           format: date-time
@@ -2450,5 +2557,58 @@ components:
         rpe:
           type: number
           nullable: true
+        modifierId:
+          type: string
+          nullable: true
+          description: Attach palette modifier; null clears
       required:
         - sessionExerciseId
+    SetModifierDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        colorToken:
+          type: string
+          description: Palette token id (e.g. mod-amber)
+        isPreset:
+          type: boolean
+        archivedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - colorToken
+        - isPreset
+        - createdAt
+        - updatedAt
+    SetModifierListResponseDto:
+      type: object
+      properties:
+        modifiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/SetModifierDto"
+      required:
+        - modifiers
+    CreateSetModifierRequestDto:
+      type: object
+      properties:
+        name:
+          type: string
+        colorToken:
+          type: string
+          description: Palette token id
+      required:
+        - name
+        - colorToken

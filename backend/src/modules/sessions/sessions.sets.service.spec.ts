@@ -32,6 +32,13 @@ type StoredSessionExercise = {
   notes: string | null;
 };
 
+type StoredSetModifier = {
+  id: string;
+  name: string;
+  colorToken: string;
+  archivedAt: Date | null;
+};
+
 type StoredSet = {
   id: string;
   sessionId: string;
@@ -40,6 +47,8 @@ type StoredSet = {
   weightKg: Prisma.Decimal | null;
   reps: number | null;
   rpe: Prisma.Decimal | null;
+  modifierId: string | null;
+  modifier?: StoredSetModifier | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -49,6 +58,7 @@ describe('SessionsService sets upsert', () => {
   const sessions = new Map<string, StoredSession>();
   const sessionExercises = new Map<string, StoredSessionExercise>();
   const sets = new Map<string, StoredSet>();
+  const setModifiers = new Map<string, StoredSetModifier>();
 
   const txMock = {
     set: {
@@ -75,9 +85,11 @@ describe('SessionsService sets upsert', () => {
           weightKg?: Prisma.Decimal | null;
           reps?: number | null;
           rpe?: Prisma.Decimal | null;
+          modifierId?: string | null;
         };
       }) => {
         const now = new Date();
+        const modifierId = data.modifierId ?? null;
         const row: StoredSet = {
           id: data.id,
           sessionId: data.sessionId,
@@ -86,6 +98,9 @@ describe('SessionsService sets upsert', () => {
           weightKg: data.weightKg ?? null,
           reps: data.reps ?? null,
           rpe: data.rpe ?? null,
+          modifierId,
+          modifier:
+            modifierId != null ? setModifiers.get(modifierId) ?? null : null,
           createdAt: now,
           updatedAt: now,
         };
@@ -98,14 +113,27 @@ describe('SessionsService sets upsert', () => {
       }: {
         where: { id: string };
         data: Partial<
-          Pick<StoredSet, 'sessionExerciseId' | 'weightKg' | 'reps' | 'rpe' | 'updatedAt'>
+          Pick<
+            StoredSet,
+            'sessionExerciseId' | 'weightKg' | 'reps' | 'rpe' | 'modifierId' | 'updatedAt'
+          >
         >;
       }) => {
         const row = sets.get(where.id);
         if (!row) {
           throw new Error('missing set');
         }
-        const updated = { ...row, ...data, updatedAt: data.updatedAt ?? new Date() };
+        const updated = {
+          ...row,
+          ...data,
+          modifier:
+            data.modifierId !== undefined
+              ? data.modifierId != null
+                ? setModifiers.get(data.modifierId) ?? null
+                : null
+              : row.modifier,
+          updatedAt: data.updatedAt ?? new Date(),
+        };
         sets.set(where.id, updated);
         return updated;
       },
@@ -159,6 +187,10 @@ describe('SessionsService sets upsert', () => {
       },
     },
     set: txMock.set,
+    setModifier: {
+      findUnique: async ({ where }: { where: { id: string } }) =>
+        setModifiers.get(where.id) ?? null,
+    },
     $transaction: async <T>(fn: (tx: typeof txMock) => Promise<T>): Promise<T> => fn(txMock),
   };
 
@@ -166,6 +198,13 @@ describe('SessionsService sets upsert', () => {
     sessions.clear();
     sessionExercises.clear();
     sets.clear();
+    setModifiers.clear();
+    setModifiers.set('mod_active', {
+      id: 'mod_active',
+      name: 'Дроп',
+      colorToken: 'mod-teal',
+      archivedAt: null,
+    });
 
     const now = new Date();
     sessions.set('sess_1', {
@@ -269,5 +308,38 @@ describe('SessionsService sets upsert', () => {
         reps: 5,
       }),
     ).rejects.toMatchObject({ code: ErrorCode.WORKOUT_STATUS_CONFLICT });
+  });
+
+  it('attaches modifier on upsert and returns summary on SetDto', async () => {
+    const setId = '550e8400-e29b-41d4-a716-446655440010';
+    const dto = await service.upsertSet('sess_1', setId, 'user_trainer_1', {
+      sessionExerciseId: 'se_1',
+      reps: 8,
+      modifierId: 'mod_active',
+    });
+
+    expect(dto.modifier).toEqual({
+      id: 'mod_active',
+      name: 'Дроп',
+      colorToken: 'mod-teal',
+    });
+    expect(sets.get(setId)?.modifierId).toBe('mod_active');
+  });
+
+  it('rejects archived modifier on attach', async () => {
+    setModifiers.set('mod_archived', {
+      id: 'mod_archived',
+      name: 'Old',
+      colorToken: 'mod-sky',
+      archivedAt: new Date(),
+    });
+
+    await expect(
+      service.upsertSet('sess_1', '550e8400-e29b-41d4-a716-446655440011', 'user_trainer_1', {
+        sessionExerciseId: 'se_1',
+        reps: 5,
+        modifierId: 'mod_archived',
+      }),
+    ).rejects.toMatchObject({ code: ErrorCode.VALIDATION_FAILED });
   });
 });

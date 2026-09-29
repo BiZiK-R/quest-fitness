@@ -24,4 +24,9 @@ export class UpsertSetRequestDto {
   @IsNumber()
   @Min(0)
   rpe?: number | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, description: 'Attach palette modifier; null clears' })
+  @IsOptional()
+  @IsString()
+  modifierId?: string | null;
 }

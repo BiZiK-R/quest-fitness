@@ -26,6 +26,7 @@ model User {
   clientLocksHeld    ClientLock[]
   workoutsCreated    Workout[]
   sessionsAuthored   Session[]      @relation("SessionAuthor")
+  setModifiersCreated SetModifier[] @relation("SetModifierAuthor")
 
   @@map("users")
 }
@@ -233,6 +234,21 @@ model SessionExercise {
   @@map("session_exercises")
 }
 
+model SetModifier {
+  id              String    @id @default(cuid())
+  name            String
+  colorToken      String    @map("color_token")
+  isPreset        Boolean   @default(false) @map("is_preset")
+  archivedAt      DateTime? @map("archived_at")
+  createdByUserId String?   @map("created_by_user_id")
+  createdByUser   User?     @relation("SetModifierAuthor", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  sets            Set[]
+
+  @@map("set_modifiers")
+}
+
 model Set {
   id                  String          @id
   sessionId           String          @map("session_id")
@@ -243,6 +259,8 @@ model Set {
   weightKg            Decimal?        @map("weight_kg") @db.Decimal(10, 2)
   reps                Int?
   rpe                 Decimal?        @db.Decimal(3, 1)
+  modifierId          String?         @map("modifier_id")
+  modifier            SetModifier?    @relation(fields: [modifierId], references: [id], onDelete: Restrict)
   createdAt           DateTime        @default(now()) @map("created_at")
   updatedAt           DateTime        @updatedAt @map("updated_at")
 

@@ -15,6 +15,7 @@ import { MacrocyclesModule } from './modules/macrocycles/macrocycles.module';
 import { ClientMacroProgressModule } from './modules/client-macro-progress/client-macro-progress.module';
 import { WorkoutsModule } from './modules/workouts/workouts.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
+import { ModifiersModule } from './modules/modifiers/modifiers.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 
 @Module({
@@ -33,6 +34,7 @@ import { PrismaModule } from './shared/prisma/prisma.module';
     ClientMacroProgressModule,
     WorkoutsModule,
     SessionsModule,
+    ModifiersModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: CsrfGuard },

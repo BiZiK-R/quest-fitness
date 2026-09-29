@@ -81,6 +81,35 @@
   margin-bottom: 0.5rem;
 }
 
+.surface-session__set-modifier {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-right: 0.5rem;
+}
+
+.surface-session__set-modifier-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.surface-session__set-modifier-label {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.surface-session__set-modifier-open {
+  min-width: var(--spacing-touch-min);
+  min-height: var(--spacing-touch-min);
+  border: 1px solid var(--color-border-session);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-ink-on-session-muted);
+  cursor: pointer;
+}
+
 .surface-session__set-row {
   flex: 1;
   text-align: left;

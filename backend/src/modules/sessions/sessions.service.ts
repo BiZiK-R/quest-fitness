@@ -10,9 +10,16 @@ import { UpsertSetRequestDto } from './dto/upsert-set-request.dto';
 import { DEFAULT_SESSION_DURATION_MINUTES } from './sessions.constants';
 import { toSessionDto, toSetDto } from './session.mapper';
 
+const setWithModifierInclude = {
+  modifier: true,
+} as const;
+
 const sessionWithExercisesInclude = {
   exercises: true,
-  sets: { orderBy: { sequenceIndex: 'asc' as const } },
+  sets: {
+    orderBy: { sequenceIndex: 'asc' as const },
+    include: setWithModifierInclude,
+  },
 } as const;
 
 @Injectable()
@@ -149,6 +156,10 @@ export class SessionsService {
     const weightKg = body.weightKg != null ? new Prisma.Decimal(body.weightKg) : null;
     const rpe = body.rpe != null ? new Prisma.Decimal(body.rpe) : null;
     const reps = body.reps ?? null;
+    const modifierId =
+      body.modifierId !== undefined
+        ? await this.resolveModifierIdForAttach(body.modifierId)
+        : undefined;
 
     const row = await this.prisma.$transaction(async (tx) => {
       const existing = await tx.set.findUnique({ where: { id: setId } });
@@ -163,7 +174,9 @@ export class SessionsService {
             weightKg,
             reps,
             rpe,
+            ...(modifierId !== undefined ? { modifierId } : {}),
           },
+          include: setWithModifierInclude,
         });
       }
 
@@ -182,7 +195,9 @@ export class SessionsService {
           weightKg,
           reps,
           rpe,
+          modifierId: modifierId ?? null,
         },
+        include: setWithModifierInclude,
       });
     });
 
@@ -209,6 +224,19 @@ export class SessionsService {
     }
     await this.clientsLockService.assertActorHoldsLiveLock(session.clientProfileId, actorUserId);
     return session;
+  }
+
+  private async resolveModifierIdForAttach(
+    modifierId: string | null,
+  ): Promise<string | null> {
+    if (modifierId === null) {
+      return null;
+    }
+    const row = await this.prisma.setModifier.findUnique({ where: { id: modifierId } });
+    if (!row || row.archivedAt) {
+      throw new AppException(ErrorCode.VALIDATION_FAILED, 'Set modifier not available', 400);
+    }
+    return row.id;
   }
 
   private assertSessionActiveForMutation(session: Session): void {

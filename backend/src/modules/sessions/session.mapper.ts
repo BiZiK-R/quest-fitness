@@ -1,6 +1,7 @@
-import { Prisma, Session, SessionExercise, Set } from '@prisma/client';
+import { Prisma, Session, SessionExercise, Set, SetModifier } from '@prisma/client';
 import { SessionExerciseDto } from './dto/session-exercise.dto';
 import { SessionDto } from './dto/session.dto';
+import { SetModifierSummaryDto } from './dto/set-modifier-summary.dto';
 import { SetDto } from './dto/set.dto';
 
 type SessionExerciseRow = SessionExercise & {
@@ -10,7 +11,19 @@ type SessionExerciseRow = SessionExercise & {
 type SetRow = Set & {
   weightKg: Prisma.Decimal | null;
   rpe: Prisma.Decimal | null;
+  modifier?: SetModifier | null;
 };
+
+function toSetModifierSummary(row: SetModifier | null | undefined): SetModifierSummaryDto | null {
+  if (!row) {
+    return null;
+  }
+  return {
+    id: row.id,
+    name: row.name,
+    colorToken: row.colorToken,
+  };
+}
 
 type SessionRow = Session & {
   exercises?: SessionExerciseRow[];
@@ -33,6 +46,7 @@ export function toSetDto(row: SetRow): SetDto {
     weightKg: decimalToNumber(row.weightKg),
     reps: row.reps,
     rpe: decimalToNumber(row.rpe),
+    modifier: toSetModifierSummary(row.modifier),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

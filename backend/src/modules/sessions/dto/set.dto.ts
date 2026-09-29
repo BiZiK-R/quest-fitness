@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { SetModifierSummaryDto } from './set-modifier-summary.dto';
 
 export class SetDto {
   @ApiProperty({ type: String, description: 'Client-generated set id (UUID)' })
@@ -21,6 +22,9 @@ export class SetDto {
 
   @ApiPropertyOptional({ type: Number, nullable: true })
   rpe!: number | null;
+
+  @ApiPropertyOptional({ type: () => SetModifierSummaryDto, nullable: true })
+  modifier!: SetModifierSummaryDto | null;
 
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt!: string;
