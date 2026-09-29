@@ -13,16 +13,100 @@
   margin-bottom: 1.5rem;
 }
 
+.surface-session__header-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.surface-session__sync {
+  font-size: 0.8125rem;
+  color: var(--color-ink-on-session-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: default;
+}
+
+.surface-session__sync--retry {
+  color: var(--color-accent-apricot);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.surface-session__sync--retry:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-accent-apricot);
+  outline-offset: var(--focus-ring-offset);
+}
+
 .surface-session__timer {
   font-variant-numeric: tabular-nums;
   font-size: 1.25rem;
 }
 
 .surface-session__exercise-card {
+  display: block;
+  width: 100%;
+  text-align: left;
   background-color: var(--color-surface-session-raised);
   border-radius: 0.5rem;
   padding: 1rem 1.25rem;
   margin-bottom: 0.75rem;
+  border: 2px solid transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.surface-session__exercise-card--selected {
+  border-color: var(--color-accent-apricot);
+}
+
+.surface-session__exercise-card:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-accent-apricot);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.surface-session__set-tape {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+}
+
+.surface-session__set-tape li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.surface-session__set-row {
+  flex: 1;
+  text-align: left;
+  background: var(--color-surface-session-raised);
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  color: var(--color-ink-on-session);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.surface-session__set-row:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-accent-apricot);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.surface-session__set-delete {
+  min-width: var(--spacing-touch-min);
+  min-height: var(--spacing-touch-min);
+  border: 1px solid var(--color-border-session);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-ink-on-session-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
 }
 
 .surface-session__exercise-name {

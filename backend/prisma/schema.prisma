@@ -208,6 +208,7 @@ model Session {
   createdAt              DateTime          @default(now()) @map("created_at")
   updatedAt              DateTime          @updatedAt @map("updated_at")
   exercises              SessionExercise[]
+  sets                   Set[]
 
   @@index([clientProfileId])
   @@map("sessions")
@@ -225,9 +226,27 @@ model SessionExercise {
   plannedWeightKg Decimal? @map("planned_weight_kg") @db.Decimal(10, 2)
   nameSnapshot    String   @map("name_snapshot")
   notes           String?
+  sets            Set[]
 
   @@unique([sessionId, sortOrder])
   @@map("session_exercises")
+}
+
+model Set {
+  id                  String          @id
+  sessionId           String          @map("session_id")
+  session             Session         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionExerciseId   String          @map("session_exercise_id")
+  sessionExercise     SessionExercise @relation(fields: [sessionExerciseId], references: [id], onDelete: Cascade)
+  sequenceIndex       Int             @map("sequence_index")
+  weightKg            Decimal?        @map("weight_kg") @db.Decimal(10, 2)
+  reps                Int?
+  rpe                 Decimal?        @db.Decimal(3, 1)
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  @@index([sessionId, sequenceIndex])
+  @@map("sets")
 }
 
 model IdempotencyRecord {

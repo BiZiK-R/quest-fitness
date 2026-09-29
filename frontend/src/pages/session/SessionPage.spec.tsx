@@ -52,6 +52,7 @@ describe('SessionPage snapshot display', () => {
                 notes: null,
               },
             ],
+            sets: [],
           },
           error: undefined,
           response: new Response(null, { status: 200 }),

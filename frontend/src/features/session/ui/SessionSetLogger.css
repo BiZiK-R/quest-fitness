@@ -1,0 +1,85 @@
+.session-set-logger {
+  background-color: var(--color-surface-session-sunken);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-top: 1rem;
+}
+
+.session-set-logger__label {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-ink-on-session-muted);
+}
+
+.session-set-logger__fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.session-set-logger__field-label {
+  display: block;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+  color: var(--color-ink-on-session-muted);
+}
+
+.session-set-logger__stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+}
+
+.session-set-logger__stepper button {
+  min-width: var(--spacing-touch-min);
+  min-height: var(--spacing-touch-min);
+  border: 1px solid var(--color-border-session);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-session-raised);
+  color: var(--color-ink-on-session);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.session-set-logger__stepper button:focus-visible,
+.session-set-logger__stepper button:active:not(:disabled),
+.session-set-logger__confirm:focus-visible,
+.session-set-logger__confirm:active:not(:disabled) {
+  outline: var(--focus-ring-width) solid var(--color-accent-apricot);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.session-set-logger__stepper button:disabled,
+.session-set-logger__confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.session-set-logger__value {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.125rem;
+  min-width: 3ch;
+  text-align: center;
+}
+
+.session-set-logger__confirm {
+  width: 100%;
+  min-height: var(--spacing-control-md);
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-red);
+  color: var(--color-ink-inverse);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.session-set-logger__confirm:active:not(:disabled) {
+  background: var(--color-accent-red-pressed);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

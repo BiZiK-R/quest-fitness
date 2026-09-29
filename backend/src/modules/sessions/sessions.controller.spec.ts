@@ -91,6 +91,18 @@ type StoredSessionExercise = {
   notes: string | null;
 };
 
+type StoredLoggedSet = {
+  id: string;
+  sessionId: string;
+  sessionExerciseId: string;
+  sequenceIndex: number;
+  weightKg: { toNumber: () => number } | null;
+  reps: number | null;
+  rpe: { toNumber: () => number } | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 function sessionCookieHeader(setCookie: string | string[] | undefined): string {
   return (setCookie ?? [])
     .map((raw) => raw.split(';')[0] ?? '')
@@ -126,6 +138,7 @@ describe('SessionsController (HTTP)', () => {
   const exercises = new Map<string, StoredExercise>();
   const trainingSessions = new Map<string, StoredTrainingSession>();
   const sessionExercises = new Map<string, StoredSessionExercise>();
+  const loggedSets = new Map<string, StoredLoggedSet>();
 
   const usersById = () =>
     new Map([trainerUser, clientUser].map((u) => [u.id, u as User]));
@@ -297,7 +310,7 @@ describe('SessionsController (HTTP)', () => {
         include,
       }: {
         where: { id?: string; workoutId?: string };
-        include?: { exercises?: boolean };
+        include?: { exercises?: boolean; sets?: { orderBy: { sequenceIndex: 'asc' } } };
       }) => {
         let row: StoredTrainingSession | undefined;
         if (where.id) {
@@ -308,13 +321,18 @@ describe('SessionsController (HTTP)', () => {
         if (!row) {
           return null;
         }
+        const result: Record<string, unknown> = { ...row };
         if (include?.exercises) {
-          const exRows = [...sessionExercises.values()]
+          result.exercises = [...sessionExercises.values()]
             .filter((e) => e.sessionId === row!.id)
             .sort((a, b) => a.sortOrder - b.sortOrder);
-          return { ...row, exercises: exRows };
         }
-        return { ...row };
+        if (include?.sets) {
+          result.sets = [...loggedSets.values()]
+            .filter((s) => s.sessionId === row!.id)
+            .sort((a, b) => a.sequenceIndex - b.sequenceIndex);
+        }
+        return result;
       },
       create: async ({
         data,
@@ -394,6 +412,99 @@ describe('SessionsController (HTTP)', () => {
         }
         return { count: data.length };
       },
+      findFirst: async ({
+        where,
+      }: {
+        where: { id: string; sessionId: string };
+      }) => {
+        const row = sessionExercises.get(where.id);
+        if (!row || row.sessionId !== where.sessionId) {
+          return null;
+        }
+        return row;
+      },
+    },
+    set: {
+      findUnique: async ({ where }: { where: { id: string } }) => loggedSets.get(where.id) ?? null,
+      aggregate: async ({ where }: { where: { sessionId: string } }) => {
+        const rows = [...loggedSets.values()].filter((s) => s.sessionId === where.sessionId);
+        const max = rows.reduce((acc, r) => Math.max(acc, r.sequenceIndex), 0);
+        return { _max: { sequenceIndex: rows.length === 0 ? null : max } };
+      },
+      create: async ({
+        data,
+      }: {
+        data: {
+          id: string;
+          sessionId: string;
+          sessionExerciseId: string;
+          sequenceIndex: number;
+          weightKg?: unknown;
+          reps?: number | null;
+          rpe?: unknown;
+        };
+      }) => {
+        const now = new Date();
+        const row: StoredLoggedSet = {
+          id: data.id,
+          sessionId: data.sessionId,
+          sessionExerciseId: data.sessionExerciseId,
+          sequenceIndex: data.sequenceIndex,
+          weightKg:
+            data.weightKg != null ? { toNumber: () => Number(data.weightKg) } : null,
+          reps: data.reps ?? null,
+          rpe: data.rpe != null ? { toNumber: () => Number(data.rpe) } : null,
+          createdAt: now,
+          updatedAt: now,
+        };
+        loggedSets.set(row.id, row);
+        return row;
+      },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: {
+          sessionExerciseId?: string;
+          weightKg?: unknown;
+          reps?: number | null;
+          rpe?: unknown;
+        };
+      }) => {
+        const row = loggedSets.get(where.id);
+        if (!row) {
+          throw new Error('Set not found');
+        }
+        const updated: StoredLoggedSet = {
+          ...row,
+          sessionExerciseId: data.sessionExerciseId ?? row.sessionExerciseId,
+          weightKg:
+            data.weightKg !== undefined
+              ? data.weightKg != null
+                ? { toNumber: () => Number(data.weightKg) }
+                : null
+              : row.weightKg,
+          reps: data.reps !== undefined ? data.reps : row.reps,
+          rpe:
+            data.rpe !== undefined
+              ? data.rpe != null
+                ? { toNumber: () => Number(data.rpe) }
+                : null
+              : row.rpe,
+          updatedAt: new Date(),
+        };
+        loggedSets.set(where.id, updated);
+        return updated;
+      },
+      delete: async ({ where }: { where: { id: string } }) => {
+        const row = loggedSets.get(where.id);
+        if (!row) {
+          throw new Error('Set not found');
+        }
+        loggedSets.delete(where.id);
+        return row;
+      },
     },
   };
 
@@ -436,6 +547,7 @@ describe('SessionsController (HTTP)', () => {
     exercises.clear();
     trainingSessions.clear();
     sessionExercises.clear();
+    loggedSets.clear();
 
     const now = new Date();
     clientLocks.set('client_pool_1', {
@@ -599,6 +711,97 @@ describe('SessionsController (HTTP)', () => {
 
     expect(getRes.status).toBe(403);
     expect(getRes.body.error?.code).toBe(ErrorCode.FORBIDDEN_ROLE);
+  });
+
+  async function startActiveSession(): Promise<{
+    sessionId: string;
+    csrfToken: string;
+    cookiePairs: string;
+    sessionExerciseId: string;
+  }> {
+    const { csrfToken, cookiePairs } = await loginAndGetSession(
+      app,
+      trainerUser.login,
+      TRAINER_PASSWORD,
+    );
+    const startRes = await request(app.getHttpServer())
+      .post('/api/workouts/wo_pending_1/session')
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken);
+    expect(startRes.status).toBe(201);
+    const sessionExerciseId = startRes.body.exercises[0].id as string;
+    return {
+      sessionId: startRes.body.id as string,
+      csrfToken,
+      cookiePairs,
+      sessionExerciseId,
+    };
+  }
+
+  it('PUT set twice with same setId creates one row and monotonic sequenceIndex', async () => {
+    const { sessionId, csrfToken, cookiePairs, sessionExerciseId } = await startActiveSession();
+    const setId = '550e8400-e29b-41d4-a716-446655440010';
+    const payload = { sessionExerciseId, weightKg: 50, reps: 10 };
+
+    const first = await request(app.getHttpServer())
+      .put(`/api/sessions/${sessionId}/sets/${setId}`)
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send(payload);
+    expect(first.status).toBe(200);
+    expect(first.body.sequenceIndex).toBe(1);
+
+    const second = await request(app.getHttpServer())
+      .put(`/api/sessions/${sessionId}/sets/${setId}`)
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send(payload);
+    expect(second.status).toBe(200);
+    expect(second.body.sequenceIndex).toBe(1);
+    expect(loggedSets.size).toBe(1);
+
+    const thirdSetId = '550e8400-e29b-41d4-a716-446655440011';
+    const third = await request(app.getHttpServer())
+      .put(`/api/sessions/${sessionId}/sets/${thirdSetId}`)
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send(payload);
+    expect(third.status).toBe(200);
+    expect(third.body.sequenceIndex).toBe(2);
+  });
+
+  it('GET session returns sets ordered by sequenceIndex', async () => {
+    const { sessionId, csrfToken, cookiePairs, sessionExerciseId } = await startActiveSession();
+
+    await request(app.getHttpServer())
+      .put(`/api/sessions/${sessionId}/sets/550e8400-e29b-41d4-a716-446655440012`)
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({ sessionExerciseId, reps: 8 });
+
+    const getRes = await request(app.getHttpServer())
+      .get(`/api/sessions/${sessionId}`)
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken);
+
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.sets).toHaveLength(1);
+    expect(getRes.body.sets[0].reps).toBe(8);
+  });
+
+  it('PUT set on completed session returns WORKOUT_STATUS_CONFLICT', async () => {
+    const { sessionId, csrfToken, cookiePairs, sessionExerciseId } = await startActiveSession();
+    const session = trainingSessions.get(sessionId)!;
+    trainingSessions.set(sessionId, { ...session, status: SessionStatus.completed });
+
+    const res = await request(app.getHttpServer())
+      .put(`/api/sessions/${sessionId}/sets/550e8400-e29b-41d4-a716-446655440013`)
+      .set('Cookie', cookiePairs)
+      .set('x-csrf-token', csrfToken)
+      .send({ sessionExerciseId, reps: 5 });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error?.code).toBe(ErrorCode.WORKOUT_STATUS_CONFLICT);
   });
 
   it('POST start without templateId returns VALIDATION_FAILED', async () => {

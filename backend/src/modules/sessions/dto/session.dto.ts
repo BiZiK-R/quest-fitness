@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SessionStatus } from '@prisma/client';
 import { SessionExerciseDto } from './session-exercise.dto';
+import { SetDto } from './set.dto';
 
 export class SessionDto {
   @ApiProperty({ type: String })
@@ -35,4 +36,7 @@ export class SessionDto {
 
   @ApiProperty({ type: () => SessionExerciseDto, isArray: true })
   exercises!: SessionExerciseDto[];
+
+  @ApiProperty({ type: () => SetDto, isArray: true })
+  sets!: SetDto[];
 }

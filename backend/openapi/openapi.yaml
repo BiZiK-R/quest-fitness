@@ -1361,8 +1361,100 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags:
+      tags: &a13
         - sessions
+  /api/sessions/{sessionId}/sets/{setId}:
+    put:
+      operationId: SessionsController_upsertSet
+      parameters:
+        - name: setId
+          required: true
+          in: path
+          description: Client-generated UUID
+          schema:
+            type: string
+        - name: sessionId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertSetRequestDto"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "409":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a13
+    delete:
+      operationId: SessionsController_deleteSet
+      parameters:
+        - name: setId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: sessionId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "409":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a13
   /api/workouts/{id}/session:
     post:
       operationId: WorkoutSessionController_start
@@ -2249,6 +2341,41 @@ components:
         - exerciseId
         - sortOrder
         - nameSnapshot
+    SetDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Client-generated set id (UUID)
+        sessionId:
+          type: string
+        sessionExerciseId:
+          type: string
+        sequenceIndex:
+          type: number
+          description: Server-assigned order within session
+        weightKg:
+          type: number
+          nullable: true
+        reps:
+          type: number
+          nullable: true
+        rpe:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - sessionId
+        - sessionExerciseId
+        - sequenceIndex
+        - createdAt
+        - updatedAt
     SessionDto:
       type: object
       properties:
@@ -2285,6 +2412,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SessionExerciseDto"
+        sets:
+          type: array
+          items:
+            $ref: "#/components/schemas/SetDto"
       required:
         - id
         - workoutId
@@ -2294,3 +2425,20 @@ components:
         - startedAt
         - plannedDurationMinutes
         - exercises
+        - sets
+    UpsertSetRequestDto:
+      type: object
+      properties:
+        sessionExerciseId:
+          type: string
+        weightKg:
+          type: number
+          nullable: true
+        reps:
+          type: number
+          nullable: true
+        rpe:
+          type: number
+          nullable: true
+      required:
+        - sessionExerciseId

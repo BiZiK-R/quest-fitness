@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { SessionStatus, WorkoutStatus } from '@prisma/client';
+import { Prisma, Session, SessionStatus, WorkoutStatus } from '@prisma/client';
 import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-code.enum';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { ClientsLockService } from '../clients-lock/clients-lock.service';
 import { SessionDto } from './dto/session.dto';
+import { SetDto } from './dto/set.dto';
+import { UpsertSetRequestDto } from './dto/upsert-set-request.dto';
 import { DEFAULT_SESSION_DURATION_MINUTES } from './sessions.constants';
-import { toSessionDto } from './session.mapper';
+import { toSessionDto, toSetDto } from './session.mapper';
 
 const sessionWithExercisesInclude = {
   exercises: true,
+  sets: { orderBy: { sequenceIndex: 'asc' as const } },
 } as const;
 
 @Injectable()
@@ -121,5 +124,98 @@ export class SessionsService {
     await this.clientsLockService.assertActorHoldsLiveLock(session.clientProfileId, actorUserId);
 
     return toSessionDto(session);
+  }
+
+  /**
+   * Upserts a logged set by client setId (AD-8). Assigns sequenceIndex on first insert only.
+   */
+  async upsertSet(
+    sessionId: string,
+    setId: string,
+    actorUserId: string,
+    body: UpsertSetRequestDto,
+  ): Promise<SetDto> {
+    const session = await this.loadSessionForMutation(sessionId, actorUserId);
+    this.assertSessionActiveForMutation(session);
+
+    const sessionExercise = await this.prisma.sessionExercise.findFirst({
+      where: { id: body.sessionExerciseId, sessionId },
+    });
+    if (!sessionExercise) {
+      throw new AppException(ErrorCode.NOT_FOUND, 'Session exercise not found', 404);
+    }
+
+    const weightKg = body.weightKg != null ? new Prisma.Decimal(body.weightKg) : null;
+    const rpe = body.rpe != null ? new Prisma.Decimal(body.rpe) : null;
+    const reps = body.reps ?? null;
+
+    const row = await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.set.findUnique({ where: { id: setId } });
+      if (existing) {
+        if (existing.sessionId !== sessionId) {
+          throw new AppException(ErrorCode.NOT_FOUND, 'Set not found', 404);
+        }
+        return tx.set.update({
+          where: { id: setId },
+          data: {
+            sessionExerciseId: body.sessionExerciseId,
+            weightKg,
+            reps,
+            rpe,
+          },
+        });
+      }
+
+      const agg = await tx.set.aggregate({
+        where: { sessionId },
+        _max: { sequenceIndex: true },
+      });
+      const nextIndex = (agg._max.sequenceIndex ?? 0) + 1;
+
+      return tx.set.create({
+        data: {
+          id: setId,
+          sessionId,
+          sessionExerciseId: body.sessionExerciseId,
+          sequenceIndex: nextIndex,
+          weightKg,
+          reps,
+          rpe,
+        },
+      });
+    });
+
+    return toSetDto(row);
+  }
+
+  /** Removes a logged set while the session is active (AD-15 terminal immutability). */
+  async deleteSet(sessionId: string, setId: string, actorUserId: string): Promise<void> {
+    const session = await this.loadSessionForMutation(sessionId, actorUserId);
+    this.assertSessionActiveForMutation(session);
+
+    const existing = await this.prisma.set.findUnique({ where: { id: setId } });
+    if (!existing || existing.sessionId !== sessionId) {
+      throw new AppException(ErrorCode.NOT_FOUND, 'Set not found', 404);
+    }
+
+    await this.prisma.set.delete({ where: { id: setId } });
+  }
+
+  private async loadSessionForMutation(sessionId: string, actorUserId: string): Promise<Session> {
+    const session = await this.prisma.session.findUnique({ where: { id: sessionId } });
+    if (!session) {
+      throw new AppException(ErrorCode.NOT_FOUND, 'Session not found', 404);
+    }
+    await this.clientsLockService.assertActorHoldsLiveLock(session.clientProfileId, actorUserId);
+    return session;
+  }
+
+  private assertSessionActiveForMutation(session: Session): void {
+    if (session.status === SessionStatus.abandoned) {
+      throw new AppException(ErrorCode.SESSION_ABANDONED, 'Session was abandoned', 409);
+    }
+    if (session.status !== SessionStatus.active) {
+      throw new AppException(ErrorCode.WORKOUT_STATUS_CONFLICT, 'Session is not active', 409);
+    }
   }
 }

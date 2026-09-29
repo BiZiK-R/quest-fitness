@@ -484,6 +484,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{sessionId}/sets/{setId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["SessionsController_upsertSet"];
+        post?: never;
+        delete: operations["SessionsController_deleteSet"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/workouts/{id}/session": {
         parameters: {
             query?: never;
@@ -852,6 +868,21 @@ export interface components {
             nameSnapshot: string;
             notes?: string | null;
         };
+        SetDto: {
+            /** @description Client-generated set id (UUID) */
+            id: string;
+            sessionId: string;
+            sessionExerciseId: string;
+            /** @description Server-assigned order within session */
+            sequenceIndex: number;
+            weightKg?: number | null;
+            reps?: number | null;
+            rpe?: number | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         SessionDto: {
             id: string;
             workoutId: string;
@@ -868,6 +899,13 @@ export interface components {
             /** @description Planned session length in minutes copied from template at start (AD-8) */
             plannedDurationMinutes: number;
             exercises: components["schemas"]["SessionExerciseDto"][];
+            sets: components["schemas"]["SetDto"][];
+        };
+        UpsertSetRequestDto: {
+            sessionExerciseId: string;
+            weightKg?: number | null;
+            reps?: number | null;
+            rpe?: number | null;
         };
     };
     responses: never;
@@ -2608,6 +2646,111 @@ export interface operations {
                 };
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    SessionsController_upsertSet: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Client-generated UUID */
+                setId: string;
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpsertSetRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    SessionsController_deleteSet: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                setId: string;
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
