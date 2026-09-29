@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ClientInvitePanel } from '@/features/invite-share/ui/ClientInvitePanel';
 import { ClientMacroProgressPanel } from '@/features/client-macro-progress/ui/ClientMacroProgressPanel';
+import { ClientWorkoutsOverviewPanel } from '@/features/client-workouts-overview/ui/ClientWorkoutsOverviewPanel';
 import { ClientWorkoutSchedulePanel } from '@/features/client-workout-schedule/ui/ClientWorkoutSchedulePanel';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
@@ -257,6 +258,12 @@ export function ClientCardPage() {
               onClose={() => setInviteOpen(false)}
             />
           ) : null}
+
+          <ClientWorkoutsOverviewPanel
+            clientId={client.id}
+            diaryTo={`/clients/${client.id}/diary`}
+            compact
+          />
 
           <ClientMacroProgressPanel
             clientId={client.id}

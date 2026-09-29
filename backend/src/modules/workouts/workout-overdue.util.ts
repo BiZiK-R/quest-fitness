@@ -11,6 +11,11 @@ export function calendarDateKeyInTimeZone(date: Date, timeZone: string): string 
   }).format(date);
 }
 
+/** YYYY-MM gym-local month key (AD-17). */
+export function calendarMonthKeyInTimeZone(date: Date, timeZone: string): string {
+  return calendarDateKeyInTimeZone(date, timeZone).slice(0, 7);
+}
+
 /**
  * AD-17: pending workout is overdue when its gym-local calendar day is before gym-local today.
  */

@@ -1183,6 +1183,42 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a11
+  /api/clients/{id}/workouts/overview:
+    get:
+      operationId: WorkoutsController_overview
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Client profile id
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientWorkoutsOverviewDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a11
   /api/workouts/{id}/skip:
     post:
       operationId: WorkoutActionsController_skip
@@ -2506,6 +2542,63 @@ components:
         - createdByUserId
         - createdAt
         - updatedAt
+    WorkoutOverviewItemDto:
+      type: object
+      properties:
+        id:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - pending
+            - attended
+            - skipped
+            - cancelled
+        isOverdue:
+          type: boolean
+          description: Pending and gym-local day before today (AD-17)
+        templateName:
+          type: string
+          nullable: true
+      required:
+        - id
+        - scheduledAt
+        - status
+        - isOverdue
+    ClientWorkoutsOverviewDto:
+      type: object
+      properties:
+        monthKey:
+          type: string
+          description: Current gym-local month as YYYY-MM (AD-17, do not derive on FE)
+          example: 2026-03
+        monthLabel:
+          type: string
+          description: Human-readable gym-local month label (ru-RU)
+        workoutsThisMonth:
+          type: number
+          description: Workouts scheduled in current gym-local month (non-cancelled)
+        upcoming:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkoutOverviewItemDto"
+        nextScheduled:
+          nullable: true
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/WorkoutOverviewItemDto"
+        isEmpty:
+          type: boolean
+          description: True when the client has no workouts at all
+      required:
+        - monthKey
+        - monthLabel
+        - workoutsThisMonth
+        - upcoming
+        - isEmpty
     WorkoutListResponseDto:
       type: object
       properties:

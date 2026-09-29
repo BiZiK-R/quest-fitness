@@ -18,6 +18,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { ErrorEnvelopeDto } from '../../common/errors/dto/error-envelope.dto';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AssignWorkoutRequestDto } from './dto/assign-workout-request.dto';
+import { ClientWorkoutsOverviewDto } from './dto/client-workouts-overview.dto';
 import { WorkoutDto, WorkoutListResponseDto } from './dto/workout.dto';
 import { WorkoutsService } from './workouts.service';
 
@@ -45,6 +46,26 @@ export class WorkoutsController {
     @Req() req: Request,
   ): Promise<WorkoutDto> {
     return this.workoutsService.assign(clientId, req.user!.id, idempotencyKey, body);
+  }
+
+  @Get('overview')
+  @RequireSession()
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.ADMIN, UserRole.CLIENT)
+  @ApiParam({ name: 'id', type: String, description: 'Client profile id' })
+  @ApiOkResponse({ type: ClientWorkoutsOverviewDto })
+  @ApiUnauthorizedResponse({ type: () => ErrorEnvelopeDto })
+  @ApiForbiddenResponse({ type: () => ErrorEnvelopeDto })
+  @ApiNotFoundResponse({ type: () => ErrorEnvelopeDto })
+  async overview(
+    @Param('id') clientId: string,
+    @Req() req: Request,
+  ): Promise<ClientWorkoutsOverviewDto> {
+    return this.workoutsService.getOverviewForClient(
+      clientId,
+      req.user!.id,
+      req.user!.role,
+    );
   }
 
   @Get()

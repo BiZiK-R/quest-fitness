@@ -420,6 +420,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clients/{id}/workouts/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorkoutsController_overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/workouts/{id}/skip": {
         parameters: {
             query?: never;
@@ -932,6 +948,31 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        WorkoutOverviewItemDto: {
+            id: string;
+            /** Format: date-time */
+            scheduledAt: string;
+            /** @enum {string} */
+            status: "pending" | "attended" | "skipped" | "cancelled";
+            /** @description Pending and gym-local day before today (AD-17) */
+            isOverdue: boolean;
+            templateName?: string | null;
+        };
+        ClientWorkoutsOverviewDto: {
+            /**
+             * @description Current gym-local month as YYYY-MM (AD-17, do not derive on FE)
+             * @example 2026-03
+             */
+            monthKey: string;
+            /** @description Human-readable gym-local month label (ru-RU) */
+            monthLabel: string;
+            /** @description Workouts scheduled in current gym-local month (non-cancelled) */
+            workoutsThisMonth: number;
+            upcoming: components["schemas"]["WorkoutOverviewItemDto"][];
+            nextScheduled?: components["schemas"]["WorkoutOverviewItemDto"] | null;
+            /** @description True when the client has no workouts at all */
+            isEmpty: boolean;
         };
         WorkoutListResponseDto: {
             workouts: components["schemas"]["WorkoutDto"][];
@@ -2601,6 +2642,52 @@ export interface operations {
                 };
             };
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    WorkoutsController_overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Client profile id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientWorkoutsOverviewDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

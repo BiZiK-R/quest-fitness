@@ -10,6 +10,21 @@ export function getGymTimezone(): string {
 /**
  * Человекочитаемая метка срока действия инвайта в таймзоне зала.
  */
+/**
+ * Russian month label for a gym-local YYYY-MM key (BFF-only, AD-17).
+ */
+export function formatGymMonthLabel(monthKey: string, timeZone = getGymTimezone()): string {
+  const [yearPart, monthPart] = monthKey.split('-');
+  const year = Number(yearPart);
+  const month = Number(monthPart);
+  const anchor = new Date(Date.UTC(year, month - 1, 15, 12, 0, 0));
+  return new Intl.DateTimeFormat('ru-RU', {
+    timeZone,
+    month: 'long',
+    year: 'numeric',
+  }).format(anchor);
+}
+
 export function formatInviteExpiryLabel(expiresAt: Date, timeZone = getGymTimezone()): string {
   const formatter = new Intl.DateTimeFormat('ru-RU', {
     timeZone,

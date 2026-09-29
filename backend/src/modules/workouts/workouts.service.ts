@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { WorkoutStatus } from '@prisma/client';
+import { UserRole, WorkoutStatus } from '@prisma/client';
 import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-code.enum';
+import { getGymTimezone } from '../../shared/timezone/gym-timezone';
 import { PrismaService } from '../../shared/prisma/prisma.service';
+import { buildClientWorkoutsOverview } from './build-client-workouts-overview';
+import { ClientWorkoutsOverviewDto } from './dto/client-workouts-overview.dto';
 import { ClientsLockService } from '../clients-lock/clients-lock.service';
 import { AssignWorkoutRequestDto } from './dto/assign-workout-request.dto';
 import { RescheduleWorkoutRequestDto } from './dto/reschedule-workout-request.dto';
@@ -154,6 +157,35 @@ export class WorkoutsService {
   }
 
   /**
+   * Client workouts overview for cabinet and client card (Story 6.1, AD-17).
+   */
+  async getOverviewForClient(
+    clientId: string,
+    actorUserId: string,
+    actorRole: UserRole,
+    options?: { now?: Date },
+  ): Promise<ClientWorkoutsOverviewDto> {
+    await this.ensureClientExists(clientId);
+    await this.assertCanReadClientOverview(actorUserId, actorRole, clientId);
+
+    const rows = await this.prisma.workout.findMany({
+      where: { clientProfileId: clientId },
+      orderBy: [{ scheduledAt: 'asc' }, { id: 'asc' }],
+      include: workoutWithTemplateInclude,
+    });
+
+    return buildClientWorkoutsOverview(
+      rows.map((row) => ({
+        id: row.id,
+        scheduledAt: row.scheduledAt,
+        status: row.status,
+        templateName: row.template?.name ?? null,
+      })),
+      { now: options?.now, timeZone: getGymTimezone() },
+    );
+  }
+
+  /**
    * Epic 5 entry: pending → attended; advances macro stage when source matches pointer (AD-7).
    */
   async markAttended(workoutId: string): Promise<WorkoutDto> {
@@ -301,5 +333,25 @@ export class WorkoutsService {
     if (!client) {
       throw new AppException(ErrorCode.NOT_FOUND, 'Client not found', 404);
     }
+  }
+
+  private async assertCanReadClientOverview(
+    actorUserId: string,
+    actorRole: UserRole,
+    clientProfileId: string,
+  ): Promise<void> {
+    if (actorRole === UserRole.TRAINER || actorRole === UserRole.ADMIN) {
+      return;
+    }
+    if (actorRole === UserRole.CLIENT) {
+      const linked = await this.prisma.clientProfile.findUnique({
+        where: { userId: actorUserId },
+      });
+      if (!linked || linked.id !== clientProfileId) {
+        throw new AppException(ErrorCode.FORBIDDEN_ROLE, 'Forbidden', 403);
+      }
+      return;
+    }
+    throw new AppException(ErrorCode.FORBIDDEN_ROLE, 'Forbidden', 403);
   }
 }
