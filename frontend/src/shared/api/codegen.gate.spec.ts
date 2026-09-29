@@ -51,6 +51,8 @@ describe('OpenAPI codegen gate', () => {
     expect(schema).toContain('"/api/muscle-groups"');
     expect(schema).toContain('"/api/exercises"');
     expect(schema).toContain('"/api/exercises/{id}/archive"');
+    expect(schema).toContain('"/api/templates"');
+    expect(schema).toContain('"/api/templates/{id}"');
   });
 
   it('codegen.mjs exits non-zero when contract path is missing', () => {

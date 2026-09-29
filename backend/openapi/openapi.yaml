@@ -722,6 +722,147 @@ paths:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags:
         - exercises
+  /api/templates:
+    get:
+      operationId: TemplatesController_list
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkoutTemplateListResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: &a8
+        - templates
+    post:
+      operationId: TemplatesController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkoutTemplateRequestDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkoutTemplateDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a8
+  /api/templates/{id}:
+    get:
+      operationId: TemplatesController_getById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkoutTemplateDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a8
+    patch:
+      operationId: TemplatesController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkoutTemplateRequestDto"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkoutTemplateDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "409":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a8
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -1132,3 +1273,159 @@ components:
             $ref: "#/components/schemas/MuscleGroupDto"
       required:
         - muscleGroups
+    TemplateExerciseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        exerciseId:
+          type: string
+        exerciseName:
+          type: string
+          nullable: true
+        sortOrder:
+          type: number
+        plannedSets:
+          type: number
+          nullable: true
+        plannedReps:
+          type: number
+          nullable: true
+        plannedWeightKg:
+          type: number
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - id
+        - exerciseId
+        - sortOrder
+    WorkoutTemplateDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          example: strength
+        description:
+          type: string
+          nullable: true
+        durationMinutes:
+          type: number
+          nullable: true
+        microcycleWeeks:
+          type: number
+          nullable: true
+        version:
+          type: number
+        archivedAt:
+          type: string
+          format: date-time
+          nullable: true
+        exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateExerciseDto"
+      required:
+        - id
+        - name
+        - type
+        - version
+        - exercises
+    WorkoutTemplateListResponseDto:
+      type: object
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkoutTemplateDto"
+      required:
+        - templates
+    TemplateExerciseInputDto:
+      type: object
+      properties:
+        exerciseId:
+          type: string
+        sortOrder:
+          type: number
+        plannedSets:
+          type: number
+          nullable: true
+        plannedReps:
+          type: number
+          nullable: true
+        plannedWeightKg:
+          type: number
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - exerciseId
+        - sortOrder
+    CreateWorkoutTemplateRequestDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        type:
+          type: string
+          minLength: 1
+          maxLength: 64
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+        durationMinutes:
+          type: number
+          nullable: true
+        microcycleWeeks:
+          type: number
+          nullable: true
+        exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateExerciseInputDto"
+      required:
+        - name
+        - type
+        - exercises
+    UpdateWorkoutTemplateRequestDto:
+      type: object
+      properties:
+        version:
+          type: number
+          description: Expected template version for optimistic concurrency
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        type:
+          type: string
+          minLength: 1
+          maxLength: 64
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+        durationMinutes:
+          type: number
+          nullable: true
+        microcycleWeeks:
+          type: number
+          nullable: true
+        exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateExerciseInputDto"
+      required:
+        - version
+        - name
+        - type
+        - exercises

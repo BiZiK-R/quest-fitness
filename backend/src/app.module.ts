@@ -10,6 +10,7 @@ import { InvitesModule } from './modules/invites/invites.module';
 import { TrainerModule } from './modules/trainer/trainer.module';
 import { UsersModule } from './modules/users/users.module';
 import { ExercisesModule } from './modules/exercises/exercises.module';
+import { TemplatesModule } from './modules/templates/templates.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { PrismaModule } from './shared/prisma/prisma.module';
     InvitesModule,
     UsersModule,
     ExercisesModule,
+    TemplatesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: CsrfGuard },

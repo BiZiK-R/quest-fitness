@@ -8,6 +8,7 @@ import { ClientCardPage } from '@/pages/client-card/ClientCardPage';
 import { InviteRegisterPage } from '@/pages/invite/InviteRegisterPage';
 import { AdminTrainersPage } from '@/pages/admin-trainers/AdminTrainersPage';
 import { CatalogPage } from '@/pages/catalog/CatalogPage';
+import { TemplatesPage } from '@/pages/templates/TemplatesPage';
 
 export const appRouter = createBrowserRouter([
   { path: '/', element: <RootRedirect /> },
@@ -18,6 +19,7 @@ export const appRouter = createBrowserRouter([
       { path: '/invite/:token', element: <InviteRegisterPage /> },
       { path: '/pool', element: <PoolPage /> },
       { path: '/catalog', element: <CatalogPage /> },
+      { path: '/templates', element: <TemplatesPage /> },
       { path: '/admin/trainers', element: <AdminTrainersPage /> },
       { path: '/clients/:id', element: <ClientCardPage /> },
       { path: '/cabinet/workouts', element: <CabinetWorkoutsPage /> },

@@ -104,8 +104,41 @@ model Exercise {
   createdAt  DateTime         @default(now()) @map("created_at")
   updatedAt  DateTime         @updatedAt @map("updated_at")
   muscles    ExerciseMuscle[]
+  templateExercises TemplateExercise[]
 
   @@map("exercises")
+}
+
+model WorkoutTemplate {
+  id              String             @id @default(cuid())
+  name            String
+  type            String
+  description     String?
+  durationMinutes Int?               @map("duration_minutes")
+  microcycleWeeks Int?               @map("microcycle_weeks")
+  version         Int                @default(1)
+  archivedAt      DateTime?          @map("archived_at")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  exercises       TemplateExercise[]
+
+  @@map("workout_templates")
+}
+
+model TemplateExercise {
+  id              String          @id @default(cuid())
+  templateId      String          @map("template_id")
+  template        WorkoutTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  exerciseId      String          @map("exercise_id")
+  exercise        Exercise        @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  sortOrder       Int             @map("sort_order")
+  plannedSets     Int?            @map("planned_sets")
+  plannedReps     Int?            @map("planned_reps")
+  plannedWeightKg Decimal?        @map("planned_weight_kg") @db.Decimal(10, 2)
+  notes           String?
+
+  @@unique([templateId, sortOrder])
+  @@map("template_exercises")
 }
 
 model ExerciseMuscle {
