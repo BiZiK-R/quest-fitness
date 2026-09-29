@@ -863,6 +863,141 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a8
+  /api/macrocycles:
+    get:
+      operationId: MacrocyclesController_list
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MacrocycleListResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: &a9
+        - macrocycles
+    post:
+      operationId: MacrocyclesController_create
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMacrocycleRequestDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MacrocycleDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a9
+  /api/macrocycles/{id}:
+    get:
+      operationId: MacrocyclesController_getById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MacrocycleDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a9
+    patch:
+      operationId: MacrocyclesController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMacrocycleRequestDto"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MacrocycleDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a9
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -1429,3 +1564,104 @@ components:
         - name
         - type
         - exercises
+    MacrocycleStageDto:
+      type: object
+      properties:
+        id:
+          type: string
+        templateId:
+          type: string
+        templateName:
+          type: string
+          nullable: true
+        sortOrder:
+          type: number
+      required:
+        - id
+        - templateId
+        - sortOrder
+    MacrocycleDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        periodicityNote:
+          type: string
+          nullable: true
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/MacrocycleStageDto"
+      required:
+        - id
+        - name
+        - stages
+    MacrocycleListResponseDto:
+      type: object
+      properties:
+        macrocycles:
+          type: array
+          items:
+            $ref: "#/components/schemas/MacrocycleDto"
+      required:
+        - macrocycles
+    MacrocycleStageCreateInputDto:
+      type: object
+      properties:
+        templateId:
+          type: string
+        sortOrder:
+          type: number
+      required:
+        - templateId
+        - sortOrder
+    CreateMacrocycleRequestDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        periodicityNote:
+          type: string
+          maxLength: 2000
+          nullable: true
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/MacrocycleStageCreateInputDto"
+      required:
+        - name
+        - stages
+    UpdateMacrocycleStageInputDto:
+      type: object
+      properties:
+        id:
+          type: string
+        templateId:
+          type: string
+        sortOrder:
+          type: number
+      required:
+        - templateId
+        - sortOrder
+    UpdateMacrocycleRequestDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        periodicityNote:
+          type: string
+          maxLength: 2000
+          nullable: true
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateMacrocycleStageInputDto"
+      required:
+        - name
+        - stages

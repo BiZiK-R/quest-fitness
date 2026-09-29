@@ -38,6 +38,7 @@ model ClientProfile {
   updatedAt     DateTime     @updatedAt @map("updated_at")
   invites       Invite[]
   clientLock    ClientLock?
+  macroProgress ClientMacroProgress?
 
   @@map("client_profiles")
 }
@@ -121,8 +122,46 @@ model WorkoutTemplate {
   createdAt       DateTime           @default(now()) @map("created_at")
   updatedAt       DateTime           @updatedAt @map("updated_at")
   exercises       TemplateExercise[]
+  macrocycleStages MacrocycleStage[]
 
   @@map("workout_templates")
+}
+
+model Macrocycle {
+  id              String                @id @default(cuid())
+  name            String
+  periodicityNote String?               @map("periodicity_note")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+  stages          MacrocycleStage[]
+  clientProgress  ClientMacroProgress[]
+
+  @@map("macrocycles")
+}
+
+model MacrocycleStage {
+  id           String                @id @default(cuid())
+  macrocycleId String                @map("macrocycle_id")
+  macrocycle   Macrocycle            @relation(fields: [macrocycleId], references: [id], onDelete: Cascade)
+  templateId   String                @map("template_id")
+  template     WorkoutTemplate       @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  sortOrder    Int                   @map("sort_order")
+  progressAtStage ClientMacroProgress[] @relation("MacroProgressCurrentStage")
+
+  @@unique([macrocycleId, sortOrder])
+  @@map("macrocycle_stages")
+}
+
+model ClientMacroProgress {
+  id              String           @id @default(cuid())
+  clientProfileId String           @unique @map("client_profile_id")
+  clientProfile   ClientProfile    @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  macrocycleId    String           @map("macrocycle_id")
+  macrocycle      Macrocycle       @relation(fields: [macrocycleId], references: [id], onDelete: Cascade)
+  currentStageId  String?          @map("current_stage_id")
+  currentStage    MacrocycleStage? @relation("MacroProgressCurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
+
+  @@map("client_macro_progress")
 }
 
 model TemplateExercise {

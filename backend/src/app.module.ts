@@ -11,6 +11,7 @@ import { TrainerModule } from './modules/trainer/trainer.module';
 import { UsersModule } from './modules/users/users.module';
 import { ExercisesModule } from './modules/exercises/exercises.module';
 import { TemplatesModule } from './modules/templates/templates.module';
+import { MacrocyclesModule } from './modules/macrocycles/macrocycles.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 
 @Module({
@@ -25,6 +26,7 @@ import { PrismaModule } from './shared/prisma/prisma.module';
     UsersModule,
     ExercisesModule,
     TemplatesModule,
+    MacrocyclesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: CsrfGuard },

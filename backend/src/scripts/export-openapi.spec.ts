@@ -65,5 +65,7 @@ describe('OpenAPI export contract', () => {
     expect(loginPost?.requestBody).toBeDefined();
     expect(document.paths).toHaveProperty('/api/templates');
     expect(document.paths).toHaveProperty('/api/templates/{id}');
+    expect(document.paths).toHaveProperty('/api/macrocycles');
+    expect(document.paths).toHaveProperty('/api/macrocycles/{id}');
   });
 });

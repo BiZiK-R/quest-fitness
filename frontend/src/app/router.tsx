@@ -9,6 +9,7 @@ import { InviteRegisterPage } from '@/pages/invite/InviteRegisterPage';
 import { AdminTrainersPage } from '@/pages/admin-trainers/AdminTrainersPage';
 import { CatalogPage } from '@/pages/catalog/CatalogPage';
 import { TemplatesPage } from '@/pages/templates/TemplatesPage';
+import { MacrocyclesPage } from '@/pages/macrocycles/MacrocyclesPage';
 
 export const appRouter = createBrowserRouter([
   { path: '/', element: <RootRedirect /> },
@@ -20,6 +21,7 @@ export const appRouter = createBrowserRouter([
       { path: '/pool', element: <PoolPage /> },
       { path: '/catalog', element: <CatalogPage /> },
       { path: '/templates', element: <TemplatesPage /> },
+      { path: '/macrocycles', element: <MacrocyclesPage /> },
       { path: '/admin/trainers', element: <AdminTrainersPage /> },
       { path: '/clients/:id', element: <ClientCardPage /> },
       { path: '/cabinet/workouts', element: <CabinetWorkoutsPage /> },

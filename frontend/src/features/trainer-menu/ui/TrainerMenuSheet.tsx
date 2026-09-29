@@ -7,8 +7,6 @@ export type TrainerMenuSheetProps = {
   showAdminTrainersLink?: boolean;
 };
 
-const STUB_ITEMS = ['Макроциклы'] as const;
-
 export function TrainerMenuSheet({
   open,
   onClose,
@@ -65,11 +63,11 @@ export function TrainerMenuSheet({
               Шаблоны
             </Link>
           </li>
-          {STUB_ITEMS.map((label) => (
-            <li key={label}>
-              <span aria-disabled="true">{label} — скоро</span>
-            </li>
-          ))}
+          <li>
+            <Link to="/macrocycles" onClick={onClose}>
+              Макроциклы
+            </Link>
+          </li>
         </ul>
         <button ref={closeButtonRef} type="button" onClick={onClose}>
           Закрыть
