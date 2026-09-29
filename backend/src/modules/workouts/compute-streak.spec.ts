@@ -52,6 +52,14 @@ describe('computeStreak (AD-16 / FR-20)', () => {
     expect(computeStreak(workouts)).toBe(2);
   });
 
+  it('shows streak 0 after reset when only first attended since skip', () => {
+    const workouts: WorkoutStreakInput[] = [
+      w('1', '2026-10-01T10:00:00.000Z', WorkoutStatus.skipped),
+      w('2', '2026-10-02T10:00:00.000Z', WorkoutStatus.attended),
+    ];
+    expect(computeStreak(workouts)).toBe(0);
+  });
+
   it('ramps 0 → 2 after reset on two consecutive attended', () => {
     const workouts: WorkoutStreakInput[] = [
       w('1', '2026-10-01T10:00:00.000Z', WorkoutStatus.skipped),

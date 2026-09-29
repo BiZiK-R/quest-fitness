@@ -57,6 +57,7 @@ describe('buildClientWorkoutsOverview (AD-17)', () => {
     expect(dto.workoutsThisMonth).toBe(0);
     expect(dto.upcoming).toEqual([]);
     expect(dto.nextScheduled).toBeNull();
+    expect(dto.streak).toBe(0);
   });
 
   it('upcoming includes gym-local today onward, max 5, ordered ASC', () => {
@@ -106,5 +107,51 @@ describe('buildClientWorkoutsOverview (AD-17)', () => {
 
     expect(dto.nextScheduled?.id).toBe('early');
     expect(dto.nextScheduled?.isOverdue).toBe(true);
+  });
+
+  it('includes streak from full history (5 attended + 5 pending → 5)', () => {
+    const attended = ['a1', 'a2', 'a3', 'a4', 'a5'].map((id, i) => ({
+      id,
+      scheduledAt: new Date(`2026-02-0${i + 1}T09:00:00.000Z`),
+      status: WorkoutStatus.attended,
+      templateName: null,
+    }));
+    const pending = ['p1', 'p2', 'p3', 'p4', 'p5'].map((id, i) => ({
+      id,
+      scheduledAt: new Date(`2026-03-${10 + i}T09:00:00.000Z`),
+      status: WorkoutStatus.pending,
+      templateName: null,
+    }));
+
+    const dto = buildClientWorkoutsOverview([...attended, ...pending], { now, timeZone: TZ });
+
+    expect(dto.streak).toBe(5);
+  });
+
+  it('includes streak 0 after skip with no attended recovery', () => {
+    const rows: Row[] = [
+      {
+        id: '1',
+        scheduledAt: new Date('2026-03-01T09:00:00.000Z'),
+        status: WorkoutStatus.attended,
+        templateName: null,
+      },
+      {
+        id: '2',
+        scheduledAt: new Date('2026-03-02T09:00:00.000Z'),
+        status: WorkoutStatus.skipped,
+        templateName: null,
+      },
+      {
+        id: '3',
+        scheduledAt: new Date('2026-03-20T09:00:00.000Z'),
+        status: WorkoutStatus.pending,
+        templateName: null,
+      },
+    ];
+
+    const dto = buildClientWorkoutsOverview(rows, { now, timeZone: TZ });
+
+    expect(dto.streak).toBe(0);
   });
 });

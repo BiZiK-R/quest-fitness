@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { workoutStatusLabel } from '@/features/client-workout-schedule/lib/workout-schedule-labels';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
+import { StreakChip } from '@/widgets/streak-chip/ui/StreakChip';
 import { formatOverviewScheduledAt } from '../lib/format-overview-scheduled-at';
 
 type Overview = components['schemas']['ClientWorkoutsOverviewDto'];
@@ -73,6 +74,9 @@ export function ClientWorkoutsOverviewPanel({ clientId, diaryTo, compact = false
   return (
     <section aria-label="Обзор тренировок">
       {!compact ? <h2>{heading}</h2> : <h3>{heading}</h3>}
+      <p data-testid="workouts-streak">
+        <StreakChip streak={overview.streak} />
+      </p>
 
       {overview.isEmpty ? (
         <p role="status">{WORKOUTS_OVERVIEW_EMPTY_COPY}</p>

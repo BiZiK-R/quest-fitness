@@ -2593,12 +2593,16 @@ components:
         isEmpty:
           type: boolean
           description: True when the client has no workouts at all
+        streak:
+          type: number
+          description: Workout streak from AD-16 computeStreak on full client history
       required:
         - monthKey
         - monthLabel
         - workoutsThisMonth
         - upcoming
         - isEmpty
+        - streak
     WorkoutListResponseDto:
       type: object
       properties:

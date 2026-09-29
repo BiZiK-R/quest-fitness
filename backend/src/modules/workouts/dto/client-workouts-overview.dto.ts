@@ -52,4 +52,10 @@ export class ClientWorkoutsOverviewDto {
     description: 'True when the client has no workouts at all',
   })
   isEmpty!: boolean;
+
+  @ApiProperty({
+    type: Number,
+    description: 'Workout streak from AD-16 computeStreak on full client history',
+  })
+  streak!: number;
 }

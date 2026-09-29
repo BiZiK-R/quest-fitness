@@ -5,6 +5,7 @@ import {
   calendarMonthKeyInTimeZone,
   computeWorkoutIsOverdue,
 } from './workout-overdue.util';
+import { computeStreak } from './compute-streak';
 import { ClientWorkoutsOverviewDto, WorkoutOverviewItemDto } from './dto/client-workouts-overview.dto';
 
 const UPCOMING_LIMIT = 5;
@@ -73,6 +74,14 @@ export function buildClientWorkoutsOverview(
     ? toOverviewItem(pendingSorted[0], now, timeZone)
     : null;
 
+  const streak = computeStreak(
+    sorted.map((row) => ({
+      id: row.id,
+      scheduledAt: row.scheduledAt,
+      status: row.status,
+    })),
+  );
+
   return {
     monthKey,
     monthLabel: formatGymMonthLabel(monthKey, timeZone),
@@ -80,5 +89,6 @@ export function buildClientWorkoutsOverview(
     upcoming,
     nextScheduled,
     isEmpty,
+    streak,
   };
 }

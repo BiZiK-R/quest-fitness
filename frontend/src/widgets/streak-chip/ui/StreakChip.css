@@ -1,0 +1,22 @@
+.streak-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--spacing-touch-min);
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-full);
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.streak-chip--active {
+  background: var(--color-accent-apricot);
+  color: var(--color-ink-primary);
+}
+
+.streak-chip--accumulating {
+  background: var(--color-surface-cream);
+  color: var(--color-ink-muted);
+}

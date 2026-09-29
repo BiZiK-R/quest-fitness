@@ -306,6 +306,7 @@ describe('GET /api/clients/:id/workouts/overview (HTTP)', () => {
     expect(res.body.isEmpty).toBe(false);
     expect(res.body.nextScheduled?.id).toBe('wo2');
     expect(res.body.upcoming.length).toBeGreaterThan(0);
+    expect(res.body.streak).toBe(1);
   });
 
   it('CLIENT can read own overview', async () => {

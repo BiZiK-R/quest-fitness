@@ -973,6 +973,8 @@ export interface components {
             nextScheduled?: components["schemas"]["WorkoutOverviewItemDto"] | null;
             /** @description True when the client has no workouts at all */
             isEmpty: boolean;
+            /** @description Workout streak from AD-16 computeStreak on full client history */
+            streak: number;
         };
         WorkoutListResponseDto: {
             workouts: components["schemas"]["WorkoutDto"][];
