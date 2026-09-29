@@ -1,0 +1,394 @@
+---
+name: Quest Fitness вЂ” Р“РёР»СЊРґРёСЏ
+description: Р’РёР·СѓР°Р»СЊРЅР°СЏ СЃРёСЃС‚РµРјР° РІРЅСѓС‚СЂРµРЅРЅРµРіРѕ РёРЅСЃС‚СЂСѓРјРµРЅС‚Р° Р·Р°Р»Р° Quest Fitness. Mobile-first web. РўС‘РїР»С‹Р№ СЃРІРµС‚Р»С‹Р№ РїСЂРѕРґСѓРєС‚, С‚С‘РјРЅР°СЏ live-РЎРµСЃСЃРёСЏ, РѕРґРёРЅ РєСЂР°СЃРЅС‹Р№ Р°РєС†РµРЅС‚ РІ РєР°РґСЂРµ.
+status: final
+project: quest-fitness
+updated: 2026-09-29
+document_output_language: Russian
+sources:
+  - ../../prds/prd-quest-fitness-2026-09-29/prd.md
+  - ../../prds/prd-quest-fitness-2026-09-29/design-brief-guild.md
+  - ../../../../docs/project-spec.md
+  - imports/Quest-Fitness-Rebranding.pptx
+colors:
+  surface-app: '#FAF7F4'
+  surface-card: '#FFFFFF'
+  surface-cream: '#F6EBDD'
+  surface-sunken: '#F1EBE6'
+  ink-primary: '#241C20'
+  ink-muted: '#6E5D60'
+  ink-soon: '#7A6B6D'
+  ink-inverse: '#FFFFFF'
+  accent-red: '#C33F46'
+  accent-red-pressed: '#A7333A'
+  accent-apricot: '#EFB68C'
+  ink-error: '#8B3A3E'
+  border-hairline: '#BFAFB1'
+  border-control: '#8F8083'
+  border-subtle: '#E3D9D5'
+  surface-session: '#241C20'
+  surface-session-raised: '#302428'
+  surface-session-sunken: '#1B1416'
+  ink-on-session: '#F6EBDD'
+  ink-on-session-muted: '#BFAFB1'
+  border-session: '#3D2E32'
+typography:
+  display:
+    fontFamily: Rubik
+    fontSize: 28px
+    fontWeight: 700
+    lineHeight: 34px
+    letterSpacing: '-0.2px'
+  title:
+    fontFamily: Rubik
+    fontSize: 20px
+    fontWeight: 700
+    lineHeight: 26px
+  body:
+    fontFamily: Rubik
+    fontSize: 16px
+    fontWeight: 400
+    lineHeight: 24px
+  meta:
+    fontFamily: Rubik
+    fontSize: 13px
+    fontWeight: 500
+    lineHeight: 18px
+    letterSpacing: '0.2px'
+  button:
+    fontFamily: Rubik
+    fontSize: 16px
+    fontWeight: 600
+    lineHeight: 20px
+  numeric:
+    fontFamily: Rubik
+    fontSize: 32px
+    fontWeight: 700
+    lineHeight: 36px
+    note: 'tabular-nums вЂ” РІРµСЃ, РїРѕРІС‚РѕСЂРµРЅРёСЏ, С‚Р°Р№РјРµСЂС‹, С‚РѕРЅРЅР°Р¶'
+rounded:
+  sm: 8px
+  md: 12px
+  lg: 16px
+  full: 9999px
+spacing:
+  '1': 4px
+  '2': 8px
+  '3': 12px
+  '4': 16px
+  '5': 24px
+  '6': 32px
+  '7': 48px
+  gutter: 16px
+  margin-mobile: 16px
+  margin-wide: 24px
+  touch-min: 48px
+  control-md: 48px
+  control-lg: 56px
+  bottom-cta-zone: 64px
+  content-max: 640px
+  breakpoint-md: 768px
+  viewport-min-width: 360px
+  viewport-min-height: 640px
+components:
+  button-primary:
+    background: '{colors.accent-red}'
+    label-color: '{colors.ink-inverse}'
+    label-type: '{typography.button}'
+    height: '{spacing.control-lg}'
+    radius: '{rounded.md}'
+    padding-x: '{spacing.5}'
+    pressed-background: '{colors.accent-red-pressed}'
+    hover-background: '{colors.accent-red-pressed}'
+    hover-media: '(hover: hover)'
+    disabled-background: '{colors.border-subtle}'
+    disabled-label: '{colors.ink-muted}'
+  button-secondary:
+    background: '{colors.surface-card}'
+    border: '1px solid {colors.border-control}'
+    label-color: '{colors.ink-primary}'
+    label-type: '{typography.button}'
+    height: '{spacing.control-md}'
+    radius: '{rounded.md}'
+    padding-x: '{spacing.4}'
+    pressed-background: '{colors.surface-sunken}'
+    hover-background: '{colors.surface-sunken}'
+    hover-media: '(hover: hover)'
+  button-danger:
+    background: transparent
+    border: '1px solid {colors.accent-red}'
+    label-color: '{colors.accent-red}'
+    label-type: '{typography.button}'
+    height: '{spacing.control-md}'
+    radius: '{rounded.md}'
+    padding-x: '{spacing.4}'
+    pressed-background: '{colors.surface-cream}'
+    hover-background: '{colors.surface-cream}'
+    hover-media: '(hover: hover)'
+  focus-ring:
+    width: 2px
+    offset: 2px
+    light-inner: '{colors.ink-inverse}'
+    light-outer: '{colors.ink-primary}'
+    session-inner: '{colors.ink-primary}'
+    session-outer: '{colors.ink-on-session}'
+    note: 'Global :focus-visible only вЂ” components do not invent their own rings.'
+  bottom-cta:
+    container-background: '{colors.surface-card}'
+    container-background-session: '{colors.surface-session-raised}'
+    border-top: '1px solid {colors.border-subtle}'
+    border-top-session: '1px solid {colors.border-session}'
+    padding: '{spacing.3} {spacing.4}'
+    button-height: '{spacing.control-lg}'
+    button-width: '100%'
+    column-max: '{spacing.content-max}'
+    note: 'Fixed strip centers with content column; button = 100% of column not viewport. Optional full-bleed bar background only.'
+    safe-area: 'env(safe-area-inset-bottom)'
+  client-row:
+    background: '{colors.surface-card}'
+    min-height: '{spacing.control-lg}'
+    padding: '{spacing.3} {spacing.4}'
+    radius: '{rounded.md}'
+    gap: '{spacing.3}'
+    name-type: '{typography.body}'
+    meta-type: '{typography.meta}'
+    meta-color: '{colors.ink-muted}'
+    divider: '1px solid {colors.border-subtle}'
+    hover-background: '{colors.surface-sunken}'
+    hover-media: '(hover: hover)'
+    cursor: pointer
+  lock-badge:
+    background: '{colors.surface-cream}'
+    border: '1px solid {colors.border-control}'
+    label-color: '{colors.ink-primary}'
+    label-type: '{typography.meta}'
+    icon-color: '{colors.ink-muted}'
+    icon-size: 16px
+    height: 24px
+    hit-area: '{spacing.touch-min}'
+    radius: '{rounded.full}'
+    padding-x: '{spacing.2}'
+    note: 'In client-row вЂ” decorative only. Interactive hit в‰Ґ48px only in Client card header.'
+  streak-chip:
+    background: '{colors.accent-apricot}'
+    label-color: '{colors.ink-primary}'
+    number-type: '{typography.title}'
+    label-type: '{typography.meta}'
+    radius: '{rounded.md}'
+    padding: '{spacing.3} {spacing.4}'
+    zero-background: '{colors.surface-cream}'
+    zero-label-color: '{colors.ink-muted}'
+  tab-bar:
+    background: '{colors.surface-card}'
+    border-top: '1px solid {colors.border-subtle}'
+    height: 64px
+    label-type: '{typography.meta}'
+    label-color: '{colors.ink-muted}'
+    active-label-color: '{colors.ink-primary}'
+    active-indicator: '2px solid {colors.accent-red}'
+    soon-label-color: '{colors.ink-soon}'
+    soon-caption: 'РЎРєРѕСЂРѕ'
+    icon-size: 24px
+    pattern: 'icon + short label'
+    labels: 'РўСЂРµРЅРёСЂРѕРІРєРё / РђРЅР°Р»РёС‚РёРєР° / РџРёС‚Р°РЅРёРµ / Р—Р°РјРµСЂС‹ / РђС‡РёРІРєРё / РђР±РѕРЅРµРјРµРЅС‚'
+    column-max: '{spacing.content-max}'
+    note: 'Icon above label; no truncation. No opacity on soon tabs.'
+  status-pill:
+    height: 24px
+    radius: '{rounded.full}'
+    label-type: '{typography.meta}'
+    waiting-bg: '{colors.surface-sunken}'
+    waiting-ink: '{colors.ink-primary}'
+    arrived-bg: '{colors.accent-apricot}'
+    arrived-ink: '{colors.ink-primary}'
+    missed-bg: '{colors.surface-cream}'
+    missed-ink: '{colors.ink-muted}'
+    cancelled-bg: '{colors.surface-cream}'
+    cancelled-ink: '{colors.ink-muted}'
+    note: 'Word is the differentiator; background is secondary cue вЂ” never red for status.'
+  input:
+    background: '{colors.surface-card}'
+    border: '1px solid {colors.border-control}'
+    focus-border: '1px solid {colors.ink-primary}'
+    error-border: '1px solid {colors.ink-error}'
+    height: '{spacing.control-lg}'
+    radius: '{rounded.sm}'
+    padding-x: '{spacing.4}'
+    value-type: '{typography.body}'
+    value-color: '{colors.ink-primary}'
+    placeholder-color: '{colors.ink-muted}'
+  field-error:
+    color: '{colors.ink-error}'
+    type: '{typography.meta}'
+    placement: 'below field'
+  bottom-sheet:
+    background: '{colors.surface-card}'
+    background-session: '{colors.surface-session-raised}'
+    radius: '{rounded.lg}'
+    handle-color: '{colors.border-control}'
+    max-height: '85vh'
+    padding: '{spacing.4}'
+  confirm-dialog:
+    background: '{colors.surface-card}'
+    radius: '{rounded.lg}'
+    padding: '{spacing.5}'
+    title-type: '{typography.title}'
+    body-type: '{typography.body}'
+    layout: 'primary confirm + secondary alternative (РџРµСЂРµРЅРµСЃС‚Рё when streak at risk)'
+  trainer-menu:
+    trigger: 'header icon button'
+    pattern: 'bottom-sheet'
+    background: '{colors.surface-card}'
+    radius: '{rounded.lg}'
+    row-height: '{spacing.control-lg}'
+    row-type: '{typography.body}'
+    row-color: '{colors.ink-primary}'
+    divider: '1px solid {colors.border-subtle}'
+    note: 'Same sheet on all widths вЂ” never becomes sidebar, top-nav, or hover dropdown.'
+  soon-stub:
+    background: '{colors.surface-cream}'
+    radius: '{rounded.lg}'
+    padding: '{spacing.6} {spacing.5}'
+    title-type: '{typography.title}'
+    title-color: '{colors.ink-primary}'
+    body-type: '{typography.body}'
+    body-color: '{colors.ink-muted}'
+    sign-size: 32px
+    sign-color: '{colors.border-hairline}'
+  session-set-logger:
+    background: '{colors.surface-session-raised}'
+    active-border: '2px solid {colors.accent-red}'
+    active-marker: 'РџРѕРґС…РѕРґ вЂ” СЃРµР№С‡Р°СЃ'
+    idle-border: '1px solid {colors.border-session}'
+    radius: '{rounded.md}'
+    padding: '{spacing.4}'
+    value-type: '{typography.numeric}'
+    value-color: '{colors.ink-on-session}'
+    field-label-type: '{typography.meta}'
+    field-label-color: '{colors.ink-on-session-muted}'
+    stepper-size: '{spacing.touch-min}'
+    logged-row-background: '{colors.surface-session-sunken}'
+    modifier-dot-size: 10px
+    note: 'Active set: 2px red + text marker (red alone is 2.92:1 on raised вЂ” not sole cue).'
+  rest-timer:
+    background: '{colors.surface-session-sunken}'
+    track-color: '{colors.border-session}'
+    progress-color: '{colors.accent-red}'
+    value-type: '{typography.numeric}'
+    value-color: '{colors.ink-on-session}'
+    caption-type: '{typography.meta}'
+    caption-color: '{colors.ink-on-session-muted}'
+    radius: '{rounded.md}'
+    height: '{spacing.7}'
+  invite-share:
+    background: '{colors.surface-cream}'
+    radius: '{rounded.lg}'
+    padding: '{spacing.5} {spacing.4}'
+    url-background: '{colors.surface-card}'
+    url-border: '1px dashed {colors.border-control}'
+    url-type: '{typography.meta}'
+    url-color: '{colors.ink-muted}'
+    ttl-type: '{typography.meta}'
+    ttl-color: '{colors.ink-muted}'
+    action-height: '{spacing.control-lg}'
+---
+
+# Quest Fitness вЂ” DESIGN (Р“РёР»СЊРґРёСЏ)
+
+## Brand & Style
+
+Quest Fitness вЂ” РЅРµ РІРёС‚СЂРёРЅР° Рё РЅРµ SaaS-Р»РµРЅРґРёРЅРі, Р° СЂР°Р±РѕС‡РёР№ РёРЅСЃС‚СЂСѓРјРµРЅС‚ РѕРґРЅРѕРіРѕ Р·Р°Р»Р°. РўСЂРµРЅРµСЂ РґРµСЂР¶РёС‚ С‚РµР»РµС„РѕРЅ РјРѕРєСЂРѕР№ СЂСѓРєРѕР№ РјРµР¶РґСѓ РїРѕРґС…РѕРґР°РјРё, РєР»РёРµРЅС‚ РѕС‚РєСЂС‹РІР°РµС‚ РєР°Р±РёРЅРµС‚ СЂР°Р· РІ РЅРµРґРµР»СЋ РїРѕСЃРјРѕС‚СЂРµС‚СЊ, С‡С‚Рѕ Р±С‹Р»Рѕ. Р’СЃС‘, С‡С‚Рѕ РЅРµ РїРѕРјРѕРіР°РµС‚ РІ СЌС‚РѕС‚ РјРѕРјРµРЅС‚, вЂ” Р»РёС€РЅРµРµ.
+
+РћС‚СЃСЋРґР° РїРѕСЃР°РґРєР°: С‚С‘РїР»Р°СЏ Р±СѓРјР°Р¶РЅР°СЏ СЃРІРµС‚Р»Р°СЏ РїРѕРІРµСЂС…РЅРѕСЃС‚СЊ РІ В«РєР°Р±РёРЅРµС‚РЅРѕР№В» С‡Р°СЃС‚Рё РїСЂРѕРґСѓРєС‚Р° (РїСѓР», С€Р°Р±Р»РѕРЅС‹, РєР°СЂС‚РѕС‡РєР° РєР»РёРµРЅС‚Р°, РєР°Р±РёРЅРµС‚ РєР»РёРµРЅС‚Р°) Рё РіР»СѓР±РѕРєРёР№ СѓРіРѕР»СЊРЅС‹Р№ СЌРєСЂР°РЅ РІ live-РЎРµСЃСЃРёРё, РіРґРµ РІР°Р¶РЅС‹ С‡РёС‚Р°РµРјРѕСЃС‚СЊ РЅР° СЃРІРµС‚Сѓ Р·Р°Р»Р° Рё РѕС‚СЃСѓС‚СЃС‚РІРёРµ РІРёР·СѓР°Р»СЊРЅРѕРіРѕ С€СѓРјР°. РћРґРёРЅ РєСЂР°СЃРЅС‹Р№ Р°РєС†РµРЅС‚ РІ РєР°РґСЂРµ вЂ” РѕРЅ РІСЃРµРіРґР° РѕР·РЅР°С‡Р°РµС‚ В«РІРѕС‚ СЃСЋРґР°В» РёР»Рё В«РІРѕС‚ СЃРµР№С‡Р°СЃВ».
+
+Р“РёР»СЊРґРёСЏ Р¶РёРІС‘С‚ РІ РїСЂРѕРґСѓРєС‚Рµ С‚СЂРµРјСЏ РІРµС‰Р°РјРё: Р·РЅР°Рє (РіРёСЂСЏ СЃ РґСЂР°РєРѕРЅРѕРј) РєР°Рє РёРєРѕРЅРєР° РїСЂРёР»РѕР¶РµРЅРёСЏ Рё РјРѕРЅРѕС…СЂРѕРјРЅР°СЏ РјРµС‚РєР° 24вЂ“32 px РІ С€Р°РїРєРµ; РєРІРµСЃС‚РѕРІС‹Р№ СЏР·С‹Рє РІ Р·Р°РіРѕР»РѕРІРєР°С…, РїСѓСЃС‚С‹С… СЃРѕСЃС‚РѕСЏРЅРёСЏС… Рё В«РЎРєРѕСЂРѕВ»-Р·Р°РіР»СѓС€РєР°С…; С‚С‘РїР»Р°СЏ РїР°Р»РёС‚СЂР°. РќРёРєР°РєРёС… С„СЌРЅС‚РµР·Рё-РёР»Р»СЋСЃС‚СЂР°С†РёР№, СЃРІРёС‚РєРѕРІ Рё СЂР°РјРѕРє РІРЅСѓС‚СЂРё РїСЂРѕРґСѓРєС‚РѕРІС‹С… СЌРєСЂР°РЅРѕРІ вЂ” РјРµС‚Р°С„РѕСЂР° РЅРµСЃС‘С‚СЃСЏ СЃР»РѕРІР°РјРё Рё С†РІРµС‚РѕРј, РЅРµ РґРµРєРѕСЂРѕРј.
+
+РљРЅРѕРїРєРё РґРµР№СЃС‚РІРёР№ РіРѕРІРѕСЂСЏС‚ РїРѕ-С‡РµР»РѕРІРµС‡РµСЃРєРё: **РќР°С‡Р°С‚СЊ**, **РџСЂРѕРїСѓСЃС‚РёС‚СЊ**, **РћС‚РјРµРЅРёС‚СЊ**, **РџРµСЂРµРЅРµСЃС‚Рё**, **РћСЃРІРѕР±РѕРґРёС‚СЊ**. РљРІРµСЃС‚РѕРІС‹Рµ С„РѕСЂРјСѓР»РёСЂРѕРІРєРё РЅР° РєРЅРѕРїРєР°С… Р·Р°РїСЂРµС‰РµРЅС‹.
+
+## Colors
+
+РџР°Р»РёС‚СЂР° вЂ” РїРѕРґРїРёСЃР°РЅРЅС‹Р№ СЃРІРѕС‚С‡ СЂРµР±СЂРµРЅРґРёРЅРіР° РїР»СЋСЃ РјРёРЅРёРјСѓРј СЂР°Р±РѕС‡РёС… РїСЂРѕРёР·РІРѕРґРЅС‹С….
+
+- **РЈРіРѕР»СЊ `#241C20`** (`{colors.ink-primary}` / `{colors.surface-session}`) вЂ” РѕСЃРЅРѕРІРЅРѕР№ С‚РµРєСЃС‚ РЅР° СЃРІРµС‚Р»РѕРј Рё РѕСЃРЅРѕРІРЅР°СЏ РїРѕРІРµСЂС…РЅРѕСЃС‚СЊ live-РЎРµСЃСЃРёРё. РћРґРёРЅ Рё С‚РѕС‚ Р¶Рµ С†РІРµС‚ РґРµСЂР¶РёС‚ РѕР±Рµ СЂРѕР»Рё: РїСЂРѕРґСѓРєС‚ Рё РЎРµСЃСЃРёСЏ РѕС‰СѓС‰Р°СЋС‚СЃСЏ РєР°Рє РѕРґРЅР° СЃРёСЃС‚РµРјР°, РІС‹РІРµСЂРЅСѓС‚Р°СЏ РЅР°РёР·РЅР°РЅРєСѓ.
+- **РџСЂРѕРґСѓРєС‚РѕРІС‹Р№ С„РѕРЅ `#FAF7F4`** (`{colors.surface-app}`) вЂ” С„РѕРЅ РІСЃРµС… СЃРІРµС‚Р»С‹С… СЌРєСЂР°РЅРѕРІ. РљР°СЂС‚РѕС‡РєРё Рё СЃС‚СЂРѕРєРё вЂ” **Р±РµР»С‹Рµ** `{colors.surface-card}`, Р·Р° СЃС‡С‘С‚ СЌС‚РѕРіРѕ СЃРїРёСЃРѕРє С‡РёС‚Р°РµС‚СЃСЏ Р±РµР· С‚РµРЅРµР№.
+- **РљСЂРµРј `#F6EBDD`** (`{colors.surface-cream}`) вЂ” РјРѕРјРµРЅС‚С‹ В«РґРѕ Рё РїРѕСЃР»Рµ СЂР°Р±РѕС‚С‹В»: РѕРЅР±РѕСЂРґРёРЅРі, СЂРµРіРёСЃС‚СЂР°С†РёСЏ РїРѕ РїСЂРёРіР»Р°С€РµРЅРёСЋ, РїСѓСЃС‚С‹Рµ СЃРѕСЃС‚РѕСЏРЅРёСЏ, В«РЎРєРѕСЂРѕВ»-Р·Р°РіР»СѓС€РєРё, РёС‚РѕРі РЎРµСЃСЃРёРё. РљСЂРµРј РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РєР°Рє С„РѕРЅ СЂР°Р±РѕС‡РёС… СЃРїРёСЃРєРѕРІ вЂ” РѕРЅ СЃРёРіРЅР°Р»РёР·РёСЂСѓРµС‚ РїР°СѓР·Сѓ.
+- **РљСЂР°СЃРЅС‹Р№ `#C33F46`** (`{colors.accent-red}`) вЂ” **РєР°РЅРѕРЅ, РµРґРёРЅСЃС‚РІРµРЅРЅС‹Р№ РєСЂР°СЃРЅС‹Р№**. РћРґРёРЅ Р°РєС‚РёРІРЅС‹Р№ Р°РєС†РµРЅС‚ РІ РІРёРґРёРјРѕР№ РѕР±Р»Р°СЃС‚Рё: primary CTA, С‚РµРєСѓС‰РёР№ РїРѕРґС…РѕРґ/СѓРїСЂР°Р¶РЅРµРЅРёРµ РІ РЎРµСЃСЃРёРё, РїСЂРѕРіСЂРµСЃСЃ С‚Р°Р№РјРµСЂР° РѕС‚РґС‹С…Р°, Р°РєС‚РёРІРЅР°СЏ РІРєР»Р°РґРєР°. РљСЂР°СЃРЅС‹Р№ РЅРµ СЂР°СЃРєСЂР°С€РёРІР°РµС‚ СЃС‚Р°С‚СѓСЃС‹ РІ СЃРїРёСЃРєР°С… Рё РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РєР°Рє С„РѕРЅ Р±РѕР»СЊС€РёС… РѕР±Р»Р°СЃС‚РµР№. `#B33743` РёР· СЂР°Р±РѕС‡РёС… СЃР»Р°Р№РґРѕРІ вЂ” РЅРµ РєР°РЅРѕРЅ, РІ РїСЂРѕРґСѓРєС‚ РЅРµ РїРѕРїР°РґР°РµС‚.
+- **РђР±СЂРёРєРѕСЃ `#EFB68C`** (`{colors.accent-apricot}`) вЂ” Р±РµР№РґР¶Рё Рё РґРѕСЂРѕР¶РєРё РїСЂРѕРіСЂРµСЃСЃР°: С‡РёРї РЎС‚СЂРёРєР°, СЃС‚Р°С‚СѓСЃ В«РџСЂРёС€С‘Р»В», Р·Р°РїРѕР»РЅРµРЅРёРµ С€РєР°Р». **РќРёРєРѕРіРґР° РЅРµ С‚РµРєСЃС‚**: РЅР° Р±РµР»РѕРј Р°Р±СЂРёРєРѕСЃ РґР°С‘С‚ РєРѕРЅС‚СЂР°СЃС‚ 1.8:1 Рё РЅРµС‡РёС‚Р°РµРј.
+- **РџСЂРёРіР»СѓС€С‘РЅРЅС‹Р№ С‚РµРєСЃС‚ `#6E5D60`** (`{colors.ink-muted}`) вЂ” РїРѕРґРїРёСЃРё, РјРµС‚Р°, РІС‚РѕСЂРёС‡РЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ. **5.84:1** РЅР° Р±РµР»РѕРј (РЅРµ 6.2). РќР° РєСЂРµРјРµ вЂ” **4.96:1**. Р”Р»СЏ В«РЎРєРѕСЂРѕВ»-РІРєР»Р°РґРѕРє вЂ” РѕС‚РґРµР»СЊРЅС‹Р№ `{colors.ink-soon}` `#8A7A7C` (**в‰Ґ 4.5:1** РЅР° Р±РµР»РѕР№ РєР°СЂС‚РѕС‡РєРµ); **opacity РґР»СЏ РІРєР»Р°РґРѕРє РЅРµ РёСЃРїРѕР»СЊР·СѓРµРј**.
+- **Р“СЂР°РЅРёС†С‹:** `{colors.border-control}` `#8F8083` вЂ” РёРЅС‚РµСЂР°РєС‚РёРІРЅС‹Рµ РєРѕРЅС‚СЂРѕР»С‹ (в‰Ґ 3:1 РЅР° Р±РµР»РѕРј). `{colors.border-hairline}` `#BFAFB1` вЂ” С‚РѕР»СЊРєРѕ С‡РёРїС‹/РґРµРєРѕСЂ, РЅРµ РµРґРёРЅСЃС‚РІРµРЅРЅС‹Р№ Р°С„С„РѕСЂРґР°РЅСЃ РєРЅРѕРїРєРё. `{colors.border-subtle}` `#E3D9D5` вЂ” СЂР°Р·РґРµР»РёС‚РµР»Рё СЃРїРёСЃРєРѕРІ.
+- **РљСЂР°СЃРЅС‹Р№ РЅР° РЎРµСЃСЃРёРё:** РЅР° `{colors.surface-session}` в‰€ 3.26:1 (РЅРµС‚РµСЃС‚РѕРІС‹Р№ OK); РЅР° `{colors.surface-session-raised}` в‰€ **2.92:1** вЂ” РїРѕСЌС‚РѕРјСѓ Р°РєС‚РёРІРЅС‹Р№ РџРѕРґС…РѕРґ РІСЃРµРіРґР° РґСѓР±Р»РёСЂСѓРµС‚СЃСЏ С‚РµРєСЃС‚РѕРј В«РџРѕРґС…РѕРґ вЂ” СЃРµР№С‡Р°СЃВ» Рё СЂР°РјРєРѕР№ 2 px, РЅРµ РѕРґРЅРѕР№ РєСЂР°СЃРЅРѕР№ Р»РёРЅРёРµР№.
+
+РўС‘РјРЅС‹Рµ С‚РѕРєРµРЅС‹ РЎРµСЃСЃРёРё: `{colors.surface-session-raised}` `#302428` РґР»СЏ РєР°СЂС‚РѕС‡РµРє Р»РѕРіРіРµСЂР°, `{colors.surface-session-sunken}` `#1B1416` РґР»СЏ СѓР¶Рµ Р·Р°РїРёСЃР°РЅРЅС‹С… РїРѕРґС…РѕРґРѕРІ Рё РїРѕРґР»РѕР¶РєРё С‚Р°Р№РјРµСЂР°, `{colors.ink-on-session}` `#F6EBDD` РґР»СЏ РѕСЃРЅРѕРІРЅРѕРіРѕ С‚РµРєСЃС‚Р° (РІС‹СЃРѕРєРёР№ РєРѕРЅС‚СЂР°СЃС‚ Рє СѓРіР»СЋ), `{colors.ink-on-session-muted}` `#BFAFB1` РґР»СЏ РїРѕРґРїРёСЃРµР№ (7.9:1), `{colors.border-session}` `#3D2E32` РґР»СЏ СЂР°Р·РґРµР»РёС‚РµР»РµР№. РљСЂР°СЃРЅС‹Р№ РЅР° СѓРіР»Рµ РґР°С‘С‚ 3.3:1 вЂ” РµРіРѕ СЂРѕР»СЊ РЅР° С‚С‘РјРЅРѕРј С‚РѕР»СЊРєРѕ РЅРµС‚РµРєСЃС‚РѕРІР°СЏ: СЂР°РјРєР° Р°РєС‚РёРІРЅРѕРіРѕ РїРѕРґС…РѕРґР°, Р·Р°Р»РёРІРєР° РїСЂРѕРіСЂРµСЃСЃР°, С‚РѕС‡РєР° В«РёРґС‘С‚ Р·Р°РїРёСЃСЊВ». РўРµРєСЃС‚ РЅР° РєСЂР°СЃРЅРѕР№ Р·Р°Р»РёРІРєРµ вЂ” Р±РµР»С‹Р№ (5.1:1).
+
+Р—Р°РїСЂРµС‰РµРЅРѕ: Р»СЋР±С‹Рµ РіСЂР°РґРёРµРЅС‚С‹, РїРѕР»СѓРїСЂРѕР·СЂР°С‡РЅС‹Рµ В«СЃС‚РµРєР»СЏРЅРЅС‹РµВ» СЃР»РѕРё, С„РёРѕР»РµС‚РѕРІС‹Р№ Рё РЅРµРѕРЅ, СЃРІРµС‡РµРЅРёСЏ, С†РІРµС‚РѕРІРѕРµ РєРѕРґРёСЂРѕРІР°РЅРёРµ СЃС‚Р°С‚СѓСЃРѕРІ Р·Р° РїСЂРµРґРµР»Р°РјРё РѕРїРёСЃР°РЅРЅРѕРіРѕ РЅР°Р±РѕСЂР°.
+
+## Typography
+
+**Rubik** вЂ” РІРµСЃСЊ РёРЅС‚РµСЂС„РµР№СЃ. Bold (700) вЂ” Р·Р°РіРѕР»РѕРІРєРё, Regular (400) вЂ” С‚РµРєСЃС‚, Medium/SemiBold (500/600) вЂ” РјРµС‚Р° Рё РєРЅРѕРїРєРё. РќРёРєР°РєРѕР№ РІС‚РѕСЂРѕР№ РіР°СЂРЅРёС‚СѓСЂС‹; Р»РµС‚С‚РµСЂРёРЅРі Р»РѕРіРѕС‚РёРїР° Р¶РёРІС‘С‚ РѕС‚РґРµР»СЊРЅРѕ РѕС‚ UI Рё РІ РїСЂРѕРґСѓРєС‚ РЅРµ РїРѕРїР°РґР°РµС‚.
+
+Р РѕР»Рё:
+
+| Р РѕР»СЊ | Р Р°Р·РјРµСЂ / РІРµСЃ | Р“РґРµ |
+|---|---|---|
+| `{typography.display}` | 28/34, 700 | РљРІРµСЃС‚РѕРІС‹Рµ Р·Р°РіРѕР»РѕРІРєРё СЌРєСЂР°РЅРѕРІ-РјРѕРјРµРЅС‚РѕРІ: СЂРµРіРёСЃС‚СЂР°С†РёСЏ, РёС‚РѕРі РЎРµСЃСЃРёРё, РїСѓСЃС‚С‹Рµ СЃРѕСЃС‚РѕСЏРЅРёСЏ |
+| `{typography.title}` | 20/26, 700 | Р—Р°РіРѕР»РѕРІРєРё СЌРєСЂР°РЅРѕРІ Рё РєР°СЂС‚РѕС‡РµРє, РёРјСЏ РљР»РёРµРЅС‚Р°, РЅР°Р·РІР°РЅРёРµ РЈРїСЂР°Р¶РЅРµРЅРёСЏ РІ РЎРµСЃСЃРёРё |
+| `{typography.body}` | 16/24, 400 | РћСЃРЅРѕРІРЅРѕР№ С‚РµРєСЃС‚, Р·РЅР°С‡РµРЅРёСЏ РїРѕР»РµР№, СЃС‚СЂРѕРєРё СЃРїРёСЃРєРѕРІ |
+| `{typography.meta}` | 13/18, 500 | РЎС‚Р°С‚СѓСЃС‹, РґР°С‚С‹, РїРѕРґРїРёСЃРё РїРѕР»РµР№, TTL, Р°РІС‚РѕСЂ РЎРµСЃСЃРёРё |
+| `{typography.button}` | 16/20, 600 | Р’СЃРµ РєРЅРѕРїРєРё |
+| `{typography.numeric}` | 32/36, 700, tabular | Р’РµСЃ, РїРѕРІС‚РѕСЂРµРЅРёСЏ, RPE, С‚Р°Р№РјРµСЂС‹, С‚РѕРЅРЅР°Р¶ |
+
+РџСЂР°РІРёР»Р°: Р±РµР· РєР°РїСЃР°, Р±РµР· СЂР°Р·СЂСЏРґРєРё Р·Р°РіРѕР»РѕРІРєРѕРІ, Р±РµР· РєСѓСЂСЃРёРІР°. Р¦РёС„СЂС‹ РІ РЎРµСЃСЃРёРё Рё РІ РёСЃС‚РѕСЂРёРё вЂ” С‚РѕР»СЊРєРѕ С‚Р°Р±Р»РёС‡РЅС‹Рµ, С‡С‚РѕР±С‹ Р·РЅР°С‡РµРЅРёСЏ РЅРµ В«РїСЂС‹РіР°Р»РёВ» РїСЂРё РёРЅРєСЂРµРјРµРЅС‚Рµ. РњРёРЅРёРјР°Р»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ С‚РµРєСЃС‚Р° РІ РїСЂРѕРґСѓРєС‚Рµ вЂ” 13 px; РїРѕРґРїРёСЃРё РјРµР»СЊС‡Рµ РЅРµ СЂРёСЃСѓРµРј.
+
+## Layout & Spacing
+
+РЁРєР°Р»Р° 4 / 8 / 12 / 16 / 24 / 32 / 48 px. **Mobile-first:** РѕРґРЅР° РєРѕР»РѕРЅРєР° РІСЃРµРіРґР° вЂ” РєР°РЅРѕРЅРёС‡РµСЃРєРёР№ РјР°РєРµС‚ Р·Р°Р»Р°. `{spacing.content-max}` (640 px) + Р°РІС‚Рѕ-С†РµРЅС‚СЂРёСЂРѕРІР°РЅРёРµ РґРµР№СЃС‚РІСѓСЋС‚ **РЅР° РІСЃРµС… С€РёСЂРёРЅР°С…** (РЅРµ С‚РѕР»СЊРєРѕ в‰Ґ `{spacing.breakpoint-md}`): РєРѕР»РѕРЅРєР° С„РёР·РёС‡РµСЃРєРё РЅРµ С€РёСЂРµ 640 px. Р‘РѕРєРѕРІС‹Рµ РїРѕР»СЏ: `{spacing.margin-mobile}` 16 px РЅРёР¶Рµ `{spacing.breakpoint-md}` (768 px); `{spacing.margin-wide}` 24 px РЅР° в‰Ґ breakpoint. Р¤РѕРЅ РІРѕРєСЂСѓРі РєРѕР»РѕРЅРєРё вЂ” `{colors.surface-app}`. Р—Р°РєСЂРµРїР»С‘РЅРЅС‹Рµ `bottom-cta` Рё `tab-bar` РІС‹СЂР°РІРЅРёРІР°СЋС‚СЃСЏ РїРѕ С‚РѕР№ Р¶Рµ РєРѕР»РѕРЅРєРµ (РєРЅРѕРїРєР°/РІРєР»Р°РґРєРё = 100 % РєРѕР»РѕРЅРєРё, РЅРµ РІСЊСЋРїРѕСЂС‚Р°). РњРёРЅРёРјСѓРј РІСЊСЋРїРѕСЂС‚Р°: `{spacing.viewport-min-width}` Г— `{spacing.viewport-min-height}`. РџСЂРёС‘РјРєР° вЂ” РїРѕ РјРѕР±РёР»СЊРЅРѕРјСѓ РєР°РґСЂСѓ. Р‘РµР· СЃР°Р№РґР±Р°СЂРѕРІ Рё РјРЅРѕРіРѕРєРѕР»РѕРЅРѕС‡РЅС‹С… РґР°С€Р±РѕСЂРґРѕРІ.
+
+Р’РµСЂС‚РёРєР°Р»СЊРЅС‹Р№ СЂРёС‚Рј: `{spacing.5}` РјРµР¶РґСѓ СЃРјС‹СЃР»РѕРІС‹РјРё Р±Р»РѕРєР°РјРё СЌРєСЂР°РЅР°, `{spacing.3}` РІРЅСѓС‚СЂРё Р±Р»РѕРєР°, `{spacing.2}` РјРµР¶РґСѓ РјРµС‚РєРѕР№ Рё Р·РЅР°С‡РµРЅРёРµРј. РЎС‚СЂРѕРєРё СЃРїРёСЃРєРѕРІ РЅРµ СЃР¶РёРјР°СЋС‚СЃСЏ СЂР°РґРё РєРѕР»РёС‡РµСЃС‚РІР° вЂ” РјРёРЅРёРјР°Р»СЊРЅР°СЏ РІС‹СЃРѕС‚Р° СЃС‚СЂРѕРєРё `{spacing.control-lg}` 56 px.
+
+РќРёР¶РЅСЏСЏ Р·РѕРЅР° РґРµР№СЃС‚РІРёСЏ: СЌРєСЂР°РЅС‹ СЃ РѕРґРЅРёРј РіР»Р°РІРЅС‹Рј РґРµР№СЃС‚РІРёРµРј (РћР¶РёРґР°РЅРёРµ, РЎРµСЃСЃРёСЏ, СЂРµРіРёСЃС‚СЂР°С†РёСЏ, РїСЂРёРіР»Р°С€РµРЅРёРµ) РѕС‚РґР°СЋС‚ РЅРёР· РїРѕРґ Р·Р°РєСЂРµРїР»С‘РЅРЅС‹Р№ `bottom-cta` РІС‹СЃРѕС‚РѕР№ 56 px РІ РєРѕРЅС‚РµР№РЅРµСЂРµ `{spacing.bottom-cta-zone}` + safe-area. РљРѕРЅС‚РµРЅС‚ СЃРєСЂРѕР»Р»РёС‚СЃСЏ РїРѕРґ РЅРёРј, CTA РЅРµ СѓРµР·Р¶Р°РµС‚. РћРґРёРЅ СЌРєСЂР°РЅ вЂ” РѕРґРЅР° СЂР°Р±РѕС‚Р°: РЅР° РЎРµСЃСЃРёРё РІ РєР°РґСЂРµ РѕРґРЅРѕ СѓРїСЂР°Р¶РЅРµРЅРёРµ Рё РѕРґРёРЅ РїРѕРґС…РѕРґ.
+
+РўР°С‡-Р·РѕРЅС‹ вЂ” РЅРµ РјРµРЅСЊС€Рµ `{spacing.touch-min}` 48 px, СЃС‚РµРїРїРµСЂС‹ РІРµСЃР°/РїРѕРІС‚РѕСЂРѕРІ вЂ” СЂРѕРІРЅРѕ 48 px Рё СЂР°Р·РЅРµСЃРµРЅС‹, С‡С‚РѕР±С‹ РїРѕРїР°РґР°С‚СЊ Р±РѕР»СЊС€РёРј РїР°Р»СЊС†РµРј РѕРґРЅРѕР№ СЂСѓРєРѕР№.
+
+## Elevation & Depth
+
+РўРµРЅРµР№ РІ РїСЂРѕРґСѓРєС‚Рµ РЅРµС‚. РРµСЂР°СЂС…РёСЏ СЃС‚СЂРѕРёС‚СЃСЏ С‚РѕРЅРѕРј: `{colors.surface-app}` в†’ `{colors.surface-card}` РґР»СЏ РєР°СЂС‚РѕС‡РµРє, `{colors.surface-session}` в†’ `{colors.surface-session-raised}` РІ РЎРµСЃСЃРёРё. Р Р°Р·РґРµР»РёС‚РµР»Рё вЂ” hairline 1 px.
+
+Р•РґРёРЅСЃС‚РІРµРЅРЅРѕРµ РёСЃРєР»СЋС‡РµРЅРёРµ вЂ” Р·Р°РєСЂРµРїР»С‘РЅРЅС‹Р№ `bottom-cta` Рё С€С‚РѕСЂРєРё (bottom sheet): Сѓ РЅРёС… РІРµСЂС…РЅСЏСЏ РіСЂР°РЅРёС†Р° 1 px Рё, РїСЂРё СЃРєСЂРѕР»Р»Рµ РєРѕРЅС‚РµРЅС‚Р° РїРѕРґ РЅРёРјРё, С‚РµРЅСЊ `0 -1px 0 {colors.border-subtle}` вЂ” СЂРѕРІРЅРѕ РЅР°СЃС‚РѕР»СЊРєРѕ, С‡С‚РѕР±С‹ С‡РёС‚Р°Р»РѕСЃСЊ В«РїРѕРІРµСЂС…В», Р±РµР· РјСЏРіРєРѕРіРѕ РѕСЂРµРѕР»Р°.
+
+РњРѕРґР°Р»СЊРЅС‹Рµ СЃР»РѕРё вЂ” РЅРµ РіР»СѓР±Р¶Рµ РѕРґРЅРѕРіРѕ СѓСЂРѕРІРЅСЏ. Р’ РЎРµСЃСЃРёРё РјРѕРґР°Р»РѕРє РЅРµС‚ РІРѕРІСЃРµ: РІС‹Р±РѕСЂ РњРѕРґРёС„РёРєР°С‚РѕСЂР°, Р·Р°РјРµРЅР° СѓРїСЂР°Р¶РЅРµРЅРёСЏ Рё Р·Р°РІРµСЂС€РµРЅРёРµ РѕС‚РєСЂС‹РІР°СЋС‚СЃСЏ С€С‚РѕСЂРєРѕР№ СЃРЅРёР·Сѓ, РЅРµ РїРµСЂРµРєСЂС‹РІР°СЏ С‚РµРєСѓС‰РёР№ РїРѕРґС…РѕРґ РїРѕР»РЅРѕСЃС‚СЊСЋ.
+
+## Shapes
+
+`{rounded.sm}` 8 px вЂ” РїРѕР»СЏ РІРІРѕРґР°, СЃС‚РµРїРїРµСЂС‹, РјРµР»РєРёРµ С‡РёРїС‹. `{rounded.md}` 12 px вЂ” РєРЅРѕРїРєРё, СЃС‚СЂРѕРєРё-РєР°СЂС‚РѕС‡РєРё, Р±Р»РѕРє Р»РѕРіРіРµСЂР°. `{rounded.lg}` 16 px вЂ” РєСЂСѓРїРЅС‹Рµ В«РјРѕРјРµРЅС‚РЅС‹РµВ» Р±Р»РѕРєРё: РєСЂРµРј-РїР°РЅРµР»Рё, В«РЎРєРѕСЂРѕВ»-Р·Р°РіР»СѓС€РєР°, РёС‚РѕРі РЎРµСЃСЃРёРё. `{rounded.full}` вЂ” С‚РѕР»СЊРєРѕ РґР»СЏ Р±РµР№РґР¶РµР№-РїРёР»СЋР»СЊ (`lock-badge`, СЃС‚Р°С‚СѓСЃС‹) Рё Р°РІР°С‚Р°СЂРЅС‹С… РєСЂСѓР¶РєРѕРІ.
+
+Р›РѕРіРёРєР°: С‡РµРј РєСЂСѓРїРЅРµРµ РїРѕРІРµСЂС…РЅРѕСЃС‚СЊ, С‚РµРј РјСЏРіС‡Рµ СѓРіРѕР»; РёРЅС‚РµСЂР°РєС‚РёРІ РґРµСЂР¶РёС‚СЃСЏ РЅР° 12 px, С‡С‚РѕР±С‹ РєРЅРѕРїРєР° РЅРµ РІС‹РіР»СЏРґРµР»Р° РЅРё РїР»Р°РЅС€РµС‚РѕРј iOS, РЅРё РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРѕРј Р°РґРјРёРЅРєРё. РРєРѕРЅРєРё вЂ” Р»РёРЅРµР№РЅС‹Рµ, 1.5 px С€С‚СЂРёС…, 24 px СЃРµС‚РєР°. Р­РјРѕРґР·Рё РІРјРµСЃС‚Рѕ РёРєРѕРЅРѕРє Р·Р°РїСЂРµС‰РµРЅС‹. Р—РЅР°Рє Р“РёР»СЊРґРёРё вЂ” С‚РѕР»СЊРєРѕ РёРєРѕРЅРєР° РїСЂРёР»РѕР¶РµРЅРёСЏ, С€Р°РїРєР° (24вЂ“32 px, РјРѕРЅРѕС…СЂРѕРј `{colors.ink-primary}` РёР»Рё `{colors.ink-on-session}`) Рё РґРµР»РёРєР°С‚РЅС‹Р№ РІРѕРґСЏРЅРѕР№ Р·РЅР°Рє РІ В«РЎРєРѕСЂРѕВ»-Р·Р°РіР»СѓС€РєРµ С†РІРµС‚РѕРј `{colors.border-hairline}`.
+
+## Components
+
+- **`button-primary`** вЂ” РєСЂР°СЃРЅР°СЏ Р·Р°Р»РёРІРєР° `{colors.accent-red}`, Р±РµР»С‹Р№ Р»РµР№Р±Р», 56 px, СЂР°РґРёСѓСЃ 12 px, С€РёСЂРёРЅР° 100 % РІ РЅРёР¶РЅРµР№ Р·РѕРЅРµ. Р’ РєР°РґСЂРµ РґРѕРїСѓСЃС‚РёРјР° **РѕРґРЅР°** С‚Р°РєР°СЏ РєРЅРѕРїРєР°. РќР°Р¶Р°С‚РёРµ вЂ” `{colors.accent-red-pressed}`, Р±РµР· СЃРґРІРёРіР° Рё Р±РµР· РјР°СЃС€С‚Р°Р±Р°. Disabled вЂ” СЃРµСЂРѕ-Р±РµР¶РµРІР°СЏ Р·Р°Р»РёРІРєР° `{colors.border-subtle}` Рё РїСЂРёРіР»СѓС€С‘РЅРЅС‹Р№ Р»РµР№Р±Р».
+- **`button-secondary`** вЂ” Р±РµР»Р°СЏ, РіСЂР°РЅРёС†Р° `{colors.border-hairline}`, 44 px. РќРѕСЃРёС‚ **РџСЂРѕРїСѓСЃС‚РёС‚СЊ**, **РџРµСЂРµРЅРµСЃС‚Рё**, В«РљРѕРїРёСЂРѕРІР°С‚СЊ СЃСЃС‹Р»РєСѓВ», РЅР°РІРёРіР°С†РёСЋ РЅР°Р·Р°Рґ.
+- **`button-danger`** вЂ” РїСЂРѕР·СЂР°С‡РЅР°СЏ, РєСЂР°СЃРЅР°СЏ РіСЂР°РЅРёС†Р° Рё РєСЂР°СЃРЅС‹Р№ Р»РµР№Р±Р», 44 px. РќРѕСЃРёС‚ **РћС‚РјРµРЅРёС‚СЊ** Рё **РћСЃРІРѕР±РѕРґРёС‚СЊ**. Р’С‹РґРµР»СЏРµС‚СЃСЏ С„РѕСЂРјРѕР№, Р° РЅРµ Р·Р°Р»РёРІРєРѕР№: РїСЂР°РІРёР»Рѕ В«РѕРґРёРЅ РєСЂР°СЃРЅС‹Р№ С„РѕРЅ РІ РєР°РґСЂРµВ» РѕСЃС‚Р°С‘С‚СЃСЏ РІ СЃРёР»Рµ.
+- **`bottom-cta`** вЂ” Р·Р°РєСЂРµРїР»С‘РЅРЅР°СЏ РЅРёР¶РЅСЏСЏ РїРѕР»РѕСЃР°: Р±РµР»Р°СЏ РІ РїСЂРѕРґСѓРєС‚Рµ, `{colors.surface-session-raised}` РІ РЎРµСЃСЃРёРё, РІРµСЂС…РЅРёР№ hairline, РїР°РґРґРёРЅРі 12/16, safe-area СЃРЅРёР·Сѓ. РњР°РєСЃРёРјСѓРј РѕРґРёРЅ primary + РѕРґРёРЅ secondary РІ СЂСЏРґ (60/40), РёРЅР°С‡Рµ вЂ” С‚РѕР»СЊРєРѕ primary.
+- **`client-row`** вЂ” СЃС‚СЂРѕРєР° РџСѓР»Р° РєР»РёРµРЅС‚РѕРІ: РёРјСЏ `{typography.body}`, СЃРїСЂР°РІР° РјРµС‚Р° `{typography.meta}` (СЃС‚Р°С‚СѓСЃ Р±Р»РёР¶Р°Р№С€РµР№ РўСЂРµРЅРёСЂРѕРІРєРё, РґР°С‚Р°), РїСЂРё Р·Р°РЅСЏС‚РѕСЃС‚Рё вЂ” `lock-badge` РІ РїСЂР°РІРѕРј РІРµСЂС…РЅРµРј СѓРіР»Сѓ СЃС‚СЂРѕРєРё. Р—Р°РЅСЏС‚Р°СЏ СЃС‚СЂРѕРєР° РЅРµ СЃРµСЂР°СЏ Рё РЅРµ РІС‹РєР»СЋС‡РµРЅРЅР°СЏ: РѕРЅР° РѕС‚РєСЂС‹РІР°РµС‚СЃСЏ РЅР° С‡С‚РµРЅРёРµ, Р±Р»РѕРєРёСЂСѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїСЂР°РІРєР°.
+- **`lock-badge`** вЂ” РїРёР»СЋР»СЏ 24 px: РёРєРѕРЅРєР° Р·Р°РјРєР° 16 px + РёРјСЏ Р·Р°РЅСЏРІС€РµРіРѕ РўСЂРµРЅРµСЂР°, РєСЂРµРј-С„РѕРЅ, hairline. Р’ РєР°СЂС‚РѕС‡РєРµ РљР»РёРµРЅС‚Р° СЂР°Р·РІРѕСЂР°С‡РёРІР°РµС‚СЃСЏ РІ СЃС‚СЂРѕРєСѓ СЃ С‚Р°Р№РјРµСЂРѕРј TTL 30 РјРёРЅ Рё РєРЅРѕРїРєРѕР№ **РћСЃРІРѕР±РѕРґРёС‚СЊ** (`button-danger`).
+- **`streak-chip`** вЂ” Р°Р±СЂРёРєРѕСЃРѕРІС‹Р№ Р±Р»РѕРє СЃ РєСЂСѓРїРЅС‹Рј С‡РёСЃР»РѕРј `{typography.title}` Рё РїРѕРґРїРёСЃСЊСЋ `{typography.meta}` СѓРіР»С‘Рј. РџСЂРё РЎС‚СЂРёРєРµ 0 вЂ” РєСЂРµРј-С„РѕРЅ Рё РїСЂРёРіР»СѓС€С‘РЅРЅС‹Р№ С‚РµРєСЃС‚: РѕР±РЅСѓР»С‘РЅРЅС‹Р№ СЃС‚СЂРёРє РЅРµ РєСЂРёС‡РёС‚ РєСЂР°СЃРЅС‹Рј.
+- **`tab-bar`** вЂ” РЅРёР¶РЅСЏСЏ РЅР°РІРёРіР°С†РёСЏ РєР°Р±РёРЅРµС‚Р° РљР»РёРµРЅС‚Р°: 6 РІРєР»Р°РґРѕРє (РўСЂРµРЅРёСЂРѕРІРєРё, РђРЅР°Р»РёС‚РёРєР°, РџРёС‚Р°РЅРёРµ, Р—Р°РјРµСЂС‹, РђС‡РёРІРєРё, РђР±РѕРЅРµРјРµРЅС‚). РђРєС‚РёРІРЅР°СЏ вЂ” СѓРіРѕР»СЊРЅС‹Р№ Р»РµР№Р±Р» + РєСЂР°СЃРЅС‹Р№ РёРЅРґРёРєР°С‚РѕСЂ 2 px. Р’РєР»Р°РґРєРё Р­С‚Р°РїР° 2 вЂ” РїСЂРёРіР»СѓС€С‘РЅРЅС‹Р№ Р»РµР№Р±Р» (opacity 0.55) Рё РїРѕРґРїРёСЃСЊ В«РЎРєРѕСЂРѕВ», РѕРЅРё РЅР°Р¶РёРјР°СЋС‚СЃСЏ Рё РІРµРґСѓС‚ РЅР° `soon-stub`, Р° РЅРµ РІС‹РєР»СЋС‡РµРЅС‹.
+- **`soon-stub`** вЂ” РєСЂРµРј-РїР°РЅРµР»СЊ 16 px: РєРІРµСЃС‚РѕРІС‹Р№ Р·Р°РіРѕР»РѕРІРѕРє, РѕРґРЅР° СЃС‚СЂРѕРєР° РѕР±СЉСЏСЃРЅРµРЅРёСЏ РїСЂРёРіР»СѓС€С‘РЅРЅС‹Рј С‚РµРєСЃС‚РѕРј, РІРѕРґСЏРЅРѕР№ Р·РЅР°Рє Р“РёР»СЊРґРёРё 32 px. РќРёРєР°РєРёС… Р·Р°РіР»СѓС€РµС‡РЅС‹С… РіСЂР°С„РёРєРѕРІ, СЃРєРµР»РµС‚РѕРЅРѕРІ Рё В«РґРµРјРѕ-РґР°РЅРЅС‹С…В».
+- **`session-set-logger`** вЂ” РєР°СЂС‚РѕС‡РєР° С‚РµРєСѓС‰РµРіРѕ РїРѕРґС…РѕРґР° РЅР° `{colors.surface-session-raised}` СЃ РєСЂР°СЃРЅРѕР№ СЂР°РјРєРѕР№ 1 px. РўСЂРё РїРѕР»СЏ (РІРµСЃ / РїРѕРІС‚РѕСЂРµРЅРёСЏ / RPE) РєСЂСѓРїРЅС‹РјРё С‚Р°Р±Р»РёС‡РЅС‹РјРё С†РёС„СЂР°РјРё, СЃС‚РµРїРїРµСЂС‹ 48 px РїРѕ Р±РѕРєР°Рј Р·РЅР°С‡РµРЅРёСЏ. Р—Р°РїРёСЃР°РЅРЅС‹Рµ РїРѕРґС…РѕРґС‹ СѓС…РѕРґСЏС‚ РІ РєРѕРјРїР°РєС‚РЅСѓСЋ Р»РµРЅС‚Сѓ РЅР° `{colors.surface-session-sunken}`; РњРѕРґРёС„РёРєР°С‚РѕСЂ РІРёРґРµРЅ С‚РѕС‡РєРѕР№ 10 px РµРіРѕ С†РІРµС‚Р° СЃР»РµРІР° РѕС‚ СЃС‚СЂРѕРєРё. РЎСѓРїРµСЂСЃРµС‚ РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ РєР°Рє СЃРІСЏР·РєР° СЃРѕ СЃРїР»РѕС€РЅРѕР№ Р»РµРІРѕР№ Р»РёРЅРµР№РєРѕР№ `{colors.border-session}`; С‚Р°Р№РјРµСЂ РѕС‚РґС‹С…Р° РІРЅСѓС‚СЂРё СЃРІСЏР·РєРё РЅРµ Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ.
+- **`rest-timer`** вЂ” РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅР°СЏ РїРѕР»РѕСЃР° 48 px РїРѕРґ Р»РѕРіРіРµСЂРѕРј: С‚СЂРµРє `{colors.border-session}`, Р·Р°Р»РёРІРєР° `{colors.accent-red}`, РєСЂСѓРїРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ, РїРѕРґРїРёСЃСЊ В«РћС‚РґС‹С…В». РСЃС‚РµС‡РµРЅРёРµ вЂ” СЃРјРµРЅР° С†РёС„СЂС‹ Рё РІРёР±СЂР°С†РёСЏ, Р±РµР· РїРѕР»РЅРѕСЌРєСЂР°РЅРЅРѕРіРѕ РїРµСЂРµС…РІР°С‚Р°.
+- **`invite-share`** вЂ” РєСЂРµРј-РїР°РЅРµР»СЊ СЃ URL РІ Р±РµР»РѕРј РїРѕР»Рµ СЃ РїСѓРЅРєС‚РёСЂРЅРѕР№ СЂР°РјРєРѕР№, РєСЂСѓРїРЅРѕР№ РєРЅРѕРїРєРѕР№ РєРѕРїРёСЂРѕРІР°РЅРёСЏ 56 px Рё СЃС‚СЂРѕРєРѕР№ TTL (В«СЃСЃС‹Р»РєР° Р¶РёРІС‘С‚ 1 СЃСѓС‚РєРёВ»). URL СѓСЃРµС‡С‘РЅ РїРѕ СЃРµСЂРµРґРёРЅРµ Рё РЅРµ РїРµСЂРµРЅРѕСЃРёС‚СЃСЏ РЅР° С‚СЂРё СЃС‚СЂРѕРєРё.
+
+## Do's and Don'ts
+
+| Do | Don't |
+|---|---|
+| РћРґРёРЅ РєСЂР°СЃРЅС‹Р№ Р°РєС†РµРЅС‚ РІ РІРёРґРёРјРѕР№ РѕР±Р»Р°СЃС‚Рё | РљСЂР°СЃРёС‚СЊ РєСЂР°СЃРЅС‹Рј СЃС‚Р°С‚СѓСЃС‹, Р±РµР№РґР¶Рё Рё Р·Р°РіРѕР»РѕРІРєРё |
+| РђР±СЂРёРєРѕСЃ вЂ” С‚РѕР»СЊРєРѕ Р±РµР№РґР¶Рё Рё РґРѕСЂРѕР¶РєРё РїСЂРѕРіСЂРµСЃСЃР° | РђР±СЂРёРєРѕСЃРѕРІС‹Р№ С‚РµРєСЃС‚ (1.8:1 РЅР° Р±РµР»РѕРј) |
+| РўС‘РјРЅС‹Р№ СѓРіРѕР»СЊ РєР°Рє С„РѕРЅ live-РЎРµСЃСЃРёРё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ | РЎРІРµС‚Р»Р°СЏ РЎРµСЃСЃРёСЏ В«РґР»СЏ РµРґРёРЅРѕРѕР±СЂР°Р·РёСЏВ» |
+| РљРІРµСЃС‚РѕРІС‹Р№ СЏР·С‹Рє РІ Р·Р°РіРѕР»РѕРІРєР°С…, РїСѓСЃС‚С‹С… Рё В«РЎРєРѕСЂРѕВ»-СЃРѕСЃС‚РѕСЏРЅРёСЏС… | РљРІРµСЃС‚РѕРІС‹Р№ СЏР·С‹Рє РЅР° РєРЅРѕРїРєР°С… РґРµР№СЃС‚РІРёР№ |
+| Р—РЅР°Рє Р“РёР»СЊРґРёРё 24вЂ“32 px, РјРѕРЅРѕС…СЂРѕРј, С€Р°РїРєР° Рё РёРєРѕРЅРєР° | Р¤СЌРЅС‚РµР·Рё-РёР»Р»СЋСЃС‚СЂР°С†РёРё, СЃРІРёС‚РєРё, РґСЂР°РєРѕРЅС‹ РІРЅСѓС‚СЂРё СЌРєСЂР°РЅРѕРІ |
+| РРµСЂР°СЂС…РёСЏ С‚РѕРЅРѕРј Рё hairline-РіСЂР°РЅРёС†Р°РјРё | РўРµРЅРё, В«СЃС‚РµРєР»РѕВ», mesh-РіСЂР°РґРёРµРЅС‚С‹, СЃРІРµС‡РµРЅРёСЏ |
+| Р›РёРЅРµР№РЅС‹Рµ РёРєРѕРЅРєРё 24 px, С€С‚СЂРёС… 1.5 px | Р­РјРѕРґР·Рё РІРјРµСЃС‚Рѕ РёРєРѕРЅРѕРє |
+| РќРёР¶РЅСЏСЏ Р·Р°РєСЂРµРїР»С‘РЅРЅР°СЏ CTA 56 px, РѕРґРЅР° СЂР°Р±РѕС‚Р° РЅР° СЌРєСЂР°РЅ | РЎРµС‚РєРё РєСЂСѓРїРЅС‹С… В«heroВ»-РєР°СЂС‚РѕС‡РµРє Рё РјРѕРґР°Р»РєРё РїРѕРІРµСЂС… РЎРµСЃСЃРёРё |
+| РўР°Р±Р»РёС‡РЅС‹Рµ С†РёС„СЂС‹ РІ Р»РѕРіРіРµСЂРµ Рё РёСЃС‚РѕСЂРёРё | РџСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅС‹Рµ С†РёС„СЂС‹ РІ СЃС‡С‘С‚С‡РёРєР°С… Рё С‚Р°Р№РјРµСЂР°С… |
+| РћРґРЅР° РєРѕР»РѕРЅРєР°, РїРѕР»СЏ 16 px, РєРѕРЅС‚РµРЅС‚ в‰¤ 640 px | РњРЅРѕРіРѕРєРѕР»РѕРЅРѕС‡РЅС‹Рµ РґР°С€Р±РѕСЂРґС‹ РЅР° РјРѕР±РёР»СЊРЅРѕРј |

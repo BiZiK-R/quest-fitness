@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quest Fitness — Сессия (live)</title>
+<style>
+/*
+  KEY SCREEN: Сессия (live). Канонический кадр — 3-й Подход активен, отдых после 2-го идёт.
+
+  Governed by:
+  - DESIGN.md → Colors (тёмные токены Сессии; красный на угле только нетекстовый индикатор)
+  - DESIGN.md → Typography (numeric 32/36 tabular — вес/повторы/RPE/таймеры)
+  - DESIGN.md → Layout & Spacing (одна работа на экран; нижняя зона 56 px + safe-area; тач-зоны 48 px)
+  - DESIGN.md → Elevation & Depth (теней нет; иерархия тоном session → session-raised → session-sunken)
+  - DESIGN.md → Components: session-set-logger, rest-timer, bottom-cta
+  - EXPERIENCE.md → Component Patterns: session-set-logger, rest-timer, Таймер длительности,
+    Модификатор подхода, Индикатор синхронизации
+  - EXPERIENCE.md → State Patterns: «Сессия: первое Упражнение» (предзаполнение прошлым результатом)
+  - EXPERIENCE.md → Key Flows, Поток 1, шаги 4–6
+  - EXPERIENCE.md → Interaction Primitives (степперы тапом; в Сессии модалок нет)
+
+  Шрифт: Rubik с системным фолбэком — файл рендерится полностью офлайн, без сетевых запросов.
+
+  GAP (на ревью спайна): DESIGN.md не задаёт вид button-secondary на тёмной поверхности Сессии.
+  Здесь «Завершить» собран из существующих токенов: surface-session-sunken + border-session.
+*/
+
+:root {
+  --surface-session: #241C20;
+  --surface-session-raised: #302428;
+  --surface-session-sunken: #1B1416;
+  --ink-on-session: #F6EBDD;
+  --ink-on-session-muted: #BFAFB1;
+  --border-session: #3D2E32;
+  --accent-red: #C33F46;
+  --accent-apricot: #EFB68C;
+  --ink-inverse: #FFFFFF;
+  --surface-sunken: #F1EBE6;
+  --border-hairline: #BFAFB1;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-full: 9999px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Rubik, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--surface-sunken);
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.phone {
+  width: 390px;
+  height: 844px;
+  background: var(--surface-session);
+  border: 1px solid var(--border-hairline);
+  border-radius: 32px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: var(--ink-on-session);
+}
+
+/* --- статус-бар устройства (рамка мока, не продукт) --- */
+.statusbar {
+  height: 28px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-on-session-muted);
+  font-variant-numeric: tabular-nums;
+}
+.statusbar .bars { display: flex; gap: 3px; align-items: flex-end; }
+.statusbar .bars i { width: 3px; background: var(--ink-on-session-muted); border-radius: 1px; }
+.statusbar .bars i:nth-child(1) { height: 5px; }
+.statusbar .bars i:nth-child(2) { height: 7px; }
+.statusbar .bars i:nth-child(3) { height: 9px; }
+.statusbar .bars i:nth-child(4) { height: 11px; }
+
+/* --- шапка Сессии: знак + таймер длительности + индикатор синхронизации --- */
+.appbar {
+  flex: 0 0 auto;
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-session);
+}
+.mark { color: var(--ink-on-session); display: flex; }
+.duration {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 26px;
+  font-variant-numeric: tabular-nums;
+}
+.sync {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  color: var(--ink-on-session-muted);
+}
+.sync .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-full);
+  background: var(--ink-on-session-muted);
+}
+
+/* --- контент --- */
+.content {
+  flex: 1 1 auto;
+  overflow: hidden;
+  padding: 24px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.exercise-head { display: flex; flex-direction: column; gap: 8px; }
+.exercise-name { font-size: 20px; font-weight: 700; line-height: 26px; }
+.exercise-meta {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--ink-on-session-muted);
+}
+
+/* --- session-set-logger --- */
+.logger {
+  background: var(--surface-session-raised);
+  border: 1px solid var(--accent-red);
+  border-radius: var(--r-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.logger-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.logger-title { font-size: 16px; font-weight: 400; line-height: 24px; }
+.modifier-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-session);
+  background: var(--surface-session-sunken);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  color: var(--ink-on-session);
+}
+.modifier-chip .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-full);
+  background: var(--accent-apricot);
+}
+
+.field { display: flex; align-items: center; gap: 12px; }
+.field-label {
+  flex: 1 1 auto;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--ink-on-session-muted);
+}
+.stepper {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border: 1px solid var(--border-session);
+  border-radius: var(--r-sm);
+  background: var(--surface-session-sunken);
+  color: var(--ink-on-session);
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.value {
+  min-width: 96px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 36px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-on-session);
+}
+
+/* --- rest-timer --- */
+.rest {
+  position: relative;
+  height: 48px;
+  border-radius: var(--r-md);
+  background: var(--surface-session-sunken);
+  border: 1px solid var(--border-session);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+.rest-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 55%;
+  background: var(--accent-red);
+}
+.rest-caption,
+.rest-value { position: relative; }
+.rest-caption {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--ink-on-session);
+}
+.rest-value {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 36px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-on-session);
+}
+
+/* --- лента записанных Подходов --- */
+.logged { display: flex; flex-direction: column; gap: 8px; }
+.logged-title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--ink-on-session-muted);
+}
+.logged-row {
+  background: var(--surface-session-sunken);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
+}
+.logged-row .dot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border-radius: var(--r-full);
+  background: var(--accent-apricot);
+}
+.logged-row .dot.empty { background: transparent; }
+.logged-row .n { color: var(--ink-on-session-muted); width: 16px; }
+.logged-row .mod {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  color: var(--ink-on-session-muted);
+}
+
+/* --- bottom-cta (вариант Сессии) --- */
+.bottom-cta {
+  flex: 0 0 auto;
+  background: var(--surface-session-raised);
+  border-top: 1px solid var(--border-session);
+  padding: 12px 16px calc(12px + 16px);
+  display: flex;
+  gap: 12px;
+}
+.btn {
+  height: 56px;
+  border-radius: var(--r-md);
+  border: none;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-primary {
+  flex: 6 1 0;
+  background: var(--accent-red);
+  color: var(--ink-inverse);
+}
+.btn-secondary-session {
+  flex: 4 1 0;
+  background: var(--surface-session-sunken);
+  border: 1px solid var(--border-session);
+  color: var(--ink-on-session);
+}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="statusbar">
+    <span>19:24</span>
+    <span class="bars"><i></i><i></i><i></i><i></i></span>
+  </div>
+
+  <header class="appbar">
+    <span class="mark" aria-label="Quest Fitness">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8.5 8.2a3.5 3.5 0 1 1 7 0"/>
+        <path d="M8.5 8.2C6.4 9.3 5 11.4 5 13.9 5 16.7 6.8 19 9 19h6c2.2 0 4-2.3 4-5.1 0-2.5-1.4-4.6-3.5-5.7"/>
+        <path d="M9.6 13.6c.9-1.1 2.1-1.1 2.4 0 .3 1.1 1.5 1.1 2.4 0"/>
+      </svg>
+    </span>
+    <span class="duration">24:18</span>
+    <span class="sync"><span class="dot"></span>сохранено</span>
+  </header>
+
+  <main class="content">
+    <div class="exercise-head">
+      <h1 class="exercise-name">Жим штанги лёжа</h1>
+      <p class="exercise-meta">Упражнение 1 из 5 · план 4 × 8 · Мария Ковалёва</p>
+    </div>
+
+    <section class="logger">
+      <div class="logger-head">
+        <span class="logger-title">Подход 3 из 4</span>
+        <span class="modifier-chip"><span class="dot"></span>дропсет</span>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Вес, кг</span>
+        <button class="stepper" type="button" aria-label="Уменьшить вес на 2,5">−</button>
+        <span class="value">62,5</span>
+        <button class="stepper" type="button" aria-label="Увеличить вес на 2,5">+</button>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Повторения</span>
+        <button class="stepper" type="button" aria-label="Уменьшить повторения">−</button>
+        <span class="value">8</span>
+        <button class="stepper" type="button" aria-label="Увеличить повторения">+</button>
+      </div>
+
+      <div class="field">
+        <span class="field-label">RPE</span>
+        <button class="stepper" type="button" aria-label="Уменьшить RPE на 0,5">−</button>
+        <span class="value">7,5</span>
+        <button class="stepper" type="button" aria-label="Увеличить RPE на 0,5">+</button>
+      </div>
+    </section>
+
+    <div class="rest" role="timer" aria-label="Отдых, осталось 1 минута 12 секунд">
+      <span class="rest-fill"></span>
+      <span class="rest-caption">Отдых</span>
+      <span class="rest-value">1:12</span>
+    </div>
+
+    <section class="logged">
+      <h2 class="logged-title">Записано</h2>
+      <div class="logged-row">
+        <span class="dot empty"></span>
+        <span class="n">1</span>
+        <span>60 кг × 8 · RPE 7</span>
+      </div>
+      <div class="logged-row">
+        <span class="dot empty"></span>
+        <span class="n">2</span>
+        <span>62,5 кг × 8 · RPE 7,5</span>
+      </div>
+    </section>
+  </main>
+
+  <div class="bottom-cta">
+    <button class="btn btn-primary" type="button">Записать подход</button>
+    <button class="btn btn-secondary-session" type="button">Завершить</button>
+  </div>
+</div>
+
+</body>
+</html>

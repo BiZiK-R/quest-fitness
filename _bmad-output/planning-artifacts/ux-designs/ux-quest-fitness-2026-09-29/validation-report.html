@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>UX Design Validation: Quest Fitness — Гильдия</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #78716c;
+
+    --verdict-strong: #16a34a;
+    --verdict-adequate: #65a30d;
+    --verdict-thin: #d97706;
+    --verdict-broken: #dc2626;
+
+    --sev-low: #64748b;
+    --sev-medium: #ca8a04;
+    --sev-high: #ea580c;
+    --sev-critical: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header.report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .title .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .synthesis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    font-size: 15.5px;
+  }
+  .synthesis p { margin: 0 0 10px; }
+  .synthesis p:last-child { margin-bottom: 0; }
+
+  .dimension-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dim-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .dim-card .dim-name { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .dim-card .dim-verdict { font-size: 14px; font-weight: 600; }
+
+  section.dimension, section.reviewer-section { margin-bottom: 14px; }
+  section.dimension details, section.reviewer-section details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  section summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section summary::-webkit-details-marker { display: none; }
+  section summary::before {
+    content: "▸";
+    display: inline-block;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  section details[open] summary::before { transform: rotate(90deg); }
+  section summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    flex: 1;
+  }
+  .verdict-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+  }
+  .verdict-strong { background: var(--verdict-strong); }
+  .verdict-adequate { background: var(--verdict-adequate); }
+  .verdict-thin { background: var(--verdict-thin); }
+  .verdict-broken { background: var(--verdict-broken); }
+
+  .dim-body { padding: 4px 20px 18px; }
+  .dim-judgment { color: var(--text); font-size: 14.5px; }
+  .dim-judgment p { margin: 0 0 10px; }
+
+  .findings-list { padding: 0 20px 4px; }
+  article.finding {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  article.finding:first-child { border-top: none; }
+  article.finding header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+  .badge-sev-low { background: rgba(100, 116, 139, 0.12); color: var(--sev-low); }
+  .badge-sev-medium { background: rgba(202, 138, 4, 0.14); color: var(--sev-medium); }
+  .badge-sev-high { background: rgba(234, 88, 12, 0.14); color: var(--sev-high); }
+  .badge-sev-critical { background: rgba(220, 38, 38, 0.14); color: var(--sev-critical); }
+  .finding-title { margin: 0; font-size: 15px; font-weight: 500; flex: 1; min-width: 200px; }
+  .finding-location { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .finding-note, .finding-fix { margin-top: 6px; font-size: 14px; }
+  .finding-fix strong { color: var(--muted); font-weight: 500; }
+
+  .reviewer-source {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .mechanical {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  .mechanical h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mechanical ul { margin: 0; padding-left: 20px; }
+  .mechanical li { margin-bottom: 4px; color: var(--text); }
+
+  footer.report-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="report-header">
+      <div class="title">
+        <h1>Quest Fitness — Гильдия — UX Design Validation Report</h1>
+        <div class="subtitle">_bmad-output/planning-artifacts/ux-designs/ux-quest-fitness-2026-09-29/ (DESIGN.md + EXPERIENCE.md)</div>
+      </div>
+    </header>
+
+    <div class="synthesis">
+      <p><strong>Вердикт после ремедиации: пара выросла с <em>adequate</em> до контракта, готового к architecture и к story-dev по всем пяти Key User Journeys.</strong> Три ревьюера дали 42 + 16 + 10 находок; после правок закрыты единственный critical рубрики, все восемь high рубрики, оба critical и все шесть high доступности и все десять находок адаптивности. Блокирующий минимум перед story-dev (F1.1, F2.1–F2.3, F3.1–F3.3, F4.1–F4.2) исчерпан.</p>
+      <p><strong>Что изменилось по существу.</strong> UJ-2 получил Поток 5 — конструкторы Шаблона и Макроцикла и Назначение больше не висят как три экрана без сценария. Компонентный каталог вырос с 12 до 19: появились <code>input</code>, <code>field-error</code>, <code>status-pill</code>, <code>bottom-sheet</code>, <code>confirm-dialog</code>, <code>trainer-menu</code> и глобальный <code>focus-ring</code> — то есть формы, статусы и модальный слой перестали быть додумываемыми. Заблокированное решение «десктоп — тот же продукт» переведено из прозы в токены (<code>content-max</code>, <code>breakpoint-md</code>, <code>margin-wide</code>, <code>viewport-min-*</code>), закреплённые полосы привязаны к колонке, меню Тренера описано существующим паттерном шторки. Холодная загрузка и общий паттерн ошибки/ретрая получили строки состояния. Оба спайна переведены в <code>status: final</code>, ключевые экраны подняты из <code>.working/</code> в <code>mockups/</code> с инлайн-ссылкой и правилом приоритета спайна.</p>
+      <p><strong>Два места, где ремедиация неполна, и оба — в <code>DESIGN.md</code>.</strong> Первое: токен <code>ink-soon</code> <code>#8A7A7C</code> взят из review-accessibility вместе с заявленным «≥ 4.5:1», но пересчёт даёт <strong>4.07:1</strong> — критическая находка про кликабельные «Скоро»-вкладки закрыта частично, нужен один более тёмный hex. Второе: прозаическая §Components не обновлена вслед за frontmatter и теперь противоречит ему в четырёх местах, воспроизводя ровно те дефекты доступности, которые были исправлены (44 px вместо 48, <code>border-hairline</code> вместо <code>border-control</code>, <code>opacity 0.55</code> на «Скоро»-вкладках, рамка активного Подхода 1 px вместо 2 px + текстовый маркер). Это предсказанный F6.1 сценарий тихого расхождения — он материализовался.</p>
+      <p><strong>Остаток.</strong> Ноль critical, две high (обе выше, обе правятся точечно в <code>DESIGN.md</code>), 14 medium и 16 low. Ни одна из них не блокирует старт: medium — это неописанные классы состояний (офлайн вне Сессии, нет прав, девять поверхностей без пустот), недоописанные шапка и два сессионных индикатора, и незаявленное наследование UI-кита и поставки Rubik. Story-dev может начинать; правки в §Components стоит внести до первой story по формам и по Сессии, чтобы разработчик не читал устаревшие числа.</p>
+    </div>
+
+    <div class="dimension-summary">
+      <div class="dim-card">
+        <div class="dim-name">1. Flow coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate <span style="color: var(--muted); font-weight: 400">← thin</span></div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">2. Token completeness</div>
+        <div class="dim-verdict" style="color: var(--verdict-strong)">strong <span style="color: var(--muted); font-weight: 400">← adequate</span></div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">3. Component coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate <span style="color: var(--muted); font-weight: 400">← thin</span></div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">4. State coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate <span style="color: var(--muted); font-weight: 400">← thin</span></div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">5. Visual reference coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-strong)">strong <span style="color: var(--muted); font-weight: 400">← adequate</span></div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">6. Bloat &amp; overspecification</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate <span style="color: var(--muted); font-weight: 400">← strong</span></div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">7. Inheritance discipline</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate <span style="color: var(--muted); font-weight: 400">= без изменений</span></div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">8. Shape fit</div>
+        <div class="dim-verdict" style="color: var(--verdict-strong)">strong <span style="color: var(--muted); font-weight: 400">= удержано</span></div>
+      </div>
+    </div>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>1. Flow coverage</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p><strong>Закрыто:</strong> critical F1.1 — добавлен <strong>Поток 5</strong> «Тренер Дима собирает программу и цикл» (UJ-2). Протагонист, шесть шагов от <code>trainer-menu</code> → Каталог → Шаблон → Макроцикл → Назначение, кульминация — Тренировка в статусе <strong>Ожидание</strong> в расписании Клиента, и два отказных пути: конец Макроцикла при Назначении и отсутствие нужного Упражнения с инлайн-созданием. Попутно поток принял два несущих решения, которых раньше не было нигде: переупорядочивание этапов кнопками «выше/ниже» и нативный <code>datetime</code> для даты и времени.</p>
+            <p>Все пять именованных UJ теперь имеют поток; SM-2 и SM-3 покрыты. Остаток — единственная роль без сценария (Админ) и две косметические неровности в старых потоках.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Админские поверхности по-прежнему без потока</h3>
+              <span class="finding-location">EXPERIENCE.md §IA, строки «Админ: Сброс пароля Клиента», «Админ: Пул тренеров»</span>
+            </header>
+            <div class="finding-note">FR-2 остаётся в Скелете и помечен <code>[ASSUMPTION]</code>, но ни одна из трёх админских поверхностей не имеет шагов, состояний или компонентов. Пункты добавлены в <code>trainer-menu</code>, то есть навигация до них есть — а того, что за ними, нет.</div>
+            <div class="finding-fix"><strong>Fix:</strong> короткий поток «Админ заводит нового Тренера и выдаёт роль» либо явное решение вынести FR-2 в Этап 2 и убрать строку из IA Скелета.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Поток 2 начинается с действий не того протагониста</h3>
+              <span class="finding-location">EXPERIENCE.md §Key Flows, Поток 2, шаг 1</span>
+            </header>
+            <div class="finding-note">Поток называется «Клиент Мария активирует доступ», но шаг 1 выполняет Тренер. Смена актёра внутри пронумерованной последовательности сбивает разметку сценария на acceptance criteria.</div>
+            <div class="finding-fix"><strong>Fix:</strong> вынести шаг 1 в преамбулу («Предусловие: Тренер отправил Ссылку-приглашение») либо явно пометить смену актёра.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">У Потока 3 нет отказного пути</h3>
+              <span class="finding-location">EXPERIENCE.md §Key Flows, Поток 3</span>
+            </header>
+            <div class="finding-note">«Вариант с <strong>Отменить</strong>» — альтернативная ветка решения, а не отказ. Не описано, что происходит при Переносе на дату, где у Клиента уже есть Тренировка, и при Переносе Тренировки с прошедшей датой.</div>
+            <div class="finding-fix"><strong>Fix:</strong> одна строка отказа к Потоку 3 с решением по обоим случаям.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>2. Token completeness</h2>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p><strong>Закрыто:</strong> все три high. <code>control-md</code> поднят 44 → 48 px и сошёлся с <code>touch-min</code>; границы разделены по роли — <code>border-control</code> <code>#8F8083</code> для интерактива (пересчёт: <strong>3.76:1</strong> на белом, <strong>3.20:1</strong> на креме — порог 3:1 взят на обеих подложках), <code>border-hairline</code> ушёл в чипы и декор; <code>soon-opacity</code> удалён и заменён токеном <code>ink-soon</code>. Добавлены <code>ink-error</code> (<strong>7.57:1</strong> на белом), <code>focus-ring</code> как компонент и семь layout-токенов.</p>
+            <p>Токен-граф после правок: <strong>237 ссылок, 48 уникальных путей, 0 битых</strong>. Покрытие frontmatter: colors 21/21, typography 6/6, rounded 4/4, spacing 16/18. Это лучший показатель из восьми измерений — но см. high в разделе доступности: значение <code>ink-soon</code> выбрано по ошибочному расчёту ревьюера, и заявленные в §Colors цифры контраста тоже занижены.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Две основные текстовые пары так и не получили числа</h3>
+              <span class="finding-location">DESIGN.md §Colors</span>
+            </header>
+            <div class="finding-note">У <code>ink-primary</code> на <code>surface-app</code> / <code>surface-card</code> цифры нет; <code>ink-on-session</code> на <code>surface-session</code> по-прежнему описан словами «высокий контраст». Обе проходят с запасом (пересчёт: <strong>15.59:1</strong>, <strong>16.64:1</strong> и <strong>14.14:1</strong>), но контракт не должен заставлять потребителя считать самому — особенно там, где все соседние пары подписаны.</div>
+            <div class="finding-fix"><strong>Fix:</strong> дописать три числа в §Colors рядом с остальными.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Типографическая шкала в px без правила перевода в rem</h3>
+              <span class="finding-location">DESIGN.md §Typography</span>
+            </header>
+            <div class="finding-note">Размеры заданы фиксированными px (28/20/16/13/32), а <code>EXPERIENCE.md</code> §Accessibility Floor требует работоспособности при увеличении шрифта до 200 % и объявляет приёмку на 320 px. В вебе фиксированный px не реагирует на пользовательскую настройку размера шрифта браузера. Спайн не говорит, это спецификация в CSS-пикселях с обязательной конвертацией или буквальные px.</div>
+            <div class="finding-fix"><strong>Fix:</strong> одна строка в §Typography: значения даны в px как спецификация, реализация — в <code>rem</code> от корневого размера.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Два сиротских spacing-токена, один из них — дубль</h3>
+              <span class="finding-location">DESIGN.md frontmatter <code>spacing</code></span>
+            </header>
+            <div class="finding-note"><code>spacing.1</code> (4 px) и <code>spacing.gutter</code> (16 px) не используются ни одной ссылкой; <code>gutter</code> дублирует значение <code>margin-mobile</code>. Два имени для одного значения — будущий источник расхождения, особенно теперь, когда рядом появился <code>margin-wide</code>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> удалить <code>gutter</code>; <code>spacing.1</code> оставить только если он нужен как шаг шкалы.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>3. Component coverage</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p><strong>Закрыто:</strong> все три high и две medium. Формы получили <code>input</code> и <code>field-error</code> с собственным цветом ошибки (<code>ink-error</code>, чтобы не занимать <code>accent-red</code>); статусы Тренировки получили <code>status-pill</code> с явным отображением всех четырёх канонических статусов на токены и правилом «слово различает, фон вторичен»; <code>tab-bar</code> сошёлся по габариту через «иконка над подписью» без усечения. Добавлены <code>bottom-sheet</code> (со светлым и сессионным вариантом), <code>confirm-dialog</code> с раскладкой «подтверждение + альтернатива» и <code>trainer-menu</code>. Поле поиска покрыто общим <code>input</code>.</p>
+            <p>Каталог вырос с 12 до 19 компонентов. Остаток — три сущности, которые описаны поведенчески в <code>EXPERIENCE.md</code>, но не имеют визуальной анатомии в <code>DESIGN.md</code>, и разрыв между frontmatter и прозой (см. также раздел 6).</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Семь новых компонентов есть во frontmatter, но не имеют прозаических спек</h3>
+              <span class="finding-location">DESIGN.md §Components (12 буллетов) против frontmatter <code>components</code> (19 ключей)</span>
+            </header>
+            <div class="finding-note">До ревью соотношение было 12/12 — буквальное соответствие, и это была сильная сторона пары. Сейчас <code>focus-ring</code>, <code>status-pill</code>, <code>input</code>, <code>field-error</code>, <code>bottom-sheet</code>, <code>confirm-dialog</code> и <code>trainer-menu</code> живут только в YAML. Проза объясняет <em>почему</em> значение такое — без неё расширять систему, не ломая её, сложнее, а именно за этим потребитель в §Components и идёт.</div>
+            <div class="finding-fix"><strong>Fix:</strong> семь коротких буллетов по образцу существующих — роль и правило, числа ссылкой на токен, без повторения значений (см. также R6.1).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Таймер длительности и индикатор синхронизации не имеют визуальной спеки</h3>
+              <span class="finding-location">EXPERIENCE.md §Component Patterns (есть) ↔ DESIGN.md (отсутствуют полностью)</span>
+            </header>
+            <div class="finding-note">Оба живут в шапке Сессии и оба описаны поведенчески, но в <code>DESIGN.md</code> нет ни токена, ни типографики, ни цвета. Для индикатора это прямо блокирует решение: §Do's and Don'ts запрещает цветовое кодирование статусов, значит «чем отличается сохранено / сохраняется / нет связи» никем не принято, а <code>EXPERIENCE.md</code> говорит только «текстом/точкой». В §Accessibility Floor при этом уже появилось правило сворачивания таймера длительности в компактную метку при 200 % — сворачивать пока нечего.</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить <code>duration-timer</code> и <code>sync-indicator</code> во frontmatter и §Components; для индикатора зафиксировать текстовое различение и роль точки.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Шапка экрана не специфицирована, хотя в ней теперь висит меню Тренера</h3>
+              <span class="finding-location">DESIGN.md §Shapes (только знак Гильдии 24–32 px); <code>trainer-menu.trigger: 'header icon button'</code></span>
+            </header>
+            <div class="finding-note">Ремедиация F-3 описала саму шторку меню, но поверхность, которая её вызывает, по-прежнему не имеет ни высоты, ни правила возврата назад, ни раскладки. Вся верхнеуровневая навигация Тренера держится на элементе, которого нет в каталоге; <code>lock-badge</code> после правки тоже стал интерактивным именно «из шапки Карточки Клиента».</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить <code>app-header</code> с высотой, местом знака, кнопкой назад и слотом под иконку меню.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Решение по выбору даты/времени принято внутри потока, но не вынесено в контракт</h3>
+              <span class="finding-location">EXPERIENCE.md Поток 5, шаг 5 («нативный datetime»)</span>
+            </header>
+            <div class="finding-note">Выбор требуется тремя поверхностями: Назначение Тренировки, Перенос (шторка), календарь ближайших в кабинете (FR-19). Решение теперь есть, но спрятано в шаге сценария — потребитель, читающий §Component Patterns или §Components, его не найдёт.</div>
+            <div class="finding-fix"><strong>Fix:</strong> одна строка в §Component Patterns: нативный <code>input[type=datetime-local]</code> в шторке, согласованно с линией «нативный фокус-ринг, системный share, цифровая клавиатура».</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">У button-primary и button-secondary нет собственных строк поведения</h3>
+              <span class="finding-location">EXPERIENCE.md §Component Patterns</span>
+            </header>
+            <div class="finding-note">Их поведение по-прежнему выводится из строки <code>bottom-cta</code>. Для кнопок это почти безвредно, но формально ломает правило «каждый компонент имеет обе проекции».</div>
+            <div class="finding-fix"><strong>Fix:</strong> одна строка на оба с правилом «одна primary в кадре, подписи — только из канонического списка».</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>4. State coverage</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p><strong>Закрыто:</strong> обе high. «Холодная загрузка» получила строку с решением на весь продукт — сдержанный скелетон <em>строк списка</em>, при этом запрет скелетонов корректно сужен до <code>soon-stub</code>, где они имитировали бы данные. «Ошибка загрузки / сохранения» получила общий паттерн вне Сессии: инлайн-строка плюс <strong>Повторить</strong>, тостов нет. Дополнительно из ремедиации доступности пришли строки про <code>aria-disabled</code> в состоянии «Клиент занят» и про глобальный фокус.</p>
+            <p>Таблица состояний выросла до 21+ строк и покрывает самый рискованный участок плотно. Остаток — два неописанных кросс-срезовых класса и девять поверхностей без единой строки; ни одно из этого не лежит на пути Сессии и Занятости.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Офлайн вне Сессии не определён</h3>
+              <span class="finding-location">EXPERIENCE.md §State Patterns</span>
+            </header>
+            <div class="finding-note">Правило «ввод работает, очередь копится» заявлено только для Сессии. Что происходит при потере связи в Конструкторе Шаблона (где уже есть last-write-wins) или при Назначении — не сказано, хотя продуктом пользуются в зале с плохой связью.</div>
+            <div class="finding-fix"><strong>Fix:</strong> явное решение одной строкой: офлайн-устойчив только экран Сессии, остальное требует связи и показывает общий паттерн ошибки.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Permission-denied отсутствует</h3>
+              <span class="finding-location">EXPERIENCE.md §State Patterns; FR-1</span>
+            </header>
+            <div class="finding-note">Не описан ни один случай: Клиент открывает URL тренерской поверхности, Тренер жмёт admin-only действие, Тренер-не-занявший видит <strong>Освободить</strong>. Последний случай частично закрыт («Доступна занявшему Тренеру и Админу»), но без описания, что видит остальной.</div>
+            <div class="finding-fix"><strong>Fix:</strong> строка «Нет прав» с принятым правилом — скрываем действие, а не показываем и блокируем (или обратным, но решение нужно принять).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Девять поверхностей IA без единой строки состояния</h3>
+              <span class="finding-location">EXPERIENCE.md §IA против §State Patterns</span>
+            </header>
+            <div class="finding-note">Создание Клиента, Шаблоны тренировки, Макроциклы, Конструктор Макроцикла, Назначение Тренировки, Сессия в истории, Профиль Клиента, Админ: Сброс пароля, Админ: Пул тренеров. Назначение частично закрыто отказным путём Потока 5 («этапы кончились», «нет нужного Упражнения»), но строк пустоты и ошибки у него нет. Не закрыта и ситуация «Клиенту не назначен Макроцикл», и место ручного сдвига указателя этапа.</div>
+            <div class="finding-fix"><strong>Fix:</strong> минимум по одной строке пустоты/ошибки на каждую; для Назначения — три строки либо явная запись в <code>Residual uncertainty</code>.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">«Ссылка уже использована» не отделена от «Ссылка истекла»</h3>
+              <span class="finding-location">EXPERIENCE.md §State Patterns, строка «Истёкшая Ссылка-приглашение»</span>
+            </header>
+            <div class="finding-note">Разные ситуации с разным выходом: истёкшую перевыпускают, по использованной надо идти на Вход. Строка про перевыпуск теперь говорит, что старая ссылка перестаёт работать, — это делает второй случай ещё более вероятным, но текста для него нет.</div>
+            <div class="finding-fix"><strong>Fix:</strong> разделить на две строки состояния с разными текстами и разным выходом.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Уход из незавершённой Сессии и замена упражнения без поведения</h3>
+              <span class="finding-location">EXPERIENCE.md §State Patterns; §IA (строка про шторки); DESIGN.md §Elevation</span>
+            </header>
+            <div class="finding-note">Восстановление после перезагрузки описано, намеренный выход — нет: что со статусом Тренировки и с Занятостью, если Тренер закрыл вкладку посреди тренировки. «Замена упражнения» упомянута как шторка в обоих документах, но не имеет ни строки поведения, ни состояния.</div>
+            <div class="finding-fix"><strong>Fix:</strong> строка «Уход из незавершённой Сессии» и поведенческая строка для замены упражнения в §Component Patterns.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Пустой Дневник без строки состояния</h3>
+              <span class="finding-location">EXPERIENCE.md §Voice and Tone («Первый поход ещё впереди») против §State Patterns</span>
+            </header>
+            <div class="finding-note">Копирайт есть, строки состояния нет, и она не привязана к поверхности — у Клиента и у Тренера это разные экраны.</div>
+            <div class="finding-fix"><strong>Fix:</strong> строка состояния с привязкой к обеим поверхностям.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Истечение авторизации и отказ доступа к буферу обмена</h3>
+              <span class="finding-location">EXPERIENCE.md §Component Patterns, <code>invite-share</code></span>
+            </header>
+            <div class="finding-note">Не описано истечение сессии авторизации во время работы. У <code>invite-share</code> «одно касание — копирование ссылки» по-прежнему без ветки отказа — для веба это реальный случай на части браузеров, а ссылка вдобавок усечена по середине.</div>
+            <div class="finding-fix"><strong>Fix:</strong> строка отката — показать URL выделенным для ручного копирования; строка состояния для протухшей авторизации.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>5. Visual reference coverage</h2>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p><strong>Закрыто:</strong> medium F5.1. Четыре ключевых экрана подняты из <code>.working/</code> в <code>mockups/</code> — <code>key-session.html</code>, <code>key-client-pool.html</code>, <code>key-waiting.html</code>, <code>key-soon-stub.html</code> — и процитированы инлайн из §Information Architecture с явным правилом «<strong>Спайны выигрывают при конфликте с макетами</strong>». Самая нагруженная композиция продукта (Сессия, где сходятся логгер, таймер отдыха, таймер длительности, индикатор синхронизации, лента подходов, связка суперсета и нижняя CTA) больше не остаётся на усмотрение story-dev.</p>
+            <p>Пути <code>sources</code> резолвятся полностью, орфанов в <code>imports/</code> нет. Остаток — две низкие неровности в подаче бренд-референса.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">PPTX-референс не процитирован инлайн в теле DESIGN.md</h3>
+              <span class="finding-location">DESIGN.md §Brand &amp; Style; <code>imports/Quest-Fitness-Rebranding.pptx</code></span>
+            </header>
+            <div class="finding-note">Бренд-референс живёт только во frontmatter <code>sources</code>. Потребитель, читающий тело — а после правок именно §Brand &amp; Style описывает, как Гильдия живёт в продукте, — не узнает, что референс существует и где он. Макеты в §IA теперь процитированы инлайн, и контраст заметен.</div>
+            <div class="finding-fix"><strong>Fix:</strong> строка в §Brand &amp; Style: «→ Бренд-референс: <code>imports/Quest-Fitness-Rebranding.pptx</code>. Спайн выигрывает при конфликте».</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">В DESIGN.md нет общей формулировки приоритета над визуальными источниками</h3>
+              <span class="finding-location">DESIGN.md шапка (сравнить с шапкой EXPERIENCE.md)</span>
+            </header>
+            <div class="finding-note">Есть только частный вердикт по красному («<code>#B33743</code> из рабочих слайдов — не канон»). Если из PPTX всплывёт второй конфликт, правило придётся выводить заново.</div>
+            <div class="finding-fix"><strong>Fix:</strong> одна фраза в шапке <code>DESIGN.md</code>, зеркальная той, что уже есть в <code>EXPERIENCE.md</code>.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary>
+          <h2>6. Bloat &amp; overspecification</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p><strong>Единственное измерение, которое после ремедиации просело.</strong> Объём по-прежнему держится честно: 19 компонентов при 28 поверхностях IA — плотно, а не раздуто; выдуманных состояний и токенов «на будущее» нет; микроспецификации единичны и каждая опирается на явное правило.</p>
+            <p>Но реализовался ровно тот риск, который F6.1 и называл: проза §Components дублирует значения из frontmatter, frontmatter изменили, проза молча разошлась. Это не стилистика — расхождения воспроизводят три исправленных дефекта доступности, и разработчик, читающий человеческий текст вместо YAML, вернёт их в продукт.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Проза §Components разошлась с frontmatter в четырёх местах и воскрешает закрытые дефекты</h3>
+              <span class="finding-location">DESIGN.md §Components против frontmatter <code>components</code></span>
+            </header>
+            <div class="finding-note">
+              <code>button-secondary</code>: проза — «белая, граница <code>{colors.border-hairline}</code>, <strong>44 px</strong>», frontmatter — <code>border-control</code> и <code>{spacing.control-md}</code> = 48 px. То же 44 px у <code>button-danger</code>. <code>tab-bar</code>: проза — «приглушённый лейбл (<strong>opacity 0.55</strong>)», frontmatter — <code>ink-soon</code> и <code>note: 'No opacity on soon tabs'</code>, а §Colors прямо пишет «opacity для вкладок не используем». <code>session-set-logger</code>: проза — «с красной рамкой <strong>1 px</strong>», frontmatter — <code>2px</code> плюс текстовый маркер «Подход — сейчас», потому что красный на raised даёт 2.92:1 и не может быть единственным cue. Проза про <code>tab-bar</code> к тому же не упоминает иконки, которыми и решался габаритный конфликт шести вкладок.
+            </div>
+            <div class="finding-fix"><strong>Fix:</strong> переписать §Components так, как это уже сделано в §Layout — оставить роль и правило, числа брать ссылкой (<code>{spacing.control-md}</code>, <code>{colors.border-control}</code>). Тогда следующая правка frontmatter не сможет разойтись с прозой молча. Заодно дописать семь недостающих буллетов (R3.1).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Дубль spacing.gutter / spacing.margin-mobile сохранился</h3>
+              <span class="finding-location">DESIGN.md frontmatter <code>spacing</code></span>
+            </header>
+            <div class="finding-note">Оба 16 px, <code>gutter</code> не используется. Риск вырос: рядом появился <code>margin-wide</code>, и набор боковых полей теперь читается как три токена вместо двух.</div>
+            <div class="finding-fix"><strong>Fix:</strong> см. R2.3 — удалить <code>gutter</code>.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>7. Inheritance discipline</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p><strong>Измерение не менялось — правок сюда не вносили,</strong> и обе medium остались открытыми в исходном виде. Что унаследовано правильно и явно, унаследовано и дальше: нативный фокус-ринг (теперь — через единый токен <code>focus-ring</code> на <code>:focus-visible</code>, что даже усилило дисциплину), <code>env(safe-area-inset-bottom)</code>, системный share, цифровая клавиатура с корректными <code>inputmode</code>, long-press оставлен системе, <code>prefers-reduced-motion</code> и <code>forced-colors</code> учтены.</p>
+            <p>Не дотянуто то же самое: пара нигде не говорит, наследуется ли UI-кит и как поставляется единственная гарнитура продукта. Оба вопроса стали дороже, потому что компонентов теперь 19, а не 12.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Не заявлено, наследуется ли UI-система</h3>
+              <span class="finding-location">DESIGN.md §Brand &amp; Style / EXPERIENCE.md §Foundation</span>
+            </header>
+            <div class="finding-note"><code>DESIGN.md</code> определяет полный собственный набор токенов и 19 компонентов, но не говорит, это спецификация поверх библиотеки или основание для своих. Архитектор может взять MUI или shadcn и получить коллизию высот, радиусов и фокус-колец — тем более теперь, когда <code>focus-ring</code> объявлен глобальным и единственным.</div>
+            <div class="finding-fix"><strong>Fix:</strong> одна строка: UI-кит не наследуется, токены — источник истины; либо назвать кит и объявить спайн дельтой к нему.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Поставка Rubik, набор весов и поведение до загрузки шрифта не определены</h3>
+              <span class="finding-location">DESIGN.md §Typography; решение лежит только в <code>.working/distill-gaps.md</code> §4</span>
+            </header>
+            <div class="finding-note">Rubik заявлен как единственная гарнитура всего интерфейса, используются все четыре веса (400/500/600/700), но способ поставки и fallback-стек не названы нигде в контракте. <code>.working/</code> частью контракта не является. Для веб-продукта это несущее решение: FOUT/FOIT бьёт прямо по экрану Сессии, где цифры крупные и табличные.</div>
+            <div class="finding-fix"><strong>Fix:</strong> перенести в §Typography строку о поставке и fallback-стеке, либо в <code>Residual uncertainty</code>, если решение откладывается.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Иконочная библиотека не названа, хотя иконки стали несущими</h3>
+              <span class="finding-location">DESIGN.md §Shapes («линейные, 1.5 px штрих, 24 px сетка»)</span>
+            </header>
+            <div class="finding-note">Набор задан стилистически, библиотека не названа и вопрос не помечен как открытый. После ремедиации F3.3 иконки перестали быть декором: <code>tab-bar</code> решает габаритный конфликт шести вкладок именно связкой «иконка + короткая подпись», у <code>trainer-menu</code> триггер — иконочная кнопка в шапке.</div>
+            <div class="finding-fix"><strong>Fix:</strong> назвать библиотеку или добавить пункт в <code>Residual uncertainty</code>.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>8. Shape fit</h2>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p><strong>Закрыто:</strong> medium F8.1 — оба спайна переведены в <code>status: final</code> и сравнялись со статусом PRD-источника. Потребитель, действующий по frontmatter, больше не вправе считать документ неготовым.</p>
+            <p>Форма удержана при росте: frontmatter <code>DESIGN.md</code> сохранил все семь ключей и типы, секции тела идут в точном порядке спеки, <code>EXPERIENCE.md</code> сохранил полный набор секций. Разделение обязанностей между документами при добавлении семи компонентов не поехало — <code>DESIGN.md</code> по-прежнему держит анатомию, <code>EXPERIENCE.md</code> поведение, дублей значений между документами нет. Остаток — три косметические неровности, каждая на одну правку.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Порядок секций EXPERIENCE.md отличается от эталонного</h3>
+              <span class="finding-location">EXPERIENCE.md: Key Flows → Responsive &amp; Platform → Inspiration &amp; Anti-patterns</span>
+            </header>
+            <div class="finding-note">В эталоне Key Flows — последняя содержательная секция. Косметика, но для AI-потребителя, который режет документ по заголовкам, стабильный порядок дешевле.</div>
+            <div class="finding-fix"><strong>Fix:</strong> …Accessibility Floor → Responsive &amp; Platform → Inspiration &amp; Anti-patterns → Key Flows → Residual uncertainty.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">HTML-сущность &amp;lt; в теле markdown</h3>
+              <span class="finding-location">EXPERIENCE.md §Accessibility Floor и §Responsive &amp; Platform («&amp;lt; 280 px»)</span>
+            </header>
+            <div class="finding-note">В рендере выглядит корректно, при машинном чтении — артефакт. После ремедиации таких мест стало два, а не одно.</div>
+            <div class="finding-fix"><strong>Fix:</strong> заменить на «менее 280 px» или экранированный <code>\&lt;</code>.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Поле name расходится между документами</h3>
+              <span class="finding-location">DESIGN.md <code>name: Quest Fitness — Гильдия</code> ↔ EXPERIENCE.md <code>name: Quest Fitness — Experience Spine</code></span>
+            </header>
+            <div class="finding-note">Для инструмента, склеивающего пару по <code>name</code>, это два разных объекта.</div>
+            <div class="finding-fix"><strong>Fix:</strong> привести к одному имени системы.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="reviewer-section">
+      <details open>
+        <summary>
+          <h2>Accessibility review</h2>
+          <span class="reviewer-source">review-accessibility.md · WCAG 2.2 AA</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p><strong>Закрыто: оба critical, все шесть high и большинство medium.</strong> <code>soon-opacity</code> удалён и заменён токеном; границы разделены на <code>border-control</code> (интерактив) и <code>border-subtle</code> (разделители); фокус переписан как единый глобальный <code>focus-ring</code> с двойным контуром 2 px и инверсией на Сессии, а формулировка «кастомных обводок нет» уточнена до «нет <em>на компонентах</em>»; шторки и диалоги получили полное правило фокуса (<code>role="dialog"</code>, <code>aria-modal</code>, ловушка, Esc, возврат на триггер); <code>lock-badge</code> в <code>client-row</code> стал некликабельной меткой, а интерактив с hit-area 48 px переехал в шапку Карточки; активный Подход дублируется рамкой 2 px и текстовым маркером; появились правила для 200 % (с приёмкой на 320 px), <code>forced-colors</code>, live regions с таблицей politeness, <code>aria-disabled</code> вместо нативного <code>disabled</code> в состоянии «Клиент занят», опциональная светлая Сессия, заголовки и лендмарки, <code>inputmode</code> и стрелки на степперах, разделение декоративного движения и обновления данных при <code>prefers-reduced-motion</code>.</p>
+            <p><strong>Но один critical закрыт не полностью — по арифметической ошибке в самом ревью.</strong> Расчёты контраста в <code>review-accessibility.md</code> систематически смещены: заявленные 5.84:1 для <code>ink-muted</code> на белом и 4.96:1 на креме при пересчёте дают <strong>6.18:1</strong> и <strong>5.25:1</strong> (исходные 6.2 в <code>DESIGN.md</code> были верны), а рекомендованный «<code>#8A7A7C</code> → 4.6:1» на деле даёт <strong>4.07:1</strong>. Значение применено буквально и теперь стоит в палитре, а §Colors утверждает про него «≥ 4.5:1». Проверено: <code>#767676</code> на белом по той же процедуре даёт 4.54:1 — эталонное значение, метод верен.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">ink-soon #8A7A7C даёт 4.07:1 — «Скоро»-вкладки всё ещё не проходят 1.4.3</h3>
+              <span class="finding-location">DESIGN.md frontmatter <code>colors.ink-soon</code>, <code>components.tab-bar.soon-label-color</code>, §Colors</span>
+            </header>
+            <div class="finding-note">Структура правки верная — opacity убрана, цвет вынесен в отдельный токен, «Скоро» различается подписью, а не приглушением. Неверно только число: <code>#8A7A7C</code> на <code>surface-card</code> = <strong>4.07:1</strong> при требовании 4.5:1 для текста 13 px. Вкладки Этапа 2 по решению спайна кликабельны и ведут на <code>soon-stub</code>, значит исключение WCAG для неактивных контролов не применяется, и пять из шести элементов главной навигации кабинета Клиента по-прежнему не проходят Contrast Minimum. Это первый экран, который видит Клиент. Дополнительно: §Colors утверждает «≥ 4.5:1 на белой карточке» — контракт сейчас несёт неверное число.</div>
+            <div class="finding-fix"><strong>Fix:</strong> затемнить до <code>#7A6B6D</code> — <strong>5.06:1</strong> на белом, запас на случай рендеринга и подложек. Ниже <code>#827375</code> (4.51:1) не опускаться: это впритык к порогу. Обновить цифру в §Colors и заодно исправить там же <code>ink-muted</code> на 6.18:1 / 5.25:1.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Доступные имена заданы не для всех шести элементов</h3>
+              <span class="finding-location">EXPERIENCE.md §Component Patterns; §Accessibility Floor</span>
+            </header>
+            <div class="finding-note">Покрыты <code>streak-chip</code>, <code>lock-badge</code>, Модификатор (точка + короткий ярлык + полное имя) и значения логгера с единицами. Не покрыты два: точка индикатора синхронизации (у строки есть три состояния «текстом/точкой», но нет доступного имени) и усечённый по середине URL в <code>invite-share</code> — если усечение сделано в DOM, скринридер и копирование получат обрезанную ссылку.</div>
+            <div class="finding-fix"><strong>Fix:</strong> дописать две строки: «Сохранено» / «Сохраняется» / «Нет связи, N подходов в очереди» для индикатора; полный URL в <code>aria-label</code> при визуальном усечении средствами CSS.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">13 px как минимум текста на самой слабой паре продукта</h3>
+              <span class="finding-location">DESIGN.md §Typography, <code>typography.meta</code> 13/18, 500, трекинг 0.2 px</span>
+            </header>
+            <div class="finding-note">На этом кегле живут статусы Тренировки, даты, TTL приглашения и подписи полей — цветом <code>ink-muted</code>, в том числе на креме (5.25:1). Формально WCAG кегль не регулирует, но для мокрых рук, вытянутой руки и засветки это худшее сочетание в продукте: мелко, светло, с трекингом, весом 500. Ремедиация сюда не дошла.</div>
+            <div class="finding-fix"><strong>Fix:</strong> либо поднять <code>meta</code> до 14/20 (шкала не пострадает), либо для несущей информации — TTL, статус, остаток блокировки — использовать <code>ink-primary</code>, оставив <code>ink-muted</code> подписям полей. Выбрать одно до макетов.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Не зафиксировано, на каких подложках допустим ink-soon</h3>
+              <span class="finding-location">DESIGN.md §Colors, <code>colors.ink-soon</code></span>
+            </header>
+            <div class="finding-note">Токен введён и обоснован для белой карточки (<code>tab-bar</code>), но продукт имеет четыре светлые поверхности, и «Скоро»-заглушки как раз кремовые. Ограничение области применения нигде не записано — а именно непредсказуемость по подложкам и была причиной отказаться от <code>opacity</code>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> одна оговорка в §Colors: <code>ink-soon</code> допустим только на <code>surface-card</code>; на креме используется <code>ink-muted</code>.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="reviewer-section">
+      <details>
+        <summary>
+          <h2>Responsive / platform review</h2>
+          <span class="reviewer-source">review-responsive.md · остаточных находок нет</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p><strong>Все десять находок закрыты — единственный ревьюер с нулевым остатком.</strong> Заблокированное решение «десктоп — тот же продукт, не отдельный» перестало держаться прозой и дисциплиной ревью и переехало в токены и компоненты.</p>
+            <p>F-1: <code>content-max: 640px</code>, <code>breakpoint-md: 768px</code>, <code>margin-wide: 24px</code> добавлены в <code>spacing</code> и процитированы в обоих документах. F-2: закреплённые <code>bottom-cta</code> и <code>tab-bar</code> получили <code>column-max</code> и правило «кнопка/вкладки = 100 % колонки, не вьюпорта». F-4 и F-5 закрыты одним решением: <code>max-width</code> + центрирование действуют <em>на всех ширинах</em>, а брейкпоинт управляет только величиной боковых полей — дыра 640–767 px, где контент был шире декларированного максимума, исчезла, и планшет перестал расходиться с <code>DESIGN.md</code>. F-3: <code>trainer-menu</code> описан через уже существующий паттерн шторки с явным запретом превращаться в dropdown или сайдбар на широком экране — главный вектор sidebar-дрейфа снят нулём новых абстракций. F-6: hover получил переиспользуемые значения без новых цветов, под <code>@media (hover: hover)</code>, плюс <code>cursor: pointer</code>. F-7: обновление без жеста — ревалидация при возврате фокуса на вкладку и тихий интервал ~30 с на Пуле. F-8: клавиатурный контракт достроен — Esc в шторках, область действия Enter ограничена логгером с явным «глобальных горячих клавиш нет», стрелки на степперах с тем же шагом. F-9: конструкторы добавлены в «Не делаем» отдельной строкой, переупорядочивание задано кнопками «выше/ниже» вместо неназванного drag-and-drop. F-10: <code>viewport-min-width/height</code> 360 × 640 и правило для ландшафта.</p>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <div class="mechanical">
+      <h3>Mechanical notes</h3>
+      <ul>
+        <li><strong>Резолюция токенов после правок:</strong> 237 ссылок <code>{path.to.token}</code> в двух документах, 48 уникальных путей, <strong>0 битых</strong> (было 162 / 39 / 0).</li>
+        <li><strong>Покрытие frontmatter ссылками:</strong> colors 21/21, typography 6/6, rounded 4/4, spacing 16/18. Сироты — <code>spacing.1</code>, <code>spacing.gutter</code>.</li>
+        <li><strong>Компоненты:</strong> frontmatter 19, прозаические спеки в §Components — 12. До ревью было 12/12.</li>
+        <li><strong>Кросс-файловые ссылки резолвятся:</strong> <code>{components.focus-ring}</code> из <code>EXPERIENCE.md</code> в frontmatter <code>DESIGN.md</code> — легально, шапка <code>EXPERIENCE.md</code> объявляет <code>DESIGN.md</code> держателем значений.</li>
+        <li><strong>Пути <code>sources</code>:</strong> все пять существуют на файловой системе (PRD, design-brief-guild, addendum, project-spec, PPTX).</li>
+        <li><strong>Активы:</strong> <code>mockups/</code> — 4 файла, все процитированы инлайн из §IA; <code>imports/</code> — 1 файл, орфанов нет; <code>.working/</code> — 6 файлов, не часть контракта (часть §4 <code>distill-gaps.md</code> всё ещё не поднята в <code>Residual uncertainty</code>, см. R7.2).</li>
+        <li><strong>Пересчёт контраста (sRGB, WCAG 2.x), расхождения с записанным в документах:</strong> <code>ink-soon</code> <code>#8A7A7C</code> на белом — <strong>4.07:1</strong> (записано «≥ 4.5»); <code>ink-muted</code> на белом — <strong>6.18:1</strong> (записано 5.84); <code>ink-muted</code> на креме — <strong>5.25:1</strong> (записано 4.96). Совпадают: <code>border-control</code> 3.76:1 на белом и 3.20:1 на креме, <code>ink-error</code> 7.57:1, <code>accent-red</code> на <code>surface-session-raised</code> 2.92:1.</li>
+        <li><strong>Незаявленные, но проходящие пары:</strong> <code>ink-primary</code> на <code>surface-app</code> 15.59:1, на <code>surface-card</code> 16.64:1, <code>ink-on-session</code> на <code>surface-session</code> 14.14:1.</li>
+        <li><strong>Статусы:</strong> оба спайна <code>status: final</code>, <code>updated: 2026-09-29</code>, согласованы с PRD-источником.</li>
+        <li><strong>Остаточные находки:</strong> 0 critical, 2 high, 14 medium, 16 low — всего 32 из 68 исходных. Обе high в <code>DESIGN.md</code>, обе правятся точечно.</li>
+        <li><strong>Порядок правок:</strong> (1) <code>ink-soon</code> → <code>#7A6B6D</code> и три цифры контраста в §Colors; (2) §Components — числа ссылками на токены плюс семь недостающих буллетов; (3) <code>app-header</code>, <code>duration-timer</code>, <code>sync-indicator</code>; (4) офлайн вне Сессии и «Нет прав»; (5) UI-кит и поставка Rubik; (6) остальное косметическое одним проходом.</li>
+      </ul>
+    </div>
+
+    <footer class="report-footer">
+      <div class="meta">
+        <span>Rubric: review-rubric.md · review-accessibility.md · review-responsive.md</span>
+        <span>Generated: 2026-09-29 15:40 (UTC+3)</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

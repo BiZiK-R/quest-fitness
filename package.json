@@ -1,0 +1,13 @@
+{
+  "name": "quest-fitness-scaffold",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run tests/compose.scaffold.spec.ts",
+    "test:compose": "vitest run tests/compose.scaffold.spec.ts"
+  },
+  "devDependencies": {
+    "vitest": "3.2.7",
+    "yaml": "2.8.0"
+  }
+}

@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quest Fitness — Тренировка (Ожидание)</title>
+<style>
+/*
+  KEY SCREEN: Тренировка в статусе Ожидание.
+  Кадр 1 (канонический): Начать — primary, Перенести — secondary рядом;
+    Пропустить и Отменить живут в меню действий, а не в нижней зоне.
+  Кадр 2 (несущее альтернативное состояние): подтверждение сброса Стрика после тапа «Отменить» —
+    Перенести стоит рядом с подтверждением как предпочтительный путь.
+
+  Governed by:
+  - DESIGN.md → Colors (один красный акцент в кадре: только primary; button-danger — форма, не заливка)
+  - DESIGN.md → Layout & Spacing (одна работа на экран; нижняя зона 56 px + safe-area)
+  - DESIGN.md → Shapes (rounded.full только для статус-пилюли; rounded.md для кнопок и карточек)
+  - DESIGN.md → Components: button-primary, button-secondary, button-danger, bottom-cta
+  - EXPERIENCE.md → Component Patterns: bottom-cta (на Ожидании — ровно одно главное действие)
+  - EXPERIENCE.md → State Patterns: «Тренировка в Ожидании», «Подтверждение сброса Стрика»
+  - EXPERIENCE.md → Interaction Primitives (подтверждение у Пропустить/Отменить; у Перенести — нет; свайпов нет)
+  - EXPERIENCE.md → Key Flows, Поток 3 шаги 1–5
+  - EXPERIENCE.md → Voice and Tone (verbatim: Начать, Пропустить, Отменить, Перенести)
+
+  Шрифт: Rubik с системным фолбэком — файл рендерится полностью офлайн, без сетевых запросов.
+*/
+
+:root {
+  --surface-app: #FAF7F4;
+  --surface-card: #FFFFFF;
+  --surface-cream: #F6EBDD;
+  --surface-sunken: #F1EBE6;
+  --ink-primary: #241C20;
+  --ink-muted: #6E5D60;
+  --ink-inverse: #FFFFFF;
+  --accent-red: #C33F46;
+  --border-hairline: #BFAFB1;
+  --border-subtle: #E3D9D5;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-full: 9999px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Rubik, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--surface-sunken);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 32px;
+  padding: 32px 16px;
+  color: var(--ink-primary);
+}
+
+.frame { display: flex; flex-direction: column; gap: 12px; }
+.frame-caption {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.phone {
+  position: relative;
+  width: 390px;
+  height: 844px;
+  background: var(--surface-app);
+  border: 1px solid var(--border-hairline);
+  border-radius: 32px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- статус-бар устройства (рамка мока, не продукт) --- */
+.statusbar {
+  height: 28px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.statusbar .bars { display: flex; gap: 3px; align-items: flex-end; }
+.statusbar .bars i { width: 3px; background: var(--ink-muted); border-radius: 1px; }
+.statusbar .bars i:nth-child(1) { height: 5px; }
+.statusbar .bars i:nth-child(2) { height: 7px; }
+.statusbar .bars i:nth-child(3) { height: 9px; }
+.statusbar .bars i:nth-child(4) { height: 11px; }
+
+/* --- шапка --- */
+.appbar {
+  flex: 0 0 auto;
+  height: 56px;
+  padding: 0 4px 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.icon-btn {
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  color: var(--ink-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.appbar h1 { font-size: 20px; font-weight: 700; line-height: 26px; }
+
+/* --- контент --- */
+.content {
+  flex: 1 1 auto;
+  overflow: hidden;
+  padding: 8px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.card {
+  background: var(--surface-card);
+  border-radius: var(--r-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.status-pill {
+  align-self: flex-start;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: var(--r-full);
+  background: var(--surface-cream);
+  border: 1px solid var(--border-hairline);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: 0.2px;
+  color: var(--ink-primary);
+}
+.card h2 { font-size: 20px; font-weight: 700; line-height: 26px; }
+.card .when {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--ink-muted);
+}
+
+.plan { display: flex; flex-direction: column; }
+.plan-title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--ink-muted);
+  padding: 0 16px 8px;
+}
+.plan-row {
+  background: var(--surface-card);
+  min-height: 56px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 16px;
+  line-height: 24px;
+}
+.plan-row:first-of-type { border-top-left-radius: var(--r-md); border-top-right-radius: var(--r-md); }
+.plan-row:last-of-type { border-bottom: none; border-bottom-left-radius: var(--r-md); border-bottom-right-radius: var(--r-md); }
+.plan-row .sets {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions { display: flex; flex-direction: column; gap: 12px; }
+.actions-title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--ink-muted);
+}
+.btn {
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-secondary {
+  height: 44px;
+  padding: 0 16px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  color: var(--ink-primary);
+}
+.btn-danger {
+  height: 44px;
+  padding: 0 16px;
+  background: transparent;
+  border: 1px solid var(--accent-red);
+  color: var(--accent-red);
+}
+.btn-primary {
+  height: 56px;
+  padding: 0 24px;
+  background: var(--accent-red);
+  border: none;
+  color: var(--ink-inverse);
+}
+
+/* --- bottom-cta --- */
+.bottom-cta {
+  flex: 0 0 auto;
+  background: var(--surface-card);
+  border-top: 1px solid var(--border-subtle);
+  padding: 12px 16px calc(12px + 16px);
+  display: flex;
+  gap: 12px;
+}
+.bottom-cta .btn-primary { flex: 6 1 0; }
+.bottom-cta .btn-secondary { flex: 4 1 0; height: 56px; }
+
+/* --- диалог подтверждения (кадр 2) --- */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(36, 28, 32, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.dialog {
+  width: 100%;
+  background: var(--surface-card);
+  border-radius: var(--r-lg);
+  padding: 24px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dialog h3 { font-size: 20px; font-weight: 700; line-height: 26px; }
+.dialog p { font-size: 16px; line-height: 24px; color: var(--ink-muted); }
+.dialog-actions { display: flex; flex-direction: column; gap: 12px; padding-top: 12px; }
+</style>
+</head>
+<body>
+
+<!-- ========== Кадр 1: Тренировка в Ожидании ========== -->
+<div class="frame">
+  <div class="phone">
+    <div class="statusbar">
+      <span>08:12</span>
+      <span class="bars"><i></i><i></i><i></i><i></i></span>
+    </div>
+
+    <header class="appbar">
+      <button class="icon-btn" type="button" aria-label="Назад">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m14.5 5-7 7 7 7"/>
+        </svg>
+      </button>
+      <h1>Мария Ковалёва</h1>
+    </header>
+
+    <main class="content">
+      <section class="card">
+        <span class="status-pill">Ожидание</span>
+        <h2>Грудь и трицепс</h2>
+        <p class="when">Сегодня, 19:00 · 60 мин · Макроцикл «Набор», микроцикл 2</p>
+      </section>
+
+      <section class="plan">
+        <h3 class="plan-title">Упражнения</h3>
+        <div class="plan-row">Жим штанги лёжа<span class="sets">4 × 8</span></div>
+        <div class="plan-row">Жим гантелей под углом<span class="sets">3 × 10</span></div>
+        <div class="plan-row">Разведения в кроссовере<span class="sets">3 × 12</span></div>
+        <div class="plan-row">Французский жим<span class="sets">3 × 10</span></div>
+        <div class="plan-row">Разгибания на блоке<span class="sets">3 × 15</span></div>
+      </section>
+
+      <section class="actions">
+        <h3 class="actions-title">Действия</h3>
+        <button class="btn btn-secondary" type="button">Пропустить</button>
+        <button class="btn btn-danger" type="button">Отменить</button>
+      </section>
+    </main>
+
+    <div class="bottom-cta">
+      <button class="btn btn-primary" type="button">Начать</button>
+      <button class="btn btn-secondary" type="button">Перенести</button>
+    </div>
+  </div>
+  <p class="frame-caption">Канон: Начать primary, Перенести рядом, Пропустить/Отменить в меню</p>
+</div>
+
+<!-- ========== Кадр 2: подтверждение сброса Стрика ========== -->
+<div class="frame">
+  <div class="phone">
+    <div class="statusbar">
+      <span>08:13</span>
+      <span class="bars"><i></i><i></i><i></i><i></i></span>
+    </div>
+
+    <header class="appbar">
+      <button class="icon-btn" type="button" aria-label="Назад">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m14.5 5-7 7 7 7"/>
+        </svg>
+      </button>
+      <h1>Мария Ковалёва</h1>
+    </header>
+
+    <main class="content">
+      <section class="card">
+        <span class="status-pill">Ожидание</span>
+        <h2>Грудь и трицепс</h2>
+        <p class="when">Сегодня, 19:00 · 60 мин · Макроцикл «Набор», микроцикл 2</p>
+      </section>
+
+      <section class="plan">
+        <h3 class="plan-title">Упражнения</h3>
+        <div class="plan-row">Жим штанги лёжа<span class="sets">4 × 8</span></div>
+        <div class="plan-row">Жим гантелей под углом<span class="sets">3 × 10</span></div>
+        <div class="plan-row">Разведения в кроссовере<span class="sets">3 × 12</span></div>
+      </section>
+    </main>
+
+    <div class="bottom-cta">
+      <button class="btn btn-primary" type="button">Начать</button>
+      <button class="btn btn-secondary" type="button">Перенести</button>
+    </div>
+
+    <div class="scrim">
+      <div class="dialog" role="alertdialog" aria-labelledby="dlg-title">
+        <h3 id="dlg-title">Отменить тренировку? Стрик сбросится.</h3>
+        <p>Чтобы сдвинуть дату — используйте Перенести.</p>
+        <div class="dialog-actions">
+          <button class="btn btn-danger" type="button">Отменить</button>
+          <button class="btn btn-secondary" type="button">Перенести</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="frame-caption">Подтверждение: Перенести стоит рядом как обратимый выход</p>
+</div>
+
+</body>
+</html>

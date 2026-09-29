@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quest Fitness — Пул клиентов</title>
+<style>
+/*
+  KEY SCREEN: Пул клиентов — стартовый экран Тренера.
+  Кадр 1 (канонический): список зала, строка Ильи занята Артёмом (lock-badge), поиск пуст.
+  Кадр 2 (несущее альтернативное состояние): пустой результат поиска — «Никого не нашли».
+
+  Governed by:
+  - DESIGN.md → Colors (белые строки на surface-app; красный только на primary CTA; абрикос не текст)
+  - DESIGN.md → Layout & Spacing (одна колонка, поля 16 px, строка списка ≥ 56 px)
+  - DESIGN.md → Elevation & Depth (теней нет; разделители hairline)
+  - DESIGN.md → Components: client-row, lock-badge, button-primary, bottom-cta
+  - EXPERIENCE.md → Information Architecture: Пул клиентов (стартовый экран Тренера, меню в шапке)
+  - EXPERIENCE.md → Component Patterns: client-row (тап открывает Карточку даже при занятости),
+    lock-badge (имя занявшего Тренера, тап разворачивает панель Занятости)
+  - EXPERIENCE.md → State Patterns: «Пустой поиск» (без подсказок), «Клиент занят другим Тренером»
+  - EXPERIENCE.md → Key Flows, Поток 1 шаги 1–2; Поток 4 шаг 2
+  - EXPERIENCE.md → Voice and Tone: канонические статусы Ожидание / Пришёл / Пропущена / Отменена
+
+  Шрифт: Rubik с системным фолбэком — файл рендерится полностью офлайн, без сетевых запросов.
+*/
+
+:root {
+  --surface-app: #FAF7F4;
+  --surface-card: #FFFFFF;
+  --surface-cream: #F6EBDD;
+  --surface-sunken: #F1EBE6;
+  --ink-primary: #241C20;
+  --ink-muted: #6E5D60;
+  --ink-inverse: #FFFFFF;
+  --accent-red: #C33F46;
+  --border-hairline: #BFAFB1;
+  --border-subtle: #E3D9D5;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-full: 9999px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Rubik, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--surface-sunken);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 32px;
+  padding: 32px 16px;
+  color: var(--ink-primary);
+}
+
+.frame { display: flex; flex-direction: column; gap: 12px; }
+.frame-caption {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.phone {
+  width: 390px;
+  height: 844px;
+  background: var(--surface-app);
+  border: 1px solid var(--border-hairline);
+  border-radius: 32px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- статус-бар устройства (рамка мока, не продукт) --- */
+.statusbar {
+  height: 28px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.statusbar .bars { display: flex; gap: 3px; align-items: flex-end; }
+.statusbar .bars i { width: 3px; background: var(--ink-muted); border-radius: 1px; }
+.statusbar .bars i:nth-child(1) { height: 5px; }
+.statusbar .bars i:nth-child(2) { height: 7px; }
+.statusbar .bars i:nth-child(3) { height: 9px; }
+.statusbar .bars i:nth-child(4) { height: 11px; }
+
+/* --- шапка --- */
+.appbar {
+  flex: 0 0 auto;
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-app);
+}
+.mark { color: var(--ink-primary); display: flex; }
+.appbar h1 { font-size: 20px; font-weight: 700; line-height: 26px; }
+.icon-btn {
+  margin-left: auto;
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  color: var(--ink-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- поиск --- */
+.search-wrap { flex: 0 0 auto; padding: 8px 16px 16px; }
+.search {
+  height: 44px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  color: var(--ink-muted);
+}
+.search input {
+  flex: 1 1 auto;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--ink-primary);
+}
+.search input::placeholder { color: var(--ink-muted); }
+
+/* --- список --- */
+.list {
+  flex: 1 1 auto;
+  overflow: hidden;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+}
+.client-row {
+  background: var(--surface-card);
+  min-height: 56px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.client-row.locked { align-items: flex-start; }
+.client-row.locked .client-name { padding-top: 4px; }
+.client-row:first-child { border-top-left-radius: var(--r-md); border-top-right-radius: var(--r-md); }
+.client-row:last-child { border-bottom: none; border-bottom-left-radius: var(--r-md); border-bottom-right-radius: var(--r-md); }
+.client-name { font-size: 16px; font-weight: 400; line-height: 24px; flex: 1 1 auto; }
+.row-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.client-meta {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--ink-muted);
+  text-align: right;
+}
+.client-meta b { font-weight: 500; color: var(--ink-primary); }
+
+/* --- lock-badge --- */
+.lock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: var(--r-full);
+  background: var(--surface-cream);
+  border: 1px solid var(--border-hairline);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--ink-primary);
+  white-space: nowrap;
+}
+.lock-badge svg { color: var(--ink-muted); }
+
+/* --- пустое состояние поиска --- */
+.empty {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 16px 0;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--ink-muted);
+}
+
+/* --- bottom-cta --- */
+.bottom-cta {
+  flex: 0 0 auto;
+  background: var(--surface-card);
+  border-top: 1px solid var(--border-subtle);
+  padding: 12px 16px calc(12px + 16px);
+}
+.btn-primary {
+  width: 100%;
+  height: 56px;
+  border: none;
+  border-radius: var(--r-md);
+  background: var(--accent-red);
+  color: var(--ink-inverse);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+}
+</style>
+</head>
+<body>
+
+<!-- ========== Кадр 1: канонический список ========== -->
+<div class="frame">
+  <div class="phone">
+    <div class="statusbar">
+      <span>18:41</span>
+      <span class="bars"><i></i><i></i><i></i><i></i></span>
+    </div>
+
+    <header class="appbar">
+      <span class="mark" aria-label="Quest Fitness">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8.5 8.2a3.5 3.5 0 1 1 7 0"/>
+          <path d="M8.5 8.2C6.4 9.3 5 11.4 5 13.9 5 16.7 6.8 19 9 19h6c2.2 0 4-2.3 4-5.1 0-2.5-1.4-4.6-3.5-5.7"/>
+          <path d="M9.6 13.6c.9-1.1 2.1-1.1 2.4 0 .3 1.1 1.5 1.1 2.4 0"/>
+        </svg>
+      </span>
+      <h1>Пул клиентов</h1>
+      <button class="icon-btn" type="button" aria-label="Меню">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+      </button>
+    </header>
+
+    <div class="search-wrap">
+      <div class="search">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="6"/><path d="m15.5 15.5 3.5 3.5"/>
+        </svg>
+        <input type="text" placeholder="Поиск по имени" aria-label="Поиск по имени">
+      </div>
+    </div>
+
+    <div class="list">
+      <div class="client-row">
+        <span class="client-name">Мария Ковалёва</span>
+        <span class="row-right">
+          <span class="client-meta"><b>Ожидание</b> · сегодня 19:00</span>
+        </span>
+      </div>
+
+      <div class="client-row locked">
+        <span class="client-name">Илья Воронцов</span>
+        <span class="row-right">
+          <span class="lock-badge">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="4.75" y="10.75" width="14.5" height="8.5" rx="2"/>
+              <path d="M8 10.75V7.5a4 4 0 0 1 8 0v3.25"/>
+            </svg>
+            Артём
+          </span>
+          <span class="client-meta"><b>Ожидание</b> · завтра 08:30</span>
+        </span>
+      </div>
+
+      <div class="client-row">
+        <span class="client-name">Дмитрий Саблин</span>
+        <span class="row-right">
+          <span class="client-meta"><b>Пришёл</b> · вчера 20:00</span>
+        </span>
+      </div>
+
+      <div class="client-row">
+        <span class="client-name">Аня Литвинова</span>
+        <span class="row-right">
+          <span class="client-meta"><b>Пропущена</b> · 26 сент</span>
+        </span>
+      </div>
+
+      <div class="client-row">
+        <span class="client-name">Кирилл Мазур</span>
+        <span class="row-right">
+          <span class="client-meta"><b>Ожидание</b> · 1 окт, 07:00</span>
+        </span>
+      </div>
+
+      <div class="client-row">
+        <span class="client-name">Ольга Ким</span>
+        <span class="row-right">
+          <span class="client-meta"><b>Отменена</b> · 24 сент</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="bottom-cta">
+      <button class="btn-primary" type="button">Добавить клиента</button>
+    </div>
+  </div>
+  <p class="frame-caption">Канон: список зала, Илья занят Артёмом</p>
+</div>
+
+<!-- ========== Кадр 2: пустой поиск ========== -->
+<div class="frame">
+  <div class="phone">
+    <div class="statusbar">
+      <span>18:42</span>
+      <span class="bars"><i></i><i></i><i></i><i></i></span>
+    </div>
+
+    <header class="appbar">
+      <span class="mark" aria-label="Quest Fitness">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8.5 8.2a3.5 3.5 0 1 1 7 0"/>
+          <path d="M8.5 8.2C6.4 9.3 5 11.4 5 13.9 5 16.7 6.8 19 9 19h6c2.2 0 4-2.3 4-5.1 0-2.5-1.4-4.6-3.5-5.7"/>
+          <path d="M9.6 13.6c.9-1.1 2.1-1.1 2.4 0 .3 1.1 1.5 1.1 2.4 0"/>
+        </svg>
+      </span>
+      <h1>Пул клиентов</h1>
+      <button class="icon-btn" type="button" aria-label="Меню">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+      </button>
+    </header>
+
+    <div class="search-wrap">
+      <div class="search">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="6"/><path d="m15.5 15.5 3.5 3.5"/>
+        </svg>
+        <input type="text" value="Заха" aria-label="Поиск по имени">
+      </div>
+    </div>
+
+    <div class="empty">Никого не нашли</div>
+
+    <div class="bottom-cta">
+      <button class="btn-primary" type="button">Добавить клиента</button>
+    </div>
+  </div>
+  <p class="frame-caption">Пустой поиск: без подсказок и «возможно, вы имели в виду»</p>
+</div>
+
+</body>
+</html>

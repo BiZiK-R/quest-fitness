@@ -1,0 +1,50 @@
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { assertOpenApiPresent } from './assert-openapi-present';
+
+const canonicalOpenApiPath = resolve(
+  import.meta.dirname,
+  '../../../../backend/openapi/openapi.yaml',
+);
+const codegenScript = resolve(import.meta.dirname, '../../../scripts/codegen.mjs');
+
+describe('OpenAPI codegen gate', () => {
+  it('assertOpenApiPresent throws when YAML is missing', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'qf-openapi-'));
+    const missingPath = join(dir, 'openapi.yaml');
+
+    expect(() => assertOpenApiPresent(missingPath)).toThrow(/OpenAPI contract missing/);
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('assertOpenApiPresent passes when YAML exists', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'qf-openapi-'));
+    const path = join(dir, 'openapi.yaml');
+    writeFileSync(path, 'openapi: 3.0.3\ninfo:\n  title: t\n  version: 1\npaths: {}\n');
+
+    expect(() => assertOpenApiPresent(path)).not.toThrow();
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('committed canonical openapi.yaml exists for frontend codegen', () => {
+    expect(() => assertOpenApiPresent(canonicalOpenApiPath)).not.toThrow();
+  });
+
+  it('codegen.mjs exits non-zero when contract path is missing', () => {
+    const result = spawnSync(process.execPath, [codegenScript], {
+      env: {
+        ...process.env,
+        OPENAPI_CONTRACT_PATH: join(tmpdir(), 'qf-missing-openapi.yaml'),
+      },
+      encoding: 'utf8',
+    });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr + result.stdout).toMatch(/OpenAPI contract missing/);
+  });
+});

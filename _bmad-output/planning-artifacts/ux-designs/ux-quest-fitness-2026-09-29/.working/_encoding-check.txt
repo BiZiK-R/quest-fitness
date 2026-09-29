@@ -1,0 +1,12 @@
+=== DESIGN ===
+len=28682
+has Guild word: False
+count mojibake marker Р: 4950
+'## Brand & Style\n\nQuest Fitness вЂ” РЅРµ РІРёС‚СЂРёРЅР° Рё РЅРµ SaaS-Р»РµРЅРґРёРЅРі, Р° СЂР°Р±РѕС‡РёР№ РёРЅСЃС‚СЂСѓРјРµР'
+no Foundation
+=== EXPERIENCE ===
+len=45238
+has Guild word: False
+count mojibake marker Р: 12668
+no Brand
+'## Foundation\n\nР’РЅСѓС‚СЂРµРЅРЅРёР№ РёРЅСЃС‚СЂСѓРјРµРЅС‚ РѕРґРЅРѕРіРѕ Р·Р°Р»Р° Quest Fitness. **Р’РµР±-РїСЂРёР»РѕР¶РµРЅР'

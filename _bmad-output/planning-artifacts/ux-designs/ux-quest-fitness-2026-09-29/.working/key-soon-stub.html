@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quest Fitness — Кабинет Клиента → Аналитика (Скоро)</title>
+<style>
+/*
+  KEY SCREEN: Кабинет Клиента, вкладка Аналитика — «Скоро»-заглушка.
+  Канонический кадр: tab bar из 6 вкладок, Аналитика открыта, soon-stub на месте контента.
+
+  Governed by:
+  - DESIGN.md → Colors (крем — «пауза»/«Скоро»; красный только индикатор активной вкладки;
+    водяной знак Гильдии цветом border-hairline)
+  - DESIGN.md → Typography (title — заголовок заглушки, body muted — одна строка пояснения)
+  - DESIGN.md → Shapes (rounded.lg 16 px для «моментных» блоков; знак Гильдии 32 px, монохром)
+  - DESIGN.md → Components: tab-bar, soon-stub
+  - EXPERIENCE.md → Information Architecture: Кабинет → Аналитика / Питание / Замеры / Ачивки /
+    Абонемент (Этап 2); навигация Клиента — нижний tab bar из шести вкладок
+  - EXPERIENCE.md → Component Patterns: tab-bar (вкладки Этапа 2 кликабельны, не disabled),
+    soon-stub (заголовок + одна строка, без демо-графиков и скелетонов)
+  - EXPERIENCE.md → State Patterns: «Вкладка Этапа 2» (никаких заглушечных чисел)
+  - EXPERIENCE.md → Key Flows, Поток 2 шаг 6
+  - EXPERIENCE.md → Voice and Tone: «Свиток ещё не развёрнут — раздел появится следом»
+
+  Шрифт: Rubik с системным фолбэком — файл рендерится полностью офлайн, без сетевых запросов.
+
+  FINDING (на ревью спайна): шесть кириллических лейблов по 13 px (минимум из DESIGN.md) на ширине
+  390 px влезают только с отрицательным трекингом −0.3px вместо токенных +0.2px; «Тренировки» и
+  «Абонемент» упираются в края ячейки. При 200 % шрифта tab-bar в текущем виде не выдержит —
+  нужен ответ спайна: перенос лейблов в две строки, иконки + короткие лейблы или скролл бара.
+*/
+
+:root {
+  --surface-app: #FAF7F4;
+  --surface-card: #FFFFFF;
+  --surface-cream: #F6EBDD;
+  --surface-sunken: #F1EBE6;
+  --ink-primary: #241C20;
+  --ink-muted: #6E5D60;
+  --accent-red: #C33F46;
+  --border-hairline: #BFAFB1;
+  --border-subtle: #E3D9D5;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-full: 9999px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Rubik, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--surface-sunken);
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+  color: var(--ink-primary);
+}
+
+.phone {
+  width: 390px;
+  height: 844px;
+  background: var(--surface-app);
+  border: 1px solid var(--border-hairline);
+  border-radius: 32px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- статус-бар устройства (рамка мока, не продукт) --- */
+.statusbar {
+  height: 28px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.statusbar .bars { display: flex; gap: 3px; align-items: flex-end; }
+.statusbar .bars i { width: 3px; background: var(--ink-muted); border-radius: 1px; }
+.statusbar .bars i:nth-child(1) { height: 5px; }
+.statusbar .bars i:nth-child(2) { height: 7px; }
+.statusbar .bars i:nth-child(3) { height: 9px; }
+.statusbar .bars i:nth-child(4) { height: 11px; }
+
+/* --- шапка кабинета: знак Гильдии + вход в Профиль --- */
+.appbar {
+  flex: 0 0 auto;
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mark { color: var(--ink-primary); display: flex; }
+.appbar .brand { font-size: 13px; font-weight: 500; letter-spacing: 0.2px; color: var(--ink-muted); }
+.profile {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  color: var(--ink-primary);
+}
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-full);
+  background: var(--surface-cream);
+  border: 1px solid var(--border-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-primary);
+}
+
+/* --- контент --- */
+.content {
+  flex: 1 1 auto;
+  overflow: hidden;
+  padding: 8px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.content h1 { font-size: 20px; font-weight: 700; line-height: 26px; }
+
+/* --- soon-stub --- */
+.soon-stub {
+  background: var(--surface-cream);
+  border-radius: var(--r-lg);
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.soon-stub .watermark { color: var(--border-hairline); display: flex; }
+.soon-stub h2 { font-size: 20px; font-weight: 700; line-height: 26px; color: var(--ink-primary); }
+.soon-stub p { font-size: 16px; line-height: 24px; color: var(--ink-muted); }
+
+/* --- tab-bar --- */
+.tab-bar {
+  flex: 0 0 auto;
+  background: var(--surface-card);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  padding-bottom: 16px; /* safe-area */
+}
+.tab {
+  /* ячейки по ширине лейбла, а не равные: шесть кириллических слов иначе не влезают в 390 px */
+  flex: 1 1 auto;
+  min-width: 48px;
+  height: 56px;
+  border: none;
+  background: transparent;
+  border-top: 2px solid transparent;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 8px 4px 0;
+}
+.tab .label {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  /* тайтовый трекинг вместо токенных +0.2px: шесть кириллических лейблов иначе не влезают в 390 px */
+  letter-spacing: -0.3px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.tab .soon {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--ink-muted);
+}
+.tab.stage2 { opacity: 0.55; }
+.tab.active {
+  opacity: 1;
+  border-top-color: var(--accent-red);
+}
+.tab.active .label { color: var(--ink-primary); }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="statusbar">
+    <span>21:07</span>
+    <span class="bars"><i></i><i></i><i></i><i></i></span>
+  </div>
+
+  <header class="appbar">
+    <span class="mark" aria-label="Quest Fitness">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8.5 8.2a3.5 3.5 0 1 1 7 0"/>
+        <path d="M8.5 8.2C6.4 9.3 5 11.4 5 13.9 5 16.7 6.8 19 9 19h6c2.2 0 4-2.3 4-5.1 0-2.5-1.4-4.6-3.5-5.7"/>
+        <path d="M9.6 13.6c.9-1.1 2.1-1.1 2.4 0 .3 1.1 1.5 1.1 2.4 0"/>
+      </svg>
+    </span>
+    <span class="brand">Quest Fitness</span>
+    <button class="profile" type="button">
+      Мария
+      <span class="avatar">МК</span>
+    </button>
+  </header>
+
+  <main class="content">
+    <h1>Аналитика</h1>
+
+    <section class="soon-stub">
+      <span class="watermark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8.5 8.2a3.5 3.5 0 1 1 7 0"/>
+          <path d="M8.5 8.2C6.4 9.3 5 11.4 5 13.9 5 16.7 6.8 19 9 19h6c2.2 0 4-2.3 4-5.1 0-2.5-1.4-4.6-3.5-5.7"/>
+          <path d="M9.6 13.6c.9-1.1 2.1-1.1 2.4 0 .3 1.1 1.5 1.1 2.4 0"/>
+        </svg>
+      </span>
+      <h2>Свиток ещё не развёрнут</h2>
+      <p>Аналитика тренировок появится следом.</p>
+    </section>
+  </main>
+
+  <nav class="tab-bar" aria-label="Кабинет">
+    <button class="tab" type="button">
+      <span class="label">Тренировки</span>
+    </button>
+    <button class="tab stage2 active" type="button" aria-current="page">
+      <span class="label">Аналитика</span>
+      <span class="soon">Скоро</span>
+    </button>
+    <button class="tab stage2" type="button">
+      <span class="label">Питание</span>
+      <span class="soon">Скоро</span>
+    </button>
+    <button class="tab stage2" type="button">
+      <span class="label">Замеры</span>
+      <span class="soon">Скоро</span>
+    </button>
+    <button class="tab stage2" type="button">
+      <span class="label">Ачивки</span>
+      <span class="soon">Скоро</span>
+    </button>
+    <button class="tab stage2" type="button">
+      <span class="label">Абонемент</span>
+      <span class="soon">Скоро</span>
+    </button>
+  </nav>
+</div>
+
+</body>
+</html>

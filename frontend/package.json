@@ -1,0 +1,32 @@
+{
+  "name": "@quest-fitness/frontend",
+  "private": true,
+  "version": "0.0.0-scaffold",
+  "description": "Quest Fitness web — React/Vite SPA",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "npm run codegen",
+    "build": "tsc -b && vite build",
+    "test": "vitest run --config vitest.config.ts",
+    "codegen": "node ./scripts/codegen.mjs"
+  },
+  "dependencies": {
+    "openapi-fetch": "0.17.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.6",
+    "@types/react": "19.1.8",
+    "@types/react-dom": "19.1.6",
+    "@vitejs/plugin-react": "6.1.1",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.2",
+    "vite": "8.3.1",
+    "vitest": "3.2.7"
+  }
+}
