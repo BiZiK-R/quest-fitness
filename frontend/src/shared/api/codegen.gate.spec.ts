@@ -58,6 +58,8 @@ describe('OpenAPI codegen gate', () => {
     expect(schema).toContain('"/api/clients/{id}/macro-progress"');
     expect(schema).toContain('"/api/modifiers"');
     expect(schema).toContain('"/api/modifiers/{id}/archive"');
+    expect(schema).toContain('"/api/clients/{clientId}/diary"');
+    expect(schema).toContain('"/api/diary/sessions/{sessionId}"');
   });
 
   it('codegen.mjs exits non-zero when contract path is missing', () => {

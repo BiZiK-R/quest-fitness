@@ -16,6 +16,7 @@ import { ClientMacroProgressModule } from './modules/client-macro-progress/clien
 import { WorkoutsModule } from './modules/workouts/workouts.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
 import { ModifiersModule } from './modules/modifiers/modifiers.module';
+import { DiaryModule } from './modules/diary/diary.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 
 @Module({
@@ -35,6 +36,7 @@ import { PrismaModule } from './shared/prisma/prisma.module';
     WorkoutsModule,
     SessionsModule,
     ModifiersModule,
+    DiaryModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: CsrfGuard },

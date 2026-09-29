@@ -133,6 +133,21 @@ describe('AuthController (HTTP)', () => {
         return { id: where.id };
       },
     },
+    clientProfile: {
+      findUnique: async ({
+        where,
+        select,
+      }: {
+        where: { userId?: string };
+        select?: { id: boolean };
+      }) => {
+        if (where.userId === clientUser.id) {
+          const row = { id: 'client_profile_auth_test' };
+          return select?.id ? row : row;
+        }
+        return null;
+      },
+    },
   };
 
   beforeAll(async () => {
@@ -227,6 +242,7 @@ describe('AuthController (HTTP)', () => {
       id: clientUser.id,
       login: clientUser.login,
       role: 'CLIENT',
+      clientProfileId: 'client_profile_auth_test',
     });
   });
 

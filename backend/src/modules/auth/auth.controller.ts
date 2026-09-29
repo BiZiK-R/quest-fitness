@@ -77,8 +77,7 @@ export class AuthController {
   @RequireSession()
   @ApiOkResponse({ type: MeResponseDto })
   @ApiUnauthorizedResponse({ type: () => ErrorEnvelopeDto })
-  me(@Req() req: Request): MeResponseDto {
-    const user = req.user!;
-    return { id: user.id, login: user.login, role: user.role };
+  async me(@Req() req: Request): Promise<MeResponseDto> {
+    return this.authService.buildMeResponse(req.user!);
   }
 }

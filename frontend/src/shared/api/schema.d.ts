@@ -564,6 +564,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clients/{clientId}/diary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ClientDiaryController_listForClient"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diary/sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DiaryController_getSessionDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -617,6 +649,8 @@ export interface components {
              * @enum {string}
              */
             role: "ADMIN" | "TRAINER" | "CLIENT";
+            /** @description Linked client profile id for CLIENT role */
+            clientProfileId?: string | null;
         };
         TrainerPingResponseDto: {
             /** @example true */
@@ -1003,6 +1037,46 @@ export interface components {
             name: string;
             /** @description Palette token id */
             colorToken: string;
+        };
+        DiaryEntryDto: {
+            sessionId: string;
+            /** @enum {string} */
+            status: "active" | "completed" | "abandoned";
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            completedAt?: string | null;
+            /** Format: date-time */
+            abandonedAt?: string | null;
+            authorTrainerId: string;
+            authorDisplayName?: string | null;
+            workoutId: string;
+            setCount: number;
+            totalTonnageKg: number;
+            /** @description True when session was abandoned (AD-15) */
+            incomplete: boolean;
+        };
+        DiaryListResponseDto: {
+            entries: components["schemas"]["DiaryEntryDto"][];
+        };
+        DiarySessionDetailDto: {
+            sessionId: string;
+            workoutId: string;
+            clientProfileId: string;
+            authorTrainerId: string;
+            authorDisplayName?: string | null;
+            /** @enum {string} */
+            status: "active" | "completed" | "abandoned";
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            completedAt: string | null;
+            /** Format: date-time */
+            abandonedAt: string | null;
+            incomplete: boolean;
+            totalTonnageKg: number;
+            exercises: components["schemas"]["SessionExerciseDto"][];
+            sets: components["schemas"]["SetDto"][];
         };
     };
     responses: never;
@@ -3056,6 +3130,97 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SetModifierDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    ClientDiaryController_listForClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Client profile id */
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiaryListResponseDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    DiaryController_getSessionDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiarySessionDetailDto"];
                 };
             };
             401: {

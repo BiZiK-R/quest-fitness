@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import * as argon2 from 'argon2';
-import { Prisma } from '@prisma/client';
+import { Prisma, User, UserRole } from '@prisma/client';
 import { AppException } from '../../common/errors/app.exception';
 import { ErrorCode } from '../../common/errors/error-code.enum';
 import { normalizePhoneToE164 } from '../../shared/phone/normalize-phone-e164';
 import { PrismaService } from '../../shared/prisma/prisma.service';
+import { MeResponseDto } from './dto/me-response.dto';
 import { SessionService, SessionWithUser } from './session.service';
 
 @Injectable()
@@ -56,5 +57,23 @@ export class AuthService {
 
   async logout(sessionId: string): Promise<void> {
     await this.sessionService.invalidateSession(sessionId);
+  }
+
+  /** Current session user profile; includes linked client profile id for CLIENT role. */
+  async buildMeResponse(user: User): Promise<MeResponseDto> {
+    let clientProfileId: string | null = null;
+    if (user.role === UserRole.CLIENT) {
+      const profile = await this.prisma.clientProfile.findUnique({
+        where: { userId: user.id },
+        select: { id: true },
+      });
+      clientProfileId = profile?.id ?? null;
+    }
+    return {
+      id: user.id,
+      login: user.login,
+      role: user.role,
+      clientProfileId,
+    };
   }
 }

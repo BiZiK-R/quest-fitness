@@ -12,6 +12,10 @@ import { TemplatesPage } from '@/pages/templates/TemplatesPage';
 import { MacrocyclesPage } from '@/pages/macrocycles/MacrocyclesPage';
 import { SessionPage } from '@/pages/session/SessionPage';
 import { SessionSummaryPage } from '@/pages/session/SessionSummaryPage';
+import { CabinetDiaryPage } from '@/pages/diary/CabinetDiaryPage';
+import { CabinetDiaryDetailPage } from '@/pages/diary/CabinetDiaryDetailPage';
+import { TrainerClientDiaryPage } from '@/pages/diary/TrainerClientDiaryPage';
+import { TrainerClientDiaryDetailPage } from '@/pages/diary/TrainerClientDiaryDetailPage';
 
 export const appRouter = createBrowserRouter([
   { path: '/', element: <RootRedirect /> },
@@ -26,9 +30,13 @@ export const appRouter = createBrowserRouter([
       { path: '/macrocycles', element: <MacrocyclesPage /> },
       { path: '/admin/trainers', element: <AdminTrainersPage /> },
       { path: '/clients/:id', element: <ClientCardPage /> },
+      { path: '/clients/:clientId/diary', element: <TrainerClientDiaryPage /> },
+      { path: '/clients/:clientId/diary/:sessionId', element: <TrainerClientDiaryDetailPage /> },
       { path: '/sessions/:sessionId', element: <SessionPage /> },
       { path: '/sessions/:sessionId/summary', element: <SessionSummaryPage /> },
       { path: '/cabinet/workouts', element: <CabinetWorkoutsPage /> },
+      { path: '/cabinet/diary', element: <CabinetDiaryPage /> },
+      { path: '/cabinet/diary/:sessionId', element: <CabinetDiaryDetailPage /> },
     ],
   },
 ]);

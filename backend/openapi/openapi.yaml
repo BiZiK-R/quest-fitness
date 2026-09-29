@@ -1629,6 +1629,79 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a14
+  /api/clients/{clientId}/diary:
+    get:
+      operationId: ClientDiaryController_listForClient
+      parameters:
+        - name: clientId
+          required: true
+          in: path
+          description: Client profile id
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiaryListResponseDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags:
+        - diary
+  /api/diary/sessions/{sessionId}:
+    get:
+      operationId: DiaryController_getSessionDetail
+      parameters:
+        - name: sessionId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiarySessionDetailDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags:
+        - diary
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -1736,6 +1809,10 @@ components:
             - TRAINER
             - CLIENT
           example: ADMIN
+        clientProfileId:
+          type: string
+          nullable: true
+          description: Linked client profile id for CLIENT role
       required:
         - id
         - login
@@ -2697,3 +2774,113 @@ components:
       required:
         - name
         - colorToken
+    DiaryEntryDto:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - abandoned
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        abandonedAt:
+          type: string
+          format: date-time
+          nullable: true
+        authorTrainerId:
+          type: string
+        authorDisplayName:
+          type: string
+          nullable: true
+        workoutId:
+          type: string
+        setCount:
+          type: number
+        totalTonnageKg:
+          type: number
+        incomplete:
+          type: boolean
+          description: True when session was abandoned (AD-15)
+      required:
+        - sessionId
+        - status
+        - startedAt
+        - authorTrainerId
+        - workoutId
+        - setCount
+        - totalTonnageKg
+        - incomplete
+    DiaryListResponseDto:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiaryEntryDto"
+      required:
+        - entries
+    DiarySessionDetailDto:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        workoutId:
+          type: string
+        clientProfileId:
+          type: string
+        authorTrainerId:
+          type: string
+        authorDisplayName:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - abandoned
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        abandonedAt:
+          type: string
+          format: date-time
+          nullable: true
+        incomplete:
+          type: boolean
+        totalTonnageKg:
+          type: number
+        exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/SessionExerciseDto"
+        sets:
+          type: array
+          items:
+            $ref: "#/components/schemas/SetDto"
+      required:
+        - sessionId
+        - workoutId
+        - clientProfileId
+        - authorTrainerId
+        - status
+        - startedAt
+        - completedAt
+        - abandonedAt
+        - incomplete
+        - totalTonnageKg
+        - exercises
+        - sets

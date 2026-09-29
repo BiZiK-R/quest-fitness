@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 
 export class MeResponseDto {
@@ -10,4 +10,11 @@ export class MeResponseDto {
 
   @ApiProperty({ enum: UserRole, example: UserRole.ADMIN })
   role!: UserRole;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    description: 'Linked client profile id for CLIENT role',
+  })
+  clientProfileId!: string | null;
 }

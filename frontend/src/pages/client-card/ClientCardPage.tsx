@@ -215,6 +215,10 @@ export function ClientCardPage() {
         <>
           <h1>{client.displayName}</h1>
 
+          <p>
+            <Link to={`/clients/${client.id}/diary`}>Дневник</Link>
+          </p>
+
           {!liveLock ? (
             <button type="button" onClick={() => void handleTakeClient()}>
               Взять клиента
