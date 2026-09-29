@@ -1,4 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ClientMacroProgressSummaryDto } from '../../client-macro-progress/dto/client-macro-progress-summary.dto';
 import { ClientLockStatusDto } from '../../clients-lock/dto/client-lock-status.dto';
 
 export class ClientProfileDto {
@@ -37,4 +38,11 @@ export class ClientProfileDto {
     description: 'Live lock held by another trainer; null when free or expired',
   })
   lockStatus?: ClientLockStatusDto | null;
+
+  @ApiPropertyOptional({
+    type: () => ClientMacroProgressSummaryDto,
+    nullable: true,
+    description: 'Macrocycle stage pointer when assigned (Story 3.4)',
+  })
+  macroProgress?: ClientMacroProgressSummaryDto | null;
 }

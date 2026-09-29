@@ -301,6 +301,9 @@ describe('ClientsLockController (HTTP)', () => {
         return row ?? { clientId: where.clientId };
       },
     },
+    clientMacroProgress: {
+      findUnique: async () => null,
+    },
   };
 
   beforeAll(async () => {

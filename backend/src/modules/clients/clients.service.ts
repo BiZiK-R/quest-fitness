@@ -8,6 +8,7 @@ import { generateTemporaryPassword } from '../../shared/password/generate-tempor
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { computeLockExpiresAt, isLockExpired } from '../clients-lock/client-lock.util';
 import { ClientsLockService } from '../clients-lock/clients-lock.service';
+import { ClientMacroProgressService } from '../client-macro-progress/client-macro-progress.service';
 import { ClientProfileDto } from './dto/client-profile.dto';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class ClientsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly clientsLockService: ClientsLockService,
+    private readonly clientMacroProgressService: ClientMacroProgressService,
   ) {}
 
   async create(displayName: string): Promise<ClientProfileDto> {
@@ -60,7 +62,8 @@ export class ClientsService {
       throw new AppException(ErrorCode.NOT_FOUND, 'Client not found', 404);
     }
     const lockStatus = await this.clientsLockService.getLiveLockStatus(id);
-    return this.toDto(row, lockStatus);
+    const macroProgress = await this.clientMacroProgressService.getSummaryForClient(id);
+    return this.toDto(row, lockStatus, macroProgress);
   }
 
   /**
@@ -90,6 +93,7 @@ export class ClientsService {
   private toDto(
     row: ClientProfile,
     lockStatus: ClientProfileDto['lockStatus'] = null,
+    macroProgress: ClientProfileDto['macroProgress'] = null,
   ): ClientProfileDto {
     return {
       id: row.id,
@@ -99,6 +103,7 @@ export class ClientsService {
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
       lockStatus: lockStatus ?? null,
+      macroProgress: macroProgress ?? null,
     };
   }
 }

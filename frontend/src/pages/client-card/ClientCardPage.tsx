@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ClientInvitePanel } from '@/features/invite-share/ui/ClientInvitePanel';
+import { ClientMacroProgressPanel } from '@/features/client-macro-progress/ui/ClientMacroProgressPanel';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
 import { formatLockCountdown } from '@/shared/lib/format-lock-countdown';
@@ -251,6 +252,15 @@ export function ClientCardPage() {
               onClose={() => setInviteOpen(false)}
             />
           ) : null}
+
+          <ClientMacroProgressPanel
+            clientId={client.id}
+            initialProgress={client.macroProgress}
+            mutationsDisabled={mutationsDisabled}
+            onProgressChange={(macroProgress) => {
+              setClient((prev) => (prev ? { ...prev, macroProgress } : prev));
+            }}
+          />
 
           {me?.role === 'ADMIN' && client.userId ? (
             <>

@@ -164,6 +164,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clients/{id}/macro-progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["ClientMacroProgressController_assign"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["ClientMacroProgressController_overrideStage"];
+        trace?: never;
+    };
     "/api/clients/{clientId}/invites": {
         parameters: {
             query?: never;
@@ -458,6 +474,15 @@ export interface components {
             /** Format: date-time */
             expiresAt: string;
         };
+        ClientMacroProgressSummaryDto: {
+            macrocycleId: string;
+            currentStageId: string | null;
+            /** @description True when pointer is null (with progress) or on the last stage by sortOrder */
+            stagesExhausted: boolean;
+            macrocycleName?: string;
+            currentStageSortOrder?: number | null;
+            stageCount?: number;
+        };
         ClientProfileDto: {
             /** @example clxyz123 */
             id: string;
@@ -479,6 +504,8 @@ export interface components {
             updatedAt: string;
             /** @description Live lock held by another trainer; null when free or expired */
             lockStatus?: components["schemas"]["ClientLockStatusDto"] | null;
+            /** @description Macrocycle stage pointer when assigned (Story 3.4) */
+            macroProgress?: components["schemas"]["ClientMacroProgressSummaryDto"] | null;
         };
         ClientListResponseDto: {
             clients: components["schemas"]["ClientProfileDto"][];
@@ -491,6 +518,13 @@ export interface components {
             holderTrainerId: string;
             /** Format: date-time */
             expiresAt: string;
+        };
+        AssignClientMacroProgressRequestDto: {
+            macrocycleId: string;
+            currentStageId?: string;
+        };
+        PatchClientMacroProgressRequestDto: {
+            currentStageId: string;
         };
         IssueInviteResponseDto: {
             /**
@@ -1127,6 +1161,122 @@ export interface operations {
                 };
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    ClientMacroProgressController_assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Client profile id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignClientMacroProgressRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientMacroProgressSummaryDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+        };
+    };
+    ClientMacroProgressController_overrideStage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Client profile id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatchClientMacroProgressRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientMacroProgressSummaryDto"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelopeDto"];
+                };
+            };
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

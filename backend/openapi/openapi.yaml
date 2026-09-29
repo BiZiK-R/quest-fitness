@@ -342,6 +342,102 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
       tags: *a3
+  /api/clients/{id}/macro-progress:
+    put:
+      operationId: ClientMacroProgressController_assign
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Client profile id
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignClientMacroProgressRequestDto"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientMacroProgressSummaryDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "409":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: &a4
+        - client-macro-progress
+    patch:
+      operationId: ClientMacroProgressController_overrideStage
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: Client profile id
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchClientMacroProgressRequestDto"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientMacroProgressSummaryDto"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+        "409":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelopeDto"
+      tags: *a4
   /api/clients/{clientId}/invites:
     post:
       operationId: InvitesController_issue
@@ -376,7 +472,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: &a4
+      tags: &a5
         - invites
   /api/clients/{clientId}/invites/active:
     get:
@@ -412,7 +508,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a4
+      tags: *a5
   /api/invites/{token}:
     get:
       operationId: PublicInvitesController_preview
@@ -429,7 +525,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/InvitePreviewDto"
-      tags: &a5
+      tags: &a6
         - invites
   /api/invites/{token}/register:
     post:
@@ -465,7 +561,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a5
+      tags: *a6
   /api/admin/trainers:
     post:
       operationId: AdminTrainersController_create
@@ -495,7 +591,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: &a6
+      tags: &a7
         - admin
     get:
       operationId: AdminTrainersController_list
@@ -519,7 +615,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a6
+      tags: *a7
   /api/admin/trainers/{id}/promote:
     post:
       operationId: AdminTrainersController_promote
@@ -554,7 +650,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a6
+      tags: *a7
   /api/exercises:
     get:
       operationId: ExercisesController_list
@@ -584,7 +680,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: &a7
+      tags: &a8
         - exercises
     post:
       operationId: ExercisesController_create
@@ -620,7 +716,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a7
+      tags: *a8
   /api/exercises/{id}:
     patch:
       operationId: ExercisesController_update
@@ -661,7 +757,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a7
+      tags: *a8
   /api/exercises/{id}/archive:
     post:
       operationId: ExercisesController_archive
@@ -696,7 +792,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a7
+      tags: *a8
   /api/muscle-groups:
     get:
       operationId: MuscleGroupsController_list
@@ -745,7 +841,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: &a8
+      tags: &a9
         - templates
     post:
       operationId: TemplatesController_create
@@ -781,7 +877,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a8
+      tags: *a9
   /api/templates/{id}:
     get:
       operationId: TemplatesController_getById
@@ -816,7 +912,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a8
+      tags: *a9
     patch:
       operationId: TemplatesController_update
       parameters:
@@ -862,7 +958,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a8
+      tags: *a9
   /api/macrocycles:
     get:
       operationId: MacrocyclesController_list
@@ -886,7 +982,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: &a9
+      tags: &a10
         - macrocycles
     post:
       operationId: MacrocyclesController_create
@@ -922,7 +1018,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a9
+      tags: *a10
   /api/macrocycles/{id}:
     get:
       operationId: MacrocyclesController_getById
@@ -957,7 +1053,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a9
+      tags: *a10
     patch:
       operationId: MacrocyclesController_update
       parameters:
@@ -997,7 +1093,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelopeDto"
-      tags: *a9
+      tags: *a10
 info:
   title: Quest Fitness API
   description: Quest Fitness BFF
@@ -1139,6 +1235,29 @@ components:
       required:
         - holderTrainerId
         - expiresAt
+    ClientMacroProgressSummaryDto:
+      type: object
+      properties:
+        macrocycleId:
+          type: string
+        currentStageId:
+          type: string
+          nullable: true
+        stagesExhausted:
+          type: boolean
+          description: True when pointer is null (with progress) or on the last stage by
+            sortOrder
+        macrocycleName:
+          type: string
+        currentStageSortOrder:
+          type: number
+          nullable: true
+        stageCount:
+          type: number
+      required:
+        - macrocycleId
+        - currentStageId
+        - stagesExhausted
     ClientProfileDto:
       type: object
       properties:
@@ -1170,6 +1289,12 @@ components:
           type: object
           allOf:
             - $ref: "#/components/schemas/ClientLockStatusDto"
+        macroProgress:
+          nullable: true
+          description: Macrocycle stage pointer when assigned (Story 3.4)
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/ClientMacroProgressSummaryDto"
       required:
         - id
         - displayName
@@ -1206,6 +1331,22 @@ components:
       required:
         - holderTrainerId
         - expiresAt
+    AssignClientMacroProgressRequestDto:
+      type: object
+      properties:
+        macrocycleId:
+          type: string
+        currentStageId:
+          type: string
+      required:
+        - macrocycleId
+    PatchClientMacroProgressRequestDto:
+      type: object
+      properties:
+        currentStageId:
+          type: string
+      required:
+        - currentStageId
     IssueInviteResponseDto:
       type: object
       properties:

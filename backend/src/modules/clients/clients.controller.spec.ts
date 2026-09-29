@@ -225,6 +225,9 @@ describe('ClientsController (HTTP)', () => {
       findUnique: async () => null,
       findMany: async () => [],
     },
+    clientMacroProgress: {
+      findUnique: async () => null,
+    },
   };
 
   beforeAll(async () => {

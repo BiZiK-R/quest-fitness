@@ -2,8 +2,8 @@
 title: 'Story 3.4 — Указатель этапа Макроцикла у Клиента'
 type: 'feature'
 created: '2026-09-29'
-status: 'in-progress'
-baseline_commit: ''
+status: 'done'
+baseline_commit: '662f77f'
 review_loop_iteration: 0
 context:
   - '{project-root}/_bmad-output/planning-artifacts/architecture/architecture-quest-fitness-2026-09-29/ARCHITECTURE-SPINE.md'
@@ -46,9 +46,9 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] BE assign + override + lock + OpenAPI
-- [ ] FE ClientCard macro panel + tests
-- [ ] Vitest red→green; FE build
+- [x] BE assign + override + lock + OpenAPI
+- [x] FE ClientCard macro panel + tests
+- [x] Vitest red→green; FE build
 
 **Acceptance Criteria:** Story 3.4 epics.md
 

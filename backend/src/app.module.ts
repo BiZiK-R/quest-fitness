@@ -12,6 +12,7 @@ import { UsersModule } from './modules/users/users.module';
 import { ExercisesModule } from './modules/exercises/exercises.module';
 import { TemplatesModule } from './modules/templates/templates.module';
 import { MacrocyclesModule } from './modules/macrocycles/macrocycles.module';
+import { ClientMacroProgressModule } from './modules/client-macro-progress/client-macro-progress.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 
 @Module({
@@ -27,6 +28,7 @@ import { PrismaModule } from './shared/prisma/prisma.module';
     ExercisesModule,
     TemplatesModule,
     MacrocyclesModule,
+    ClientMacroProgressModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: CsrfGuard },
