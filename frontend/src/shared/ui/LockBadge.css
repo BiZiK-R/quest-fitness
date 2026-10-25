@@ -1,0 +1,51 @@
+.ui-lock-badge {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--spacing-1);
+  height: 24px;
+  padding-inline: var(--spacing-2);
+  border: var(--ui-border-width) solid var(--color-border-control);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-raised);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--color-ink-primary);
+  white-space: nowrap;
+}
+
+.ui-lock-badge__icon {
+  display: inline-flex;
+  color: var(--color-ink-muted);
+}
+
+.ui-lock-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: var(--ui-border-width) solid var(--color-border-control);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-raised);
+}
+
+.ui-lock-row__text {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  min-width: 0;
+}
+
+.ui-lock-row__line {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--color-ink-primary);
+  font-variant-numeric: tabular-nums;
+}

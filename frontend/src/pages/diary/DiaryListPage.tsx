@@ -1,26 +1,58 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { LoadErrorWithRetry } from '@/features/diary/ui/LoadErrorWithRetry';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
+import { formatDayTimeLabel } from '@/shared/lib/format-date-ru';
+import { AppShell } from '@/shared/ui/AppShell';
+import { EmptyState } from '@/shared/ui/EmptyState';
+import { IconButton } from '@/shared/ui/IconButton';
+import { BackIcon, ChevronRightIcon } from '@/shared/ui/icons';
+import { ListCard } from '@/shared/ui/ListCard';
+import { ListRow } from '@/shared/ui/ListRow';
 import { PageMeta } from '@/shared/ui/PageMeta';
+import { PageState } from '@/shared/ui/PageState';
+import { SectionTitle } from '@/shared/ui/SectionTitle';
 
-type DiaryListResponse = components['schemas']['DiaryListResponseDto'];
 type DiaryEntry = components['schemas']['DiaryEntryDto'];
 
 type DiaryListPageProps = {
   clientId?: string;
+  /** Если задан — страница сама рисует AppShell с «Назад». В кабинете — без shell. */
   backTo?: string;
-  backLabel?: string;
   sessionDetailPath: (sessionId: string) => string;
+  /** Заголовок appbar / h1 в кабинете. */
+  title?: string;
+  /** В кабинете AppShell уже снаружи. */
+  embedded?: boolean;
 };
+
+function monthLabel(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return '';
+  }
+  return d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+}
+
+function entryMeta(entry: DiaryEntry): string {
+  const parts = [`${entry.setCount} подх.`, `${entry.totalTonnageKg} кг`];
+  if (entry.authorDisplayName) {
+    parts.push(entry.authorDisplayName);
+  }
+  if (entry.incomplete) {
+    parts.push('не завершена');
+  }
+  return parts.join(' · ');
+}
 
 export function DiaryListPage({
   clientId: clientIdProp,
   backTo,
-  backLabel = '← Назад',
   sessionDetailPath,
+  title = 'Дневник',
+  embedded = false,
 }: DiaryListPageProps) {
+  const navigate = useNavigate();
   const { clientId: clientIdParam } = useParams<{ clientId: string }>();
   const clientId = clientIdProp ?? clientIdParam;
   const [entries, setEntries] = useState<DiaryEntry[] | null>(null);
@@ -41,56 +73,94 @@ export function DiaryListPage({
       setLoadError(error?.error?.code ?? 'LOAD_FAILED');
       return;
     }
-    setEntries((data as DiaryListResponse).entries);
+    setEntries(data.entries);
   }, [clientId]);
 
   useEffect(() => {
     void loadDiary();
   }, [loadDiary]);
 
-  if (loadError) {
+  const byMonth = useMemo(() => {
+    if (!entries?.length) {
+      return [] as Array<{ label: string; items: DiaryEntry[] }>;
+    }
+    const map = new Map<string, DiaryEntry[]>();
+    for (const entry of entries) {
+      const key = monthLabel(entry.completedAt ?? entry.startedAt);
+      const bucket = map.get(key) ?? [];
+      bucket.push(entry);
+      map.set(key, bucket);
+    }
+    return [...map.entries()].map(([label, items]) => ({ label, items }));
+  }, [entries]);
+
+  function renderContent() {
+    if (loadError) {
+      return (
+        <PageState
+          status="error"
+          errorCode={loadError}
+          onRetry={() => void loadDiary()}
+        />
+      );
+    }
+    if (!entries) {
+      return <PageState status="loading" />;
+    }
+    if (entries.length === 0) {
+      return (
+        <EmptyState
+          title="Летопись пуста"
+          description="Первая запись появится после первой тренировки."
+        />
+      );
+    }
     return (
-      <>
-        <PageMeta title="Дневник — Quest Fitness" robots="noindex,nofollow" />
-        <LoadErrorWithRetry message={loadError} onRetry={() => void loadDiary()} />
-      </>
+      <div className="diary-list">
+        {byMonth.map((group) => (
+          <section key={group.label}>
+            {group.label ? <SectionTitle>{group.label}</SectionTitle> : null}
+            <ListCard label={group.label || 'Записи дневника'}>
+              {group.items.map((entry) => (
+                <ListRow
+                  key={entry.sessionId}
+                  to={sessionDetailPath(entry.sessionId)}
+                  title={formatDayTimeLabel(entry.completedAt ?? entry.startedAt)}
+                  meta={entryMeta(entry)}
+                  metaPlacement="below"
+                  trailing={<ChevronRightIcon />}
+                />
+              ))}
+            </ListCard>
+          </section>
+        ))}
+      </div>
     );
   }
 
-  if (!entries) {
-    return (
-      <>
-        <PageMeta title="Дневник — Quest Fitness" robots="noindex,nofollow" />
-        <p role="status">Загрузка…</p>
-      </>
-    );
+  const body = (
+    <>
+      <PageMeta title={`${title} — Quest Fitness`} robots="noindex,nofollow" />
+      {renderContent()}
+    </>
+  );
+
+  if (embedded) {
+    return body;
   }
 
   return (
-    <>
-      <PageMeta title="Дневник — Quest Fitness" robots="noindex,nofollow" />
-      {backTo ? (
-        <p>
-          <Link to={backTo}>{backLabel}</Link>
-        </p>
-      ) : null}
-      <h1>Дневник</h1>
-      {entries.length === 0 ? <p>Записей пока нет.</p> : null}
-      <ul>
-        {entries.map((entry) => (
-          <li key={entry.sessionId}>
-            <Link to={sessionDetailPath(entry.sessionId)}>
-              {new Date(entry.startedAt).toLocaleString('ru-RU')}
-              {entry.incomplete ? <> — не завершена</> : null}
-            </Link>
-            <span>
-              {' '}
-              · {entry.setCount} подходов · {entry.totalTonnageKg} кг
-              {entry.authorDisplayName ? <> · {entry.authorDisplayName}</> : null}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </>
+    <AppShell
+      title={title}
+      leading={
+        backTo ? (
+          <IconButton label="Назад" onClick={() => navigate(backTo)}>
+            <BackIcon />
+          </IconButton>
+        ) : undefined
+      }
+    >
+      {body}
+    </AppShell>
   );
 }

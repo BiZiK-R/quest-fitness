@@ -1,21 +1,132 @@
 @import './tokens.css';
 
+/* --- Сброс --- */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
+  min-width: 320px;
   font-family: var(--font-family);
   font-size: 16px;
+  font-weight: 400;
   line-height: 24px;
   color: var(--color-ink-primary);
   background-color: var(--color-surface-app);
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+/* Базовые заголовки на случай страниц без классов ролей */
+h1 {
+  margin-bottom: var(--spacing-4);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 34px;
+  letter-spacing: -0.2px;
+}
+
+h2 {
+  margin-bottom: var(--spacing-3);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 26px;
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--color-border-control);
+  text-underline-offset: 2px;
+}
+
+input,
+button,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img,
+svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* --- Типографика по ролям (DESIGN → Typography) --- */
+.type-display {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 34px;
+  letter-spacing: -0.2px;
+}
+
+.type-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 26px;
+}
+
+.type-body {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.type-meta {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+}
+
+.type-numeric {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 36px;
+  font-variant-numeric: tabular-nums;
+}
+
+.type-muted {
+  color: var(--color-ink-muted);
+}
+
+/* --- Фокус: единственное кольцо на весь продукт --- */
 :focus {
   outline: none;
 }
@@ -23,6 +134,28 @@ body {
 :focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring-outer);
   outline-offset: var(--focus-ring-offset);
-  box-shadow: 0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset))
-    var(--focus-ring-inner);
+  box-shadow: 0 0 0 var(--focus-ring-offset) var(--focus-ring-inner);
+}
+
+.ui-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

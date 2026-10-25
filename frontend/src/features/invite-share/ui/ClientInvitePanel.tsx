@@ -1,32 +1,37 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiClient } from '@/shared/api/client';
 import { copyToClipboard } from '@/shared/lib/copy-to-clipboard';
+import { errorMessageFor } from '@/shared/lib/error-message';
 import type { components } from '@/shared/api/schema';
+import { Button } from '@/shared/ui/Button';
+import { CopyIcon } from '@/shared/ui/icons';
+import './ClientInvitePanel.css';
 
 type IssueInviteResponse = components['schemas']['IssueInviteResponseDto'];
 
 type ClientInvitePanelProps = {
   clientId: string;
   clientDisplayName: string;
-  onClose: () => void;
+  /** «Готово» — закрыть шторку приглашения. */
+  onDone: () => void;
 };
 
 function buildFullInviteUrl(invitePath: string): string {
   return `${window.location.origin}${invitePath}`;
 }
 
-export function ClientInvitePanel({
-  clientId,
-  clientDisplayName,
-  onClose,
-}: ClientInvitePanelProps) {
+/**
+ * Содержимое шторки «Ссылка-приглашение» (EXPERIENCE → invite-share): выпуск при открытии,
+ * копирование одним касанием с текстовым «Скопировано», TTL и перевыпуск (старая ссылка гаснет).
+ */
+export function ClientInvitePanel({ clientId, clientDisplayName, onDone }: ClientInvitePanelProps) {
   const [issue, setIssue] = useState<IssueInviteResponse | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
   const issueInvite = useCallback(async () => {
-    setLoadError(null);
+    setErrorCode(null);
     setCopied(false);
     setIsLoading(true);
     const { data, error } = await apiClient.POST('/api/clients/{clientId}/invites', {
@@ -34,15 +39,12 @@ export function ClientInvitePanel({
     });
     setIsLoading(false);
 
-    if (error) {
+    if (error || !data) {
       setIssue(null);
-      setLoadError(error.error?.code ?? 'INVITE_FAILED');
+      setErrorCode(error?.error?.code ?? null);
       return;
     }
-
-    if (data) {
-      setIssue(data);
-    }
+    setIssue(data);
   }, [clientId]);
 
   useEffect(() => {
@@ -60,30 +62,55 @@ export function ClientInvitePanel({
   }
 
   return (
-    <div aria-label={`Приглашение для ${clientDisplayName}`}>
-      {isLoading ? <p>Готовим ссылку…</p> : null}
-      {loadError ? <p role="alert">{loadError}</p> : null}
+    <div className="invite-share">
+      <section className="invite-share__panel" aria-label={`Приглашение для ${clientDisplayName}`}>
+        <p className="type-body">
+          Отправьте ссылку <b>{clientDisplayName}</b> — по ней откроется анкета.
+        </p>
 
-      {issue ? (
-        <>
-          <p>
-            <a href={fullUrl}>{fullUrl}</a>
+        {isLoading ? (
+          <p className="type-meta type-muted" role="status">
+            Готовим ссылку…
           </p>
-          <p>ссылка живёт 1 сутки</p>
-          <p>{issue.expiresAtLabel}</p>
-          <button type="button" onClick={() => void handleCopy()}>
-            Копировать
-          </button>
-          {copied ? <span>Скопировано</span> : null}
-          <button type="button" disabled={isLoading} onClick={() => void issueInvite()}>
-            Перевыпустить
-          </button>
-        </>
-      ) : null}
+        ) : null}
 
-      <button type="button" onClick={onClose}>
-        Закрыть
-      </button>
+        {errorCode !== null || (!isLoading && !issue) ? (
+          <div className="invite-share__error-block">
+            <p className="type-meta invite-share__error" role="alert">
+              {errorMessageFor(errorCode)}
+            </p>
+            <Button onClick={() => void issueInvite()}>Повторить</Button>
+          </div>
+        ) : null}
+
+        {issue ? (
+          <>
+            <p className="invite-share__url">{fullUrl}</p>
+            <Button fullWidth onClick={() => void handleCopy()}>
+              <CopyIcon />
+              Копировать ссылку
+            </Button>
+            <p className="type-meta invite-share__copied" aria-live="polite">
+              {copied ? 'Скопировано' : ''}
+            </p>
+            <p className="type-meta type-muted">
+              Ссылка живёт 1 сутки · {issue.expiresAtLabel}
+            </p>
+            <Button
+              variant="ghost"
+              className="invite-share__reissue"
+              disabled={isLoading}
+              onClick={() => void issueInvite()}
+            >
+              Выпустить новую ссылку
+            </Button>
+          </>
+        ) : null}
+      </section>
+
+      <Button fullWidth onClick={onDone}>
+        Готово
+      </Button>
     </div>
   );
 }

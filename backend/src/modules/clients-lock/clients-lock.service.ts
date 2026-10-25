@@ -8,6 +8,9 @@ import { computeLockExpiresAt, isLockExpired } from './client-lock.util';
 import { ClientLockStatusDto } from './dto/client-lock-status.dto';
 import { ClientLockResponseDto } from './dto/client-lock-response.dto';
 
+/** Держатель удалён быть не может (FK Restrict), но UI не должен получить пустую строку. */
+export const FALLBACK_HOLDER_NAME = 'Тренер';
+
 @Injectable()
 export class ClientsLockService {
   constructor(private readonly prisma: PrismaService) {}
@@ -163,14 +166,41 @@ export class ClientsLockService {
     }
   }
 
-  private toStatusDto(holderTrainerId: string, lastActivityAt: Date): ClientLockStatusDto {
+  /**
+   * Имена тренеров-держателей одним запросом (список Пула — без N+1).
+   * У User нет отдельного displayName — показываем login.
+   */
+  async resolveHolderDisplayNames(holderTrainerIds: string[]): Promise<Map<string, string>> {
+    const uniqueIds = [...new Set(holderTrainerIds)];
+    if (uniqueIds.length === 0) {
+      return new Map();
+    }
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: uniqueIds } },
+      select: { id: true, login: true },
+    });
+    return new Map(users.map((user) => [user.id, user.login]));
+  }
+
+  private async toStatusDto(
+    holderTrainerId: string,
+    lastActivityAt: Date,
+  ): Promise<ClientLockStatusDto> {
+    const holder = await this.prisma.user.findUnique({
+      where: { id: holderTrainerId },
+      select: { login: true },
+    });
     return {
       holderTrainerId,
+      holderDisplayName: holder?.login ?? FALLBACK_HOLDER_NAME,
       expiresAt: computeLockExpiresAt(lastActivityAt).toISOString(),
     };
   }
 
-  private toResponseDto(holderTrainerId: string, lastActivityAt: Date): ClientLockResponseDto {
+  private toResponseDto(
+    holderTrainerId: string,
+    lastActivityAt: Date,
+  ): Promise<ClientLockResponseDto> {
     return this.toStatusDto(holderTrainerId, lastActivityAt);
   }
 }

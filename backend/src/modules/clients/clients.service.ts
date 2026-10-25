@@ -7,7 +7,10 @@ import { ARGON2_OPTIONS } from '../../shared/password/argon2-options';
 import { generateTemporaryPassword } from '../../shared/password/generate-temporary-password';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { computeLockExpiresAt, isLockExpired } from '../clients-lock/client-lock.util';
-import { ClientsLockService } from '../clients-lock/clients-lock.service';
+import {
+  ClientsLockService,
+  FALLBACK_HOLDER_NAME,
+} from '../clients-lock/clients-lock.service';
 import { ClientMacroProgressService } from '../client-macro-progress/client-macro-progress.service';
 import { WorkoutStatus } from '@prisma/client';
 import { toWorkoutDto } from '../workouts/workout.mapper';
@@ -39,7 +42,11 @@ export class ClientsService {
     const locks = await this.prisma.clientLock.findMany({
       where: { clientId: { in: rows.map((row) => row.id) } },
     });
-    const lockByClientId = new Map(locks.map((lock) => [lock.clientId, lock]));
+    const liveLocks = locks.filter((lock) => !isLockExpired(lock.lastActivityAt));
+    const lockByClientId = new Map(liveLocks.map((lock) => [lock.clientId, lock]));
+    const holderNames = await this.clientsLockService.resolveHolderDisplayNames(
+      liveLocks.map((lock) => lock.holderTrainerId),
+    );
     const clientIds = rows.map((row) => row.id);
     const pendingWorkouts = await this.prisma.workout.findMany({
       where: { clientProfileId: { in: clientIds }, status: WorkoutStatus.pending },
@@ -60,13 +67,13 @@ export class ClientsService {
 
     return rows.map((row) => {
       const lock = lockByClientId.get(row.id);
-      const lockStatus =
-        lock && !isLockExpired(lock.lastActivityAt)
-          ? {
-              holderTrainerId: lock.holderTrainerId,
-              expiresAt: computeLockExpiresAt(lock.lastActivityAt).toISOString(),
-            }
-          : null;
+      const lockStatus = lock
+        ? {
+            holderTrainerId: lock.holderTrainerId,
+            holderDisplayName: holderNames.get(lock.holderTrainerId) ?? FALLBACK_HOLDER_NAME,
+            expiresAt: computeLockExpiresAt(lock.lastActivityAt).toISOString(),
+          }
+        : null;
       const nextRow = nextByClient.get(row.id);
       const nextWorkout = nextRow
         ? (() => {

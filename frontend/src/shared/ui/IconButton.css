@@ -1,0 +1,14 @@
+.ui-icon-button.ant-btn {
+  width: var(--spacing-touch-min);
+  height: var(--spacing-touch-min);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.ui-icon-button.ant-btn .ant-btn-icon {
+  display: inline-flex;
+  line-height: 0;
+}

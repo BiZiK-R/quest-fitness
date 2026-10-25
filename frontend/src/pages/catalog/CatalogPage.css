@@ -1,0 +1,42 @@
+.catalog-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.catalog-page__search-miss {
+  margin: var(--spacing-5) 0 0;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  color: var(--color-ink-muted);
+}
+
+/* --- шторка упражнения --- */
+.catalog-sheet {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Шторка белая — карточке списка нужна граница, иначе строки «растворяются» */
+.catalog-sheet .ui-list-card {
+  border: 1px solid var(--color-border-subtle);
+}
+
+.catalog-sheet__error {
+  margin: var(--spacing-3) 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--color-ink-error);
+}
+
+.catalog-choice-row:disabled {
+  cursor: default;
+  color: var(--color-ink-muted);
+}
+
+.catalog-choice-row__check {
+  color: var(--color-ink-primary);
+}

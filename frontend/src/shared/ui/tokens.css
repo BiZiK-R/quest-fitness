@@ -1,37 +1,49 @@
 /**
- * Design tokens — source: DESIGN.md (Quest Fitness — Гильдия)
+ * Design tokens — Quest Fitness «Гильдия», dark brutal edition.
+ * Канон: DESIGN.md + override 2026-10-09 (чёрный брутализм, один красный).
  */
 :root {
-  /* Colors */
-  --color-surface-app: #faf7f4;
-  --color-surface-card: #ffffff;
-  --color-surface-cream: #f6ebdd;
-  --color-surface-sunken: #f1ebe6;
-  --color-ink-primary: #241c20;
-  --color-ink-muted: #6e5d60;
-  --color-ink-soon: #7a6b6d;
-  --color-ink-inverse: #ffffff;
+  /* Surfaces — near-black ladder, warm undertone (not cool slate) */
+  --color-surface-app: #0a0909;
+  --color-surface-card: #141212;
+  --color-surface-cream: #1c1919;
+  --color-surface-sunken: #050404;
+  --color-surface-raised: #1c1919;
+
+  /* Ink — warm paper on charcoal */
+  --color-ink-primary: #f5f0eb;
+  --color-ink-muted: #9a908c;
+  --color-ink-soon: #8f8682;
+  --color-ink-inverse: #0a0909;
+  --color-ink-error: #e8a0a4;
+
+  /* Accent — single red in frame (заливка CTA; текст ссылок — светлее) */
   --color-accent-red: #c33f46;
   --color-accent-red-pressed: #a7333a;
-  --color-accent-apricot: #efb68c;
-  --color-ink-error: #8b3a3e;
-  --color-border-hairline: #bfafb1;
-  --color-border-control: #8f8083;
-  --color-border-subtle: #e3d9d5;
-  --color-surface-session: #241c20;
-  --color-surface-session-raised: #302428;
-  --color-surface-session-sunken: #1b1416;
-  --color-ink-on-session: #f6ebdd;
-  --color-ink-on-session-muted: #bfafb1;
-  --color-border-session: #3d2e32;
+  --color-accent-red-text: #e85a60;
+  --color-accent-apricot: #c9895a;
+
+  /* Borders — hard, WCAG 3:1+ на тёмном */
+  --color-border-hairline: #3a3333;
+  --color-border-control: #8a807c;
+  --color-border-subtle: #3a3333;
+  --color-border-strong: #f5f0eb;
+
+  /* Session (live workout) — deeper charcoal, same language */
+  --color-surface-session: #050404;
+  --color-surface-session-raised: #141212;
+  --color-surface-session-sunken: #000000;
+  --color-ink-on-session: #f5f0eb;
+  --color-ink-on-session-muted: #9a908c;
+  --color-border-session: #3a3333;
 
   /* Typography */
   --font-family: 'Rubik', system-ui, sans-serif;
 
-  /* Radii */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  /* Radii — brutal: almost square */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
   --radius-full: 9999px;
 
   /* Spacing */
@@ -49,11 +61,26 @@
   --spacing-control-md: 48px;
   --spacing-control-lg: 56px;
   --spacing-content-max: 640px;
+  --spacing-bottom-cta-zone: 64px;
+  --spacing-appbar: 56px;
+  --spacing-tab-bar: 64px;
   --breakpoint-md: 768px;
 
-  /* Focus ring (light surfaces) */
+  --motion-press: 120ms ease;
+  --motion-sheet: 180ms ease-out;
+
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
   --focus-ring-inner: var(--color-ink-inverse);
   --focus-ring-outer: var(--color-ink-primary);
+
+  --ui-hover-bg: var(--color-surface-raised);
+  --ui-border-width: 2px;
+}
+
+.ui-surface-session {
+  --focus-ring-inner: var(--color-ink-primary);
+  --focus-ring-outer: var(--color-ink-on-session);
+  --ui-hover-bg: var(--color-surface-session-raised);
+  color: var(--color-ink-on-session);
 }

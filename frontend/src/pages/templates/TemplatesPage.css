@@ -1,0 +1,129 @@
+.templates-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+}
+
+.templates-editor__error {
+  margin: 0;
+  color: var(--color-ink-error);
+}
+
+.templates-editor__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3);
+}
+
+.templates-editor__lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  overflow: hidden;
+}
+
+.templates-editor__line {
+  display: flex;
+  align-items: stretch;
+  min-height: var(--spacing-control-lg);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.templates-editor__line:last-child {
+  border-bottom: none;
+}
+
+.templates-editor__line-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  min-width: 0;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.templates-editor__line-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.templates-editor__line-title {
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.templates-editor__line-meta {
+  margin: 0;
+}
+
+.templates-editor__line-chevron {
+  flex: 0 0 auto;
+  color: var(--color-ink-muted);
+}
+
+.templates-editor__row-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  padding-inline-end: var(--spacing-1);
+}
+
+.templates-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.templates-sheet__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3);
+}
+
+.templates-sheet__unit {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--color-ink-muted);
+}
+
+.templates-sheet__muted {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--color-ink-muted);
+}
+
+.templates-sheet__error {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--color-ink-error);
+}
+
+.templates-sheet__create {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+@media (hover: hover) {
+  .templates-editor__line-main:hover {
+    background: var(--color-surface-sunken);
+  }
+}

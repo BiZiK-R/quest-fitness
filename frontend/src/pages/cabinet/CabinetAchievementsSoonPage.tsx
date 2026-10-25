@@ -2,5 +2,5 @@ import { CABINET_SOON_STUBS } from '@/features/cabinet-soon/lib/cabinet-soon-cop
 import { CabinetSoonStub } from '@/features/cabinet-soon/ui/CabinetSoonStub';
 
 export function CabinetAchievementsSoonPage() {
-  return <CabinetSoonStub {...CABINET_SOON_STUBS.achievements} />;
+  return <CabinetSoonStub {...CABINET_SOON_STUBS.achievements} headingLevel={2} />;
 }

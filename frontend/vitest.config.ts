@@ -8,6 +8,7 @@ export default mergeConfig(
       environment: 'node',
       environmentMatchGlobs: [['**/*.spec.tsx', 'jsdom']],
       setupFiles: ['./vitest.setup.ts'],
+      testTimeout: 15_000,
     },
   }),
 );

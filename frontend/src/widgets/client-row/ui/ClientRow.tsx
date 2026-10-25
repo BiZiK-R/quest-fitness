@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { LockBadge } from './LockBadge';
+import { LockBadge } from '@/shared/ui/LockBadge';
+import './ClientRow.css';
 
 export type ClientRowProps = {
   id: string;
@@ -15,6 +16,7 @@ export function ClientRow({
   nextWorkoutMeta,
 }: ClientRowProps) {
   const navigate = useNavigate();
+  const hasRightColumn = Boolean(nextWorkoutMeta || lockHolderLabel);
 
   return (
     <button
@@ -24,10 +26,14 @@ export function ClientRow({
       onClick={() => navigate(`/clients/${id}`)}
     >
       <span className="client-row__name">{displayName}</span>
-      {nextWorkoutMeta ? (
-        <span className="client-row__workout-meta">{nextWorkoutMeta}</span>
+      {hasRightColumn ? (
+        <span className="client-row__right">
+          {lockHolderLabel ? <LockBadge holderName={lockHolderLabel} /> : null}
+          {nextWorkoutMeta ? (
+            <span className="client-row__workout-meta">{nextWorkoutMeta}</span>
+          ) : null}
+        </span>
       ) : null}
-      {lockHolderLabel ? <LockBadge holderLabel={lockHolderLabel} /> : null}
     </button>
   );
 }

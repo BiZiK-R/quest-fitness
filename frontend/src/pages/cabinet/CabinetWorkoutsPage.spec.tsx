@@ -2,9 +2,8 @@ import React from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CabinetWorkoutsPage } from './CabinetWorkoutsPage';
+import { CabinetWorkoutsPage, NEXT_WORKOUT_EMPTY_COPY } from './CabinetWorkoutsPage';
 import * as clientModule from '@/shared/api/client';
-import { WORKOUTS_OVERVIEW_EMPTY_COPY } from '@/features/client-workouts-overview/ui/ClientWorkoutsOverviewPanel';
 
 vi.mock('@/shared/api/client', async (importOriginal) => {
   const actual = await importOriginal<typeof clientModule>();
@@ -64,7 +63,8 @@ describe('CabinetWorkoutsPage', () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText(WORKOUTS_OVERVIEW_EMPTY_COPY)).toBeTruthy();
+    expect(await screen.findByText(NEXT_WORKOUT_EMPTY_COPY.title)).toBeTruthy();
+    expect(screen.getByText(NEXT_WORKOUT_EMPTY_COPY.line)).toBeTruthy();
   });
 
   it('displays month count from BFF fields without deriving month in page', async () => {
@@ -109,7 +109,7 @@ describe('CabinetWorkoutsPage', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('workouts-month-summary').textContent).toContain('сентябрь 2026 г.');
-      expect(screen.getByTestId('workouts-month-summary').textContent).toContain('4 тренировок');
+      expect(screen.getByTestId('workouts-month-summary').textContent).toContain('4 тренировки');
     });
 
     expect(dateSpy).not.toHaveBeenCalled();

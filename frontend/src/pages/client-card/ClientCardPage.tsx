@@ -1,14 +1,29 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ClientInvitePanel } from '@/features/invite-share/ui/ClientInvitePanel';
 import { ClientMacroProgressPanel } from '@/features/client-macro-progress/ui/ClientMacroProgressPanel';
 import { ClientWorkoutsOverviewPanel } from '@/features/client-workouts-overview/ui/ClientWorkoutsOverviewPanel';
 import { ClientWorkoutSchedulePanel } from '@/features/client-workout-schedule/ui/ClientWorkoutSchedulePanel';
+import { TrainerMenuAction } from '@/features/trainer-menu-action/ui/TrainerMenuAction';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
+import { errorMessageFor } from '@/shared/lib/error-message';
 import { formatLockCountdown } from '@/shared/lib/format-lock-countdown';
 import { useInterval } from '@/shared/lib/use-interval';
+import { AppShell } from '@/shared/ui/AppShell';
+import { BottomCta } from '@/shared/ui/BottomCta';
+import { BottomSheet } from '@/shared/ui/BottomSheet';
+import { Button } from '@/shared/ui/Button';
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { IconButton } from '@/shared/ui/IconButton';
+import { BackIcon } from '@/shared/ui/icons';
+import { ListCard } from '@/shared/ui/ListCard';
+import { ListRow } from '@/shared/ui/ListRow';
+import { LockRow } from '@/shared/ui/LockBadge';
 import { PageMeta } from '@/shared/ui/PageMeta';
+import { PageState } from '@/shared/ui/PageState';
+import { SectionTitle } from '@/shared/ui/SectionTitle';
+import './ClientCardPage.css';
 
 type ClientProfile = components['schemas']['ClientProfileDto'];
 type MeResponse = components['schemas']['MeResponseDto'];
@@ -19,6 +34,7 @@ const COUNTDOWN_TICK_MS = 30_000;
 
 export function ClientCardPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [client, setClient] = useState<ClientProfile | null>(null);
   const [me, setMe] = useState<MeResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -26,6 +42,10 @@ export function ClientCardPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [resetError, setResetError] = useState<string | null>(null);
+  const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [releasing, setReleasing] = useState(false);
+  const [taking, setTaking] = useState(false);
   const [countdownNow, setCountdownNow] = useState(() => Date.now());
   const isHolderRef = useRef(false);
 
@@ -71,6 +91,7 @@ export function ClientCardPage() {
 
   const isHolder = Boolean(me && liveLock && liveLock.holderTrainerId === me.id);
   const lockedByOther = Boolean(liveLock && me && liveLock.holderTrainerId !== me.id);
+  const canForceRelease = Boolean(isHolder || (me?.role === 'ADMIN' && liveLock));
   const mutationsDisabled = !isHolder;
 
   isHolderRef.current = isHolder;
@@ -95,6 +116,7 @@ export function ClientCardPage() {
             ...prev,
             lockStatus: {
               holderTrainerId: data.holderTrainerId,
+              holderDisplayName: data.holderDisplayName,
               expiresAt: data.expiresAt,
             },
           }
@@ -126,9 +148,11 @@ export function ClientCardPage() {
       return;
     }
     setLockActionError(null);
+    setTaking(true);
     const { data, error } = await apiClient.POST('/api/clients/{id}/lock', {
       params: { path: { id } },
     });
+    setTaking(false);
     if (error) {
       setLockActionError(error.error?.code ?? 'LOCK_FAILED');
       await loadClient();
@@ -141,6 +165,7 @@ export function ClientCardPage() {
               ...prev,
               lockStatus: {
                 holderTrainerId: data.holderTrainerId,
+                holderDisplayName: data.holderDisplayName,
                 expiresAt: data.expiresAt,
               },
             }
@@ -155,6 +180,7 @@ export function ClientCardPage() {
     }
     setResetError(null);
     setTempPassword(null);
+    setResetConfirmOpen(false);
     const { data, error } = await apiClient.POST('/api/clients/{id}/reset-password', {
       params: { path: { id } },
     });
@@ -171,16 +197,13 @@ export function ClientCardPage() {
     if (!id) {
       return;
     }
-    const confirmed = window.confirm(
-      'Освободить клиента? Карточка станет доступна другим тренерам.',
-    );
-    if (!confirmed) {
-      return;
-    }
     setLockActionError(null);
+    setReleasing(true);
     const { error } = await apiClient.DELETE('/api/clients/{id}/lock', {
       params: { path: { id } },
     });
+    setReleasing(false);
+    setReleaseConfirmOpen(false);
     if (error) {
       setLockActionError(error.error?.code ?? 'RELEASE_FAILED');
       return;
@@ -189,111 +212,207 @@ export function ClientCardPage() {
     setInviteOpen(false);
   }
 
-  const otherLockCountdown = liveLock
-    ? formatLockCountdown(liveLock.expiresAt, countdownNow)
+  const ttlText = liveLock
+    ? `Освободится через ${formatLockCountdown(liveLock.expiresAt, countdownNow)}.`
     : null;
+
+  function renderBody() {
+    if (loadError && !client) {
+      return (
+        <PageState
+          status="error"
+          errorCode={loadError}
+          onRetry={() => {
+            setLoadError(null);
+            void loadClient();
+          }}
+        />
+      );
+    }
+    if (!client) {
+      return <PageState status="loading" />;
+    }
+
+    return (
+      <div className="client-card">
+        {liveLock ? (
+          <LockRow
+            id="client-lock-banner"
+            holderName={liveLock.holderDisplayName}
+            ttlText={ttlText}
+            onRelease={canForceRelease ? () => setReleaseConfirmOpen(true) : undefined}
+            releasing={releasing}
+          />
+        ) : null}
+
+        {lockActionError ? (
+          <p className="type-meta client-card__error" role="alert">
+            {errorMessageFor(lockActionError)}
+          </p>
+        ) : null}
+
+        {lockedByOther ? (
+          <p id="client-lock-hint" className="type-meta type-muted" role="status">
+            Правки недоступны, пока клиента ведёт другой тренер.
+          </p>
+        ) : null}
+
+        {!isHolder && !lockedByOther ? (
+          <p id="client-take-hint" className="type-meta client-card__take-hint" role="status">
+            Нажмите «Взять клиента» внизу — откроются расписание, программа и приглашение.
+          </p>
+        ) : null}
+
+        {isHolder ? (
+          <p className="type-meta type-muted" role="status">
+            Дальше: назначьте тренировку. Программа — по желанию.
+          </p>
+        ) : null}
+
+        <ClientWorkoutsOverviewPanel
+          clientId={client.id}
+          diaryTo={`/clients/${client.id}/diary`}
+          compact
+          mutationsDisabled={mutationsDisabled}
+        />
+
+        <SectionTitle>Расписание</SectionTitle>
+        <ClientWorkoutSchedulePanel
+          clientId={client.id}
+          macroProgress={client.macroProgress}
+          mutationsDisabled={mutationsDisabled}
+        />
+
+        {isHolder || client.macroProgress ? (
+          <>
+            <SectionTitle>Программа</SectionTitle>
+            <ClientMacroProgressPanel
+              clientId={client.id}
+              initialProgress={client.macroProgress}
+              mutationsDisabled={mutationsDisabled}
+              onProgressChange={(macroProgress) => {
+                setClient((prev) => (prev ? { ...prev, macroProgress } : prev));
+              }}
+            />
+          </>
+        ) : null}
+
+        <SectionTitle>Ещё</SectionTitle>
+        <ListCard>
+          <ListRow
+            to={`/clients/${client.id}/diary`}
+            title="Дневник"
+            meta="История тренировок"
+          />
+        </ListCard>
+
+        <div className="client-card__access">
+          <Button
+            variant="secondary"
+            fullWidth
+            disabled={mutationsDisabled}
+            aria-describedby={
+              lockedByOther
+                ? 'client-lock-hint'
+                : mutationsDisabled
+                  ? 'client-take-hint'
+                  : undefined
+            }
+            onClick={() => setInviteOpen(true)}
+          >
+            Пригласить в кабинет
+          </Button>
+          {me?.role === 'ADMIN' && client.userId ? (
+            <Button variant="secondary" fullWidth onClick={() => setResetConfirmOpen(true)}>
+              Сбросить пароль
+            </Button>
+          ) : null}
+          {resetError ? (
+            <p className="type-meta client-card__error" role="alert">
+              {errorMessageFor(resetError)}
+            </p>
+          ) : null}
+          {tempPassword ? (
+            <div className="client-card__temp-password" role="status">
+              <p className="type-meta type-muted">Временный пароль (один раз):</p>
+              <p className="type-title">{tempPassword}</p>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  const showTakeCta = Boolean(client && !liveLock);
 
   return (
     <>
-      <PageMeta title="Клиент — Quest Fitness" robots="noindex,nofollow" />
-      <p>
-        <Link to="/pool">← Пул клиентов</Link>
-      </p>
-
-      {loadError ? <p role="alert">{loadError}</p> : null}
-      {lockActionError ? <p role="alert">{lockActionError}</p> : null}
-      {resetError ? <p role="alert">{resetError}</p> : null}
-
-      {lockedByOther && liveLock ? (
-        <div role="status" className="client-card__lock-banner">
-          <p>
-            Клиента ведёт {liveLock.holderTrainerId}. Освободится через {otherLockCountdown}.
-          </p>
-        </div>
-      ) : null}
-
-      {client ? (
-        <>
-          <h1>{client.displayName}</h1>
-
-          <p>
-            <Link to={`/clients/${client.id}/diary`}>Дневник</Link>
-          </p>
-
-          {!liveLock ? (
-            <button type="button" onClick={() => void handleTakeClient()}>
-              Взять клиента
-            </button>
-          ) : null}
-
-          {isHolder ? (
-            <button type="button" onClick={() => void handleReleaseClient()}>
-              Освободить
-            </button>
-          ) : null}
-
-          <button
-            type="button"
-            aria-disabled={mutationsDisabled}
-            aria-describedby={lockedByOther ? 'client-lock-banner-desc' : undefined}
-            onClick={() => {
-              if (mutationsDisabled) {
-                return;
+      <PageMeta
+        title={client ? `${client.displayName} — Quest Fitness` : 'Клиент — Quest Fitness'}
+        robots="noindex,nofollow"
+      />
+      <AppShell
+        title={client?.displayName ?? 'Клиент'}
+        leading={
+          <IconButton label="Назад" onClick={() => navigate('/pool')}>
+            <BackIcon />
+          </IconButton>
+        }
+        action={<TrainerMenuAction />}
+        bottom={
+          showTakeCta ? (
+            <BottomCta
+              primary={
+                <Button
+                  variant="primary"
+                  fullWidth
+                  loading={taking}
+                  onClick={() => void handleTakeClient()}
+                >
+                  Взять клиента
+                </Button>
               }
-              setInviteOpen((v) => !v);
-            }}
-          >
-            Пригласить
-          </button>
-          {lockedByOther ? (
-            <span id="client-lock-banner-desc" className="visually-hidden">
-              Доступно после захвата клиента
-            </span>
-          ) : null}
-
-          {inviteOpen && !mutationsDisabled ? (
-            <ClientInvitePanel
-              clientId={client.id}
-              clientDisplayName={client.displayName}
-              onClose={() => setInviteOpen(false)}
             />
-          ) : null}
+          ) : undefined
+        }
+      >
+        {renderBody()}
+      </AppShell>
 
-          <ClientWorkoutsOverviewPanel
+      <BottomSheet
+        open={inviteOpen && Boolean(client) && !mutationsDisabled}
+        onClose={() => setInviteOpen(false)}
+        title="Ссылка-приглашение"
+      >
+        {client ? (
+          <ClientInvitePanel
             clientId={client.id}
-            diaryTo={`/clients/${client.id}/diary`}
-            compact
+            clientDisplayName={client.displayName}
+            onDone={() => setInviteOpen(false)}
           />
+        ) : null}
+      </BottomSheet>
 
-          <ClientMacroProgressPanel
-            clientId={client.id}
-            initialProgress={client.macroProgress}
-            mutationsDisabled={mutationsDisabled}
-            onProgressChange={(macroProgress) => {
-              setClient((prev) => (prev ? { ...prev, macroProgress } : prev));
-            }}
-          />
+      <ConfirmDialog
+        open={releaseConfirmOpen}
+        title="Освободить клиента?"
+        body="Карточка станет доступна другим тренерам."
+        confirmLabel="Освободить"
+        confirmVariant="danger"
+        onConfirm={() => void handleReleaseClient()}
+        onCancel={() => setReleaseConfirmOpen(false)}
+        busy={releasing}
+      />
 
-          <ClientWorkoutSchedulePanel
-            clientId={client.id}
-            macroProgress={client.macroProgress}
-            mutationsDisabled={mutationsDisabled}
-          />
-
-          {me?.role === 'ADMIN' && client.userId ? (
-            <>
-              <button type="button" onClick={() => void handleResetPassword()}>
-                Сбросить пароль
-              </button>
-              {tempPassword ? (
-                <p role="status">
-                  Временный пароль (показан один раз): <strong>{tempPassword}</strong>
-                </p>
-              ) : null}
-            </>
-          ) : null}
-        </>
-      ) : null}
+      <ConfirmDialog
+        open={resetConfirmOpen}
+        title="Сбросить пароль?"
+        body="Клиент получит временный пароль. Старый перестанет работать."
+        confirmLabel="Сбросить"
+        confirmVariant="danger"
+        onConfirm={() => void handleResetPassword()}
+        onCancel={() => setResetConfirmOpen(false)}
+      />
     </>
   );
 }

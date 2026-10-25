@@ -1,0 +1,131 @@
+/* Вьюпорт. На мобильном колонка = экран, фон surface-app. */
+.ui-app-shell {
+  --app-shell-gutter: var(--spacing-margin-mobile);
+  --app-shell-frame-bg: var(--color-surface-app);
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--app-shell-frame-bg);
+  color: var(--color-ink-primary);
+}
+
+.ui-app-shell--session {
+  --app-shell-frame-bg: var(--color-surface-session);
+
+  color: var(--color-ink-on-session);
+}
+
+/* Колонка: всё, что закреплено (appbar, bottom), живёт внутри неё — ширина = колонка */
+.ui-app-shell__frame {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--spacing-content-max);
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin-inline: auto;
+  background-color: var(--app-shell-frame-bg);
+  /* clip, а не hidden: не создаёт scroll-контейнер и не ломает sticky */
+  overflow: clip;
+}
+
+/* «Телефон на столе»: hairline-рамка, радиус 16, без тени */
+@media (min-width: 768px) {
+  .ui-app-shell {
+    --app-shell-gutter: var(--spacing-margin-wide);
+
+    padding: var(--spacing-5) var(--spacing-margin-wide);
+    background-color: var(--color-surface-sunken);
+  }
+
+  .ui-app-shell--session {
+    background-color: var(--color-surface-session-sunken);
+  }
+
+  .ui-app-shell__frame {
+    min-height: calc(100vh - 2 * var(--spacing-5));
+    min-height: calc(100dvh - 2 * var(--spacing-5));
+    border: 2px solid var(--color-border-control);
+    border-radius: var(--radius-md);
+  }
+
+  .ui-app-shell--session .ui-app-shell__frame {
+    border-color: var(--color-border-session);
+  }
+}
+
+/* --- appbar --- */
+.ui-app-shell__appbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--spacing-3);
+  height: var(--spacing-appbar);
+  padding-inline: var(--app-shell-gutter) var(--spacing-1);
+  background-color: var(--app-shell-frame-bg);
+  border-bottom: var(--ui-border-width) solid var(--color-border-hairline);
+}
+
+/* Кнопка «Назад» 48px сама даёт поле — знак не нужен */
+.ui-app-shell__appbar--leading {
+  gap: var(--spacing-1);
+  padding-inline-start: var(--spacing-1);
+}
+
+.ui-app-shell__mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: inherit;
+}
+
+.ui-app-shell__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 26px;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ui-app-shell__brand {
+  flex: 1 1 auto;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  letter-spacing: -0.2px;
+  color: var(--color-ink-primary);
+  text-transform: uppercase;
+}
+
+.ui-app-shell--session .ui-app-shell__brand {
+  color: var(--color-ink-on-session-muted);
+}
+
+.ui-app-shell__action {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  margin-inline-start: auto;
+}
+
+/* --- контент --- */
+.ui-app-shell__main {
+  flex: 1 0 auto;
+  min-width: 0;
+  padding: var(--spacing-2) var(--app-shell-gutter) var(--spacing-5);
+}
+
+/* --- закреплённый низ: sticky внутри колонки, сам занимает место в потоке --- */
+.ui-app-shell__bottom {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  flex: 0 0 auto;
+}

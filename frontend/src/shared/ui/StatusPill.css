@@ -1,0 +1,32 @@
+.ui-status-pill {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  align-self: flex-start;
+  height: 24px;
+  padding-inline: var(--spacing-2);
+  border: var(--ui-border-width) solid var(--color-border-control);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.ui-status-pill--waiting {
+  background-color: var(--color-surface-raised);
+  color: var(--color-ink-primary);
+}
+
+.ui-status-pill--arrived {
+  border-color: var(--color-accent-apricot);
+  background-color: var(--color-accent-apricot);
+  color: var(--color-ink-inverse);
+}
+
+.ui-status-pill--missed,
+.ui-status-pill--cancelled {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-ink-muted);
+}

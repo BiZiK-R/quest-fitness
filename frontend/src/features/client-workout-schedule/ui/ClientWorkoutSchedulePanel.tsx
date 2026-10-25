@@ -2,12 +2,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
+import { errorMessageFor } from '@/shared/lib/error-message';
+import { Button } from '@/shared/ui/Button';
+import { EmptyState } from '@/shared/ui/EmptyState';
+import { SelectField } from '@/shared/ui/SelectField';
+import { TextField } from '@/shared/ui/TextField';
 import {
   WORKOUT_SKIP_CANCEL_CONFIRM_MESSAGE,
   WorkoutSkipCancelConfirmDialog,
 } from './WorkoutSkipCancelConfirmDialog';
 import { WorkoutRescheduleSheet } from './WorkoutRescheduleSheet';
 import { WorkoutScheduleRow } from './WorkoutScheduleRow';
+import './ClientWorkoutSchedulePanel.css';
 
 type Workout = components['schemas']['WorkoutDto'];
 type WorkoutTemplate = components['schemas']['WorkoutTemplateDto'];
@@ -47,6 +53,7 @@ export function ClientWorkoutSchedulePanel({
   const navigate = useNavigate();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
+  const [templatesLoaded, setTemplatesLoaded] = useState(false);
   const [scheduledLocal, setScheduledLocal] = useState('');
   const [manualTemplateId, setManualTemplateId] = useState('');
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -63,6 +70,10 @@ export function ClientWorkoutSchedulePanel({
 
   const stagesExhausted = Boolean(macroProgress?.stagesExhausted);
   const requireManualTemplate = stagesExhausted || !macroProgress?.currentStageId;
+  const needsTemplateCatalog = requireManualTemplate;
+  const noTemplatesReady = templatesLoaded && needsTemplateCatalog && templates.length === 0;
+  const canShowAssignForm =
+    !mutationsDisabled && !noTemplatesReady && (!needsTemplateCatalog || templatesLoaded);
 
   const sortedWorkouts = useMemo(
     () =>
@@ -92,17 +103,24 @@ export function ClientWorkoutSchedulePanel({
     if (!requireManualTemplate) {
       setTemplates([]);
       setManualTemplateId('');
+      setTemplatesLoaded(true);
       return;
     }
+    setTemplatesLoaded(false);
     void apiClient.GET('/api/templates').then(({ data, error }) => {
       if (error || !data?.templates) {
         setLoadError(error?.error?.code ?? 'TEMPLATES_LOAD_FAILED');
+        setTemplates([]);
+        setTemplatesLoaded(true);
         return;
       }
       setTemplates(data.templates);
       if (data.templates.length > 0) {
         setManualTemplateId((prev) => prev || data.templates[0].id);
+      } else {
+        setManualTemplateId('');
       }
+      setTemplatesLoaded(true);
     });
   }, [requireManualTemplate]);
 
@@ -191,7 +209,7 @@ export function ClientWorkoutSchedulePanel({
   );
 
   const handleAssign = useCallback(async () => {
-    if (mutationsDisabled || !scheduledLocal) {
+    if (mutationsDisabled || !scheduledLocal || !canShowAssignForm) {
       return;
     }
     if (requireManualTemplate && !manualTemplateId) {
@@ -227,6 +245,7 @@ export function ClientWorkoutSchedulePanel({
     setScheduledLocal('');
     await loadWorkouts();
   }, [
+    canShowAssignForm,
     clientId,
     loadWorkouts,
     manualTemplateId,
@@ -236,76 +255,113 @@ export function ClientWorkoutSchedulePanel({
   ]);
 
   return (
-    <section aria-labelledby="client-workout-schedule-heading">
-      <h2 id="client-workout-schedule-heading">Расписание тренировок</h2>
-
-      {loadError ? <p role="alert">{loadError}</p> : null}
-      {actionError ? <p role="alert">{actionError}</p> : null}
-
-      {stagesExhausted ? (
-        <p role="status">
-          Этапы кончились — продлите цикл или выберите шаблон тренировки вручную.
+    <div className="client-schedule">
+      {loadError ? (
+        <p className="type-meta client-schedule__error" role="alert">
+          {errorMessageFor(loadError)}
+        </p>
+      ) : null}
+      {actionError ? (
+        <p className="type-meta client-schedule__error" role="alert">
+          {errorMessageFor(actionError)}
         </p>
       ) : null}
 
-      {!macroProgress && !mutationsDisabled ? (
-        <p role="status">Назначьте макроцикл или выберите шаблон вручную для тренировки.</p>
+      {stagesExhausted && canShowAssignForm ? (
+        <p className="type-meta type-muted" role="status">
+          Этапы кончились — выберите шаблон вручную.
+        </p>
       ) : null}
 
-      <ul>
-        {sortedWorkouts.map((w) => (
-          <WorkoutScheduleRow
-            key={w.id}
-            workout={w}
-            formattedScheduledAt={formatScheduledAt(w.scheduledAt)}
-            showStartAction={w.status === 'pending' && !mutationsDisabled}
-            showPendingActions={w.status === 'pending' && !mutationsDisabled}
-            busy={busy}
-            onStart={() => void handleStartSession(w.id)}
-            onReschedule={() => openRescheduleForWorkout(w.id)}
-            onSkip={() => setConfirmTarget({ workoutId: w.id, action: 'skip' })}
-            onCancel={() => setConfirmTarget({ workoutId: w.id, action: 'cancel' })}
-          />
-        ))}
-      </ul>
-      {sortedWorkouts.length === 0 ? <p>Нет тренировок в расписании.</p> : null}
+      {!macroProgress && canShowAssignForm ? (
+        <p className="type-meta type-muted" role="status">
+          Можно назначить шаблон вручную или сначала выбрать программу в блоке «Программа».
+        </p>
+      ) : null}
 
-      <div>
-        <label htmlFor="workout-scheduled-at">Дата и время</label>
-        <input
-          id="workout-scheduled-at"
-          type="datetime-local"
-          value={scheduledLocal}
-          disabled={mutationsDisabled || busy}
-          onChange={(e) => setScheduledLocal(e.target.value)}
+      {sortedWorkouts.length === 0 && !noTemplatesReady && !mutationsDisabled ? (
+        <p className="type-meta type-muted" role="status">
+          Ближайших тренировок нет — назначьте первую ниже.
+        </p>
+      ) : null}
+
+      {sortedWorkouts.length === 0 && mutationsDisabled ? (
+        <p className="type-meta type-muted" role="status">
+          Расписание откроется после «Взять клиента».
+        </p>
+      ) : null}
+
+      {noTemplatesReady && !mutationsDisabled ? (
+        <EmptyState
+          size="title"
+          title="Нужен шаблон тренировки"
+          description="Соберите шаблон из упражнений — потом вернётесь сюда и назначите дату."
+          action={
+            <Button variant="primary" fullWidth onClick={() => navigate('/templates')}>
+              К шаблонам
+            </Button>
+          }
         />
-      </div>
+      ) : null}
 
-      {requireManualTemplate ? (
-        <div>
-          <label htmlFor="workout-manual-template">Шаблон</label>
-          <select
-            id="workout-manual-template"
-            value={manualTemplateId}
-            disabled={mutationsDisabled || busy || templates.length === 0}
-            onChange={(e) => setManualTemplateId(e.target.value)}
+      {sortedWorkouts.length > 0 ? (
+        <ul className="client-schedule__list" aria-label="Расписание клиента">
+          {sortedWorkouts.map((w) => (
+            <WorkoutScheduleRow
+              key={w.id}
+              workout={w}
+              formattedScheduledAt={formatScheduledAt(w.scheduledAt)}
+              showStartAction={w.status === 'pending' && !mutationsDisabled}
+              showPendingActions={w.status === 'pending' && !mutationsDisabled}
+              busy={busy}
+              onStart={() => void handleStartSession(w.id)}
+              onReschedule={() => openRescheduleForWorkout(w.id)}
+              onSkip={() => setConfirmTarget({ workoutId: w.id, action: 'skip' })}
+              onCancel={() => setConfirmTarget({ workoutId: w.id, action: 'cancel' })}
+            />
+          ))}
+        </ul>
+      ) : null}
+
+      {canShowAssignForm ? (
+        <div className="client-schedule__assign">
+          <TextField
+            id="workout-scheduled-at"
+            label="Дата и время"
+            type="datetime-local"
+            value={scheduledLocal}
+            disabled={busy}
+            onChange={(e) => setScheduledLocal(e.target.value)}
+          />
+
+          {requireManualTemplate ? (
+            <SelectField
+              id="workout-manual-template"
+              label="Шаблон"
+              value={manualTemplateId}
+              disabled={busy || templates.length === 0}
+              placeholder="Выберите шаблон"
+              onChange={(e) => setManualTemplateId(e.target.value)}
+            >
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </SelectField>
+          ) : null}
+
+          <Button
+            variant="primary"
+            fullWidth
+            loading={busy}
+            disabled={!scheduledLocal || (requireManualTemplate && !manualTemplateId)}
+            onClick={() => void handleAssign()}
           >
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            Назначить тренировку
+          </Button>
         </div>
       ) : null}
-
-      <button
-        type="button"
-        disabled={mutationsDisabled || busy || !scheduledLocal}
-        onClick={() => void handleAssign()}
-      >
-        Назначить тренировку
-      </button>
 
       {confirmTarget ? (
         <WorkoutSkipCancelConfirmDialog
@@ -324,7 +380,7 @@ export function ClientWorkoutSchedulePanel({
           onDismiss={() => setRescheduleTarget(null)}
         />
       ) : null}
-    </section>
+    </div>
   );
 }
 

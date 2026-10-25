@@ -1,0 +1,40 @@
+.client-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.client-card__error {
+  margin: 0;
+  color: var(--color-ink-error);
+}
+
+.client-card__take-hint {
+  margin: 0;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-card);
+  color: var(--color-ink-primary);
+}
+
+.client-card__access {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.client-card__temp-password {
+  padding: var(--spacing-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-cream);
+}
+
+.client-card__temp-password p {
+  margin: 0;
+}
+
+.client-card__temp-password .type-title {
+  margin-top: var(--spacing-2);
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}

@@ -1,0 +1,19 @@
+/* confirm-dialog: паддинг 24 и без разделителя над кнопками — это один блок */
+.ui-confirm .ui-sheet__header {
+  padding: var(--spacing-3) var(--spacing-2) 0 var(--spacing-5);
+}
+
+.ui-confirm .ui-sheet__body {
+  padding: var(--spacing-2) var(--spacing-5) 0;
+}
+
+.ui-confirm .ui-sheet__footer {
+  padding: var(--spacing-5);
+  border-top: none;
+}
+
+.ui-confirm__body {
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--color-ink-muted);
+}

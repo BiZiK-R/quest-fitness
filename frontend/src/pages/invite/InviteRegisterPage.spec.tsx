@@ -33,7 +33,15 @@ describe('InviteRegisterPage', () => {
     vi.mocked(inviteRegisterModule.postInviteRegister).mockReset();
   });
 
-  it('shows expired invite message verbatim and keeps form values', async () => {
+  it('shows welcome heading and registration fields', () => {
+    renderInvitePage();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Добро пожаловать в Гильдию' }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Телефон')).toHaveAttribute('type', 'tel');
+  });
+
+  it('replaces form with expired invite message verbatim', async () => {
     const user = userEvent.setup();
     vi.mocked(inviteRegisterModule.postInviteRegister).mockResolvedValue({
       ok: false,
@@ -55,13 +63,11 @@ describe('InviteRegisterPage', () => {
       expect(screen.getByRole('alert')).toHaveTextContent(INVITE_MESSAGE);
     });
 
-    expect(screen.getByLabelText('Имя')).toHaveValue('Иван');
-    expect(screen.getByLabelText('Телефон')).toHaveValue('9161112233');
-    expect(screen.getByLabelText('Логин')).toHaveValue('ivan_test');
-    expect(screen.getByLabelText('Пароль')).toHaveValue('password1');
+    expect(screen.queryByLabelText('Имя')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Зарегистрироваться' })).not.toBeInTheDocument();
   });
 
-  it('shows same message for INVITE_ALREADY_CONSUMED', async () => {
+  it('shows consumed-link message with login action for INVITE_ALREADY_CONSUMED', async () => {
     const user = userEvent.setup();
     vi.mocked(inviteRegisterModule.postInviteRegister).mockResolvedValue({
       ok: false,
@@ -82,8 +88,11 @@ describe('InviteRegisterPage', () => {
     await user.click(screen.getByRole('button', { name: 'Зарегистрироваться' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(INVITE_MESSAGE);
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'По этой ссылке уже зарегистрировались. Войдите со своим логином.',
+      );
     });
+    expect(screen.getByRole('button', { name: 'Войти' })).toBeInTheDocument();
   });
 
   it('navigates to cabinet on success', async () => {

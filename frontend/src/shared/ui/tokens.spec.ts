@@ -10,6 +10,6 @@ describe('tokens.css', () => {
     const css = readFileSync(tokensPath, 'utf8');
     expect(css).toMatch(/#C33F46/i);
     expect(css).toMatch(/640px/);
-    expect(css).toMatch(/#FAF7F4/i);
+    expect(css).toMatch(/#0A0909/i);
   });
 });

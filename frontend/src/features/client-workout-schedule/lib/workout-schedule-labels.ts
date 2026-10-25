@@ -1,16 +1,21 @@
 import type { components } from '@/shared/api/schema';
+import { WORKOUT_STATUS_LABEL, type WorkoutStatus as PillStatus } from '@/shared/ui/StatusPill';
 
 type WorkoutStatus = components['schemas']['WorkoutDto']['status'];
 
-const STATUS_LABELS: Record<WorkoutStatus, string> = {
-  pending: 'Ожидание',
-  attended: 'Пришёл',
-  skipped: 'Пропущена',
-  cancelled: 'Отменена',
+const PILL_STATUS: Record<WorkoutStatus, PillStatus> = {
+  pending: 'waiting',
+  attended: 'arrived',
+  skipped: 'missed',
+  cancelled: 'cancelled',
 };
 
-/** User-facing Russian status pill text (UX-DR9: primary text, no red status coloring). */
-export function workoutStatusLabel(status: WorkoutStatus): string {
-  return STATUS_LABELS[status];
+/** Статус API → вариант StatusPill (Ожидание / Пришёл / Пропущена / Отменена). */
+export function toPillStatus(status: WorkoutStatus): PillStatus {
+  return PILL_STATUS[status];
 }
 
+/** Каноническое слово статуса (EXPERIENCE → Voice and Tone), без красного цвета. */
+export function workoutStatusLabel(status: WorkoutStatus): string {
+  return WORKOUT_STATUS_LABEL[toPillStatus(status)];
+}

@@ -87,10 +87,11 @@ describe('ClientWorkoutSchedulePanel skip/cancel', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Пропустить' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Ещё' })).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole('button', { name: 'Пропустить' }));
+    await user.click(screen.getByRole('button', { name: 'Ещё' }));
+    await user.click(await screen.findByRole('button', { name: 'Пропустить' }));
 
     expect(screen.getByText(WORKOUT_SKIP_CANCEL_CONFIRM_MESSAGE)).toBeInTheDocument();
     expect(clientModule.apiClient.POST).not.toHaveBeenCalledWith(
@@ -119,10 +120,11 @@ describe('ClientWorkoutSchedulePanel skip/cancel', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Пропустить' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Ещё' })).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole('button', { name: 'Пропустить' }));
+    await user.click(screen.getByRole('button', { name: 'Ещё' }));
+    await user.click(await screen.findByRole('button', { name: 'Пропустить' }));
     const dialog = screen.getByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: 'Пропустить' }));
 
@@ -147,10 +149,11 @@ describe('ClientWorkoutSchedulePanel skip/cancel', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Пропустить' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Ещё' })).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole('button', { name: 'Пропустить' }));
+    await user.click(screen.getByRole('button', { name: 'Ещё' }));
+    await user.click(await screen.findByRole('button', { name: 'Пропустить' }));
     const confirmDialog = screen.getByRole('dialog');
     await user.click(within(confirmDialog).getByRole('button', { name: 'Перенести' }));
 
@@ -198,11 +201,11 @@ describe('ClientWorkoutSchedulePanel skip/cancel', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Перенести' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Ещё' })).toBeInTheDocument();
     });
 
-    const rowRescheduleButtons = screen.getAllByRole('button', { name: 'Перенести' });
-    await user.click(rowRescheduleButtons[0]);
+    await user.click(screen.getByRole('button', { name: 'Ещё' }));
+    await user.click(await screen.findByRole('button', { name: 'Перенести' }));
 
     const sheet = screen.getByRole('dialog', { name: /Перенести тренировку/i });
     await user.click(within(sheet).getByRole('button', { name: 'Сохранить' }));

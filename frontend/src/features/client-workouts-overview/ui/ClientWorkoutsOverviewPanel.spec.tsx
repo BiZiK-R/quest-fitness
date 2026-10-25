@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ClientWorkoutsOverviewPanel,
-  WORKOUTS_OVERVIEW_EMPTY_COPY,
+  WORKOUTS_OVERVIEW_EMPTY_TITLE,
 } from './ClientWorkoutsOverviewPanel';
 import * as clientModule from '@/shared/api/client';
 
@@ -105,7 +105,7 @@ describe('ClientWorkoutsOverviewPanel', () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText(WORKOUTS_OVERVIEW_EMPTY_COPY)).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: WORKOUTS_OVERVIEW_EMPTY_TITLE })).toBeTruthy();
     expect(screen.queryByTestId('workouts-month-summary')).toBeNull();
   });
 });

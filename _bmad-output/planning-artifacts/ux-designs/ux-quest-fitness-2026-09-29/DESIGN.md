@@ -11,27 +11,30 @@ sources:
   - ../../../../docs/project-spec.md
   - imports/Quest-Fitness-Rebranding.pptx
 colors:
-  surface-app: '#FAF7F4'
-  surface-card: '#FFFFFF'
-  surface-cream: '#F6EBDD'
-  surface-sunken: '#F1EBE6'
-  ink-primary: '#241C20'
-  ink-muted: '#6E5D60'
-  ink-soon: '#7A6B6D'
-  ink-inverse: '#FFFFFF'
+  # Dark brutal override 2026-10-09 (PO: чёрный брутализм, wow; один красный сохранён)
+  surface-app: '#0A0909'
+  surface-card: '#141212'
+  surface-cream: '#1C1919'
+  surface-sunken: '#050404'
+  surface-raised: '#1C1919'
+  ink-primary: '#F5F0EB'
+  ink-muted: '#9A908C'
+  ink-soon: '#7A726E'
+  ink-inverse: '#0A0909'
   accent-red: '#C33F46'
   accent-red-pressed: '#A7333A'
-  accent-apricot: '#EFB68C'
-  ink-error: '#8B3A3E'
-  border-hairline: '#BFAFB1'
-  border-control: '#8F8083'
-  border-subtle: '#E3D9D5'
-  surface-session: '#241C20'
-  surface-session-raised: '#302428'
-  surface-session-sunken: '#1B1416'
-  ink-on-session: '#F6EBDD'
-  ink-on-session-muted: '#BFAFB1'
-  border-session: '#3D2E32'
+  accent-apricot: '#C9895A'
+  ink-error: '#E8A0A4'
+  border-hairline: '#2A2424'
+  border-control: '#5A5250'
+  border-subtle: '#2A2424'
+  border-strong: '#F5F0EB'
+  surface-session: '#050404'
+  surface-session-raised: '#141212'
+  surface-session-sunken: '#000000'
+  ink-on-session: '#F5F0EB'
+  ink-on-session-muted: '#9A908C'
+  border-session: '#3A3333'
 typography:
   display:
     fontFamily: Rubik
@@ -67,9 +70,9 @@ typography:
     lineHeight: 36px
     note: 'tabular-nums — вес, повторения, таймеры, тоннаж'
 rounded:
-  sm: 8px
-  md: 12px
-  lg: 16px
+  sm: 4px
+  md: 8px
+  lg: 12px
   full: 9999px
 spacing:
   '1': 4px
@@ -197,7 +200,7 @@ components:
     active-label-color: '{colors.ink-primary}'
     active-indicator: '2px solid {colors.accent-red}'
     soon-label-color: '{colors.ink-soon}'
-    soon-caption: 'РЎРєРѕСЂРѕ'
+    soon-caption: 'Скоро'
     icon-size: 24px
     pattern: 'icon + short label'
     labels: 'Тренировки / Аналитика / Питание / Замеры / Ачивки / Абонемент'
@@ -344,14 +347,14 @@ Quest Fitness — не витрина и не SaaS-лендинг, а рабоч
 | `{typography.title}` | 20/26, 700 | Заголовки экранов и карточек, имя Клиента, название Упражнения в Сессии |
 | `{typography.body}` | 16/24, 400 | Основной текст, значения полей, строки списков |
 | `{typography.meta}` | 13/18, 500 | Статусы, даты, подписи полей, TTL, автор Сессии |
-| `{typography.button}` | 16/20, 600 | Р'СЃРµ РєРЅРѕРїРєРё |
+| `{typography.button}` | 16/20, 600 | Все кнопки |
 | `{typography.numeric}` | 32/36, 700, tabular | Вес, повторения, RPE, таймеры, тоннаж |
 
 Правила: без капса, без разрядки заголовков, без курсива. Цифры в Сессии и в истории — только табличные, чтобы значения не «прыгали» при инкременте. Минимальный размер текста в продукте — 13 px; подписи мельче не рисуем.
 
 ## Layout & Spacing
 
-Шкала 4 / 8 / 12 / 16 / 24 / 32 / 48 px. **Mobile-first:** одна колонка всегда — канонический макет зала. `{spacing.content-max}` (640 px) + авто-центрирование действуют **на всех ширинах** (не только ≥ `{spacing.breakpoint-md}`): колонка физически не шире 640 px. Боковые поля: `{spacing.margin-mobile}` 16 px ниже `{spacing.breakpoint-md}` (768 px); `{spacing.margin-wide}` 24 px на ≥ breakpoint. Фон вокруг колонки — `{colors.surface-app}`. Закреплённые `bottom-cta` и `tab-bar` выравниваются по той же колонке (кнопка/вкладки = 100 % колонки, не вьюпорта). Минимум вьюпорта: `{spacing.viewport-min-width}` × `{spacing.viewport-min-height}`. Приёмка — по мобильному кадру. Без сайдбаров и многоколоночных дашбордов.
+Шкала 4 / 8 / 12 / 16 / 24 / 32 / 48 px. **Mobile-first:** одна колонка всегда — канонический макет зала. `{spacing.content-max}` (640 px) + авто-центрирование действуют **на всех ширинах** (не только ≥ `{spacing.breakpoint-md}`): колонка физически не шире 640 px. Боковые поля: `{spacing.margin-mobile}` 16 px ниже `{spacing.breakpoint-md}` (768 px); `{spacing.margin-wide}` 24 px на ≥ breakpoint. Фон вокруг колонки на ≥ `{spacing.breakpoint-md}` — `{colors.surface-sunken}`, колонка на `{colors.surface-app}` с hairline-рамкой 1 px `{colors.border-hairline}` и радиусом `{rounded.lg}`, внешний отступ 24 px («телефон на столе», без тени); ниже breakpoint колонка = экран на `{colors.surface-app}`. Закреплённые `bottom-cta` и `tab-bar` выравниваются по той же колонке (кнопка/вкладки = 100 % колонки, не вьюпорта). Минимум вьюпорта: `{spacing.viewport-min-width}` × `{spacing.viewport-min-height}`. Приёмка — по мобильному кадру. Без сайдбаров и многоколоночных дашбордов.
 
 Вертикальный ритм: `{spacing.5}` между смысловыми блоками экрана, `{spacing.3}` внутри блока, `{spacing.2}` между меткой и значением. Строки списков не сжимаются ради количества — минимальная высота строки `{spacing.control-lg}` 56 px.
 

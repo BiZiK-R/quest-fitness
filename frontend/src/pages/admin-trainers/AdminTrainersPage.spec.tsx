@@ -66,12 +66,13 @@ describe('AdminTrainersPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Логин')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Добавить тренера' })).toBeInTheDocument();
     });
 
+    await user.click(screen.getByRole('button', { name: 'Добавить тренера' }));
     await user.type(screen.getByLabelText('Логин'), 'newbie');
     await user.type(screen.getByLabelText('Пароль'), 'Password1!');
-    await user.click(screen.getByRole('button', { name: 'Создать тренера' }));
+    await user.click(screen.getByRole('button', { name: 'Создать' }));
 
     await waitFor(() => {
       expect(clientModule.apiClient.POST).toHaveBeenCalledWith('/api/admin/trainers', {

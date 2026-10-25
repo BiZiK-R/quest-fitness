@@ -74,7 +74,7 @@ describe('DiaryListPage', () => {
 
     renderList();
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('LOAD_FAILED');
+    expect(await screen.findByRole('alert')).toHaveTextContent(/не загрузилось/i);
     expect(screen.getByRole('button', { name: 'Повторить' })).toBeInTheDocument();
 
     vi.mocked(clientModule.apiClient.GET).mockResolvedValue({

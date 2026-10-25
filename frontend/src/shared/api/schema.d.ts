@@ -681,6 +681,7 @@ export interface components {
         };
         ClientLockStatusDto: {
             holderTrainerId: string;
+            holderDisplayName: string;
             /** Format: date-time */
             expiresAt: string;
         };
@@ -735,6 +736,7 @@ export interface components {
         };
         ClientLockResponseDto: {
             holderTrainerId: string;
+            holderDisplayName: string;
             /** Format: date-time */
             expiresAt: string;
         };

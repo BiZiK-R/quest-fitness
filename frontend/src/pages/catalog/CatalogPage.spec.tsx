@@ -14,11 +14,52 @@ vi.mock('@/shared/api/client', async (importOriginal) => {
       ...actual.apiClient,
       GET: vi.fn(),
       POST: vi.fn(),
+      PATCH: vi.fn(),
     },
   };
 });
 
 const WARNING = 'Без групп упражнение не попадёт в статистику мышц';
+
+const ok = (data: unknown) => ({
+  data,
+  error: undefined,
+  response: new Response(null, { status: 200 }),
+});
+
+function mockCatalog(exercises: unknown[]) {
+  vi.mocked(clientModule.apiClient.GET).mockImplementation(async (path) => {
+    if (path === '/api/muscle-groups') {
+      return ok({
+        muscleGroups: [
+          { id: 'mg1', name: 'Грудь', sortOrder: 1 },
+          { id: 'mg2', name: 'Спина', sortOrder: 2 },
+        ],
+      });
+    }
+    if (path === '/api/exercises') {
+      return ok({ exercises });
+    }
+    return { data: undefined, error: undefined, response: new Response(null, { status: 404 }) };
+  });
+}
+
+const BENCH = {
+  id: 'ex1',
+  name: 'Жим',
+  missingMuscleGroupsWarning: false,
+  primaryMuscleGroupId: 'mg1',
+  secondaryMuscleGroupIds: [],
+  archivedAt: null,
+};
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <CatalogPage />
+    </MemoryRouter>,
+  );
+}
 
 describe('CatalogPage', () => {
   afterEach(() => {
@@ -28,119 +69,97 @@ describe('CatalogPage', () => {
   beforeEach(() => {
     vi.mocked(clientModule.apiClient.GET).mockReset();
     vi.mocked(clientModule.apiClient.POST).mockReset();
-    vi.mocked(clientModule.apiClient.GET).mockImplementation(async (path) => {
-      if (path === '/api/muscle-groups') {
-        return {
-          data: {
-            muscleGroups: [
-              { id: 'mg1', name: 'Грудь', sortOrder: 1 },
-              { id: 'mg2', name: 'Спина', sortOrder: 2 },
-            ],
-          },
-          error: undefined,
-          response: new Response(null, { status: 200 }),
-        };
-      }
-      if (path === '/api/exercises') {
-        return {
-          data: { exercises: [{ id: 'ex1', name: 'Жим', missingMuscleGroupsWarning: false, primaryMuscleGroupId: 'mg1', secondaryMuscleGroupIds: [], archivedAt: null }] },
-          error: undefined,
-          response: new Response(null, { status: 200 }),
-        };
-      }
-      return { data: undefined, error: undefined, response: new Response(null, { status: 404 }) };
-    });
+    vi.mocked(clientModule.apiClient.PATCH).mockReset();
+    mockCatalog([BENCH]);
   });
 
-  it('loads exercises and muscle groups', async () => {
-    render(
-      <MemoryRouter>
-        <CatalogPage />
-      </MemoryRouter>,
-    );
+  it('shows appbar title and loads exercises with archived ones', async () => {
+    renderPage();
 
+    expect(screen.getByRole('heading', { level: 1, name: 'Каталог упражнений' })).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getByText('Жим')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Жим/ })).toBeInTheDocument();
     });
-    expect(clientModule.apiClient.GET).toHaveBeenCalledWith('/api/exercises');
+    expect(screen.getByText('Грудь')).toBeInTheDocument();
+    expect(clientModule.apiClient.GET).toHaveBeenCalledWith('/api/exercises', {
+      params: { query: { includeArchived: true } },
+    });
     expect(clientModule.apiClient.GET).toHaveBeenCalledWith('/api/muscle-groups');
   });
 
-  it('shows warning when no muscle groups selected', async () => {
-    render(
-      <MemoryRouter>
-        <CatalogPage />
-      </MemoryRouter>,
-    );
+  it('shows empty state when catalog is empty', async () => {
+    mockCatalog([]);
+    renderPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Название')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Каталог пуст' })).toBeInTheDocument();
     });
-
-    expect(screen.getByText(WARNING)).toBeInTheDocument();
   });
 
-  it('creates exercise via POST /api/exercises', async () => {
+  it('shows hidden exercises in a separate section', async () => {
+    mockCatalog([BENCH, { ...BENCH, id: 'ex2', name: 'Тяга', archivedAt: '2026-09-01T00:00:00Z' }]);
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Скрытые' })).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Скрыто/)).toBeInTheDocument();
+  });
+
+  it('filters by search and shows miss text', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/найти упражнение/i)).toBeInTheDocument();
+    });
+    await user.type(screen.getByPlaceholderText(/найти упражнение/i), 'присед');
+
+    expect(screen.getByText('Ничего не нашли')).toBeInTheDocument();
+  });
+
+  it('opens create sheet with no-groups warning and creates exercise', async () => {
     const user = userEvent.setup();
     vi.mocked(clientModule.apiClient.POST).mockResolvedValue({
-      data: {
-        id: 'ex2',
-        name: 'Планка',
-        missingMuscleGroupsWarning: true,
-        primaryMuscleGroupId: null,
-        secondaryMuscleGroupIds: [],
-        archivedAt: null,
-      },
+      data: { ...BENCH, id: 'ex3', name: 'Планка', primaryMuscleGroupId: null },
       error: undefined,
       response: new Response(null, { status: 201 }),
     });
+    renderPage();
 
-    render(
-      <MemoryRouter>
-        <CatalogPage />
-      </MemoryRouter>,
-    );
+    await user.click(screen.getByRole('button', { name: 'Добавить упражнение' }));
 
-    await waitFor(() => {
-      expect(screen.getByLabelText('Название')).toBeInTheDocument();
-    });
+    const dialog = await screen.findByRole('dialog', { name: 'Новое упражнение' });
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByText(WARNING)).toBeInTheDocument();
 
     await user.type(screen.getByLabelText('Название'), 'Планка');
-    await user.click(screen.getByRole('button', { name: 'Сохранить упражнение' }));
+    await user.click(screen.getByRole('radio', { name: 'Спина' }));
+    await user.click(screen.getByRole('button', { name: 'Сохранить' }));
 
     await waitFor(() => {
       expect(clientModule.apiClient.POST).toHaveBeenCalledWith('/api/exercises', {
-        body: { name: 'Планка' },
+        body: { name: 'Планка', primaryMuscleGroupId: 'mg2' },
       });
     });
   });
 
-  it('archives exercise via POST archive', async () => {
+  it('archives exercise after confirm', async () => {
     const user = userEvent.setup();
     vi.mocked(clientModule.apiClient.POST).mockResolvedValue({
-      data: {
-        id: 'ex1',
-        name: 'Жим',
-        missingMuscleGroupsWarning: false,
-        primaryMuscleGroupId: 'mg1',
-        secondaryMuscleGroupIds: [],
-        archivedAt: new Date().toISOString(),
-      },
+      data: { ...BENCH, archivedAt: new Date().toISOString() },
       error: undefined,
       response: new Response(null, { status: 200 }),
     });
+    renderPage();
 
-    render(
-      <MemoryRouter>
-        <CatalogPage />
-      </MemoryRouter>,
-    );
+    await user.click(await screen.findByRole('button', { name: /Жим/ }));
+    await user.click(screen.getByRole('button', { name: 'Удалить' }));
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'В архив' })).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole('button', { name: 'В архив' }));
+    const confirm = await screen.findByRole('alertdialog', { name: 'Удалить упражнение?' });
+    expect(confirm).toHaveTextContent('Упражнение скроется из каталога, история сохранится.');
+    const confirmButtons = screen.getAllByRole('button', { name: 'Удалить' });
+    await user.click(confirmButtons[confirmButtons.length - 1]!);
 
     await waitFor(() => {
       expect(clientModule.apiClient.POST).toHaveBeenCalledWith('/api/exercises/{id}/archive', {

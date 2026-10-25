@@ -29,7 +29,8 @@ describe('SessionSummaryView', () => {
       />,
     );
 
-    expect(screen.getByTestId('session-growth-ex_1')).toHaveTextContent('Первый раз');
+    expect(screen.getByText('Первый раз')).toBeInTheDocument();
+    expect(screen.getByTestId('session-summary-totals')).toBeInTheDocument();
   });
 
   it('shows growth percent when provided', () => {
@@ -53,6 +54,6 @@ describe('SessionSummaryView', () => {
       />,
     );
 
-    expect(screen.getByTestId('session-growth-ex_1')).toHaveTextContent('+10%');
+    expect(screen.getByText(/\+10%/)).toBeInTheDocument();
   });
 });

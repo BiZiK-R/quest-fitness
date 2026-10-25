@@ -1,3 +1,0 @@
-.cabinet-layout__main {
-  padding-bottom: calc(var(--spacing-touch-min) + var(--spacing-4) + env(safe-area-inset-bottom, 0));
-}

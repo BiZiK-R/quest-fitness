@@ -1,83 +1,76 @@
-import { useEffect, useId, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { BottomSheet } from '@/shared/ui/BottomSheet';
+import { Button } from '@/shared/ui/Button';
+import { ListCard } from '@/shared/ui/ListCard';
+import { ListRow } from '@/shared/ui/ListRow';
+import {
+  DumbbellIcon,
+  LayersIcon,
+  ListIcon,
+  LogoutIcon,
+  RepeatIcon,
+  ShieldIcon,
+  UsersIcon,
+} from '@/shared/ui/icons';
+import './TrainerMenuSheet.css';
 
 export type TrainerMenuSheetProps = {
   open: boolean;
   onClose: () => void;
-  showAdminTrainersLink?: boolean;
+  /** Админ видит «Тренеры» и «Админ-панель». */
+  isAdmin?: boolean;
+  /** Если задан — внизу шторки ghost-кнопка «Выйти». */
+  onLogout?: () => void;
 };
 
-export function TrainerMenuSheet({
-  open,
-  onClose,
-  showAdminTrainersLink = false,
-}: TrainerMenuSheetProps) {
-  const titleId = useId();
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
+type MenuItem = {
+  to: string;
+  label: string;
+  icon: ReactNode;
+  meta?: string;
+  adminOnly?: boolean;
+};
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    closeButtonRef.current?.focus();
+const MENU_ITEMS: MenuItem[] = [
+  { to: '/pool', label: 'Пул клиентов', icon: <ListIcon /> },
+  { to: '/catalog', label: 'Каталог упражнений', icon: <DumbbellIcon /> },
+  { to: '/templates', label: 'Шаблоны тренировки', icon: <LayersIcon /> },
+  { to: '/macrocycles', label: 'Макроциклы', icon: <RepeatIcon /> },
+  { to: '/admin/trainers', label: 'Тренеры', icon: <UsersIcon />, adminOnly: true },
+  { to: '/admin/panel', label: 'Админ-панель', icon: <ShieldIcon />, meta: 'Скоро', adminOnly: true },
+];
 
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    }
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, onClose]);
-
-  if (!open) {
-    return null;
-  }
+/** Меню тренера — шторка снизу на всех ширинах (DESIGN → trainer-menu), один уровень. */
+export function TrainerMenuSheet({ open, onClose, isAdmin = false, onLogout }: TrainerMenuSheetProps) {
+  const visibleItems = MENU_ITEMS.filter((item) => isAdmin || !item.adminOnly);
 
   return (
-    <div className="trainer-menu-sheet__backdrop" onClick={onClose}>
-      <div
-        className="trainer-menu-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <h2 id={titleId}>Меню тренера</h2>
-        {showAdminTrainersLink ? (
-          <p>
-            <Link to="/admin/trainers" onClick={onClose}>
-              Тренеры
-            </Link>
-          </p>
-        ) : null}
-        <ul>
-          <li>
-            <Link to="/catalog" onClick={onClose}>
-              Каталог
-            </Link>
-          </li>
-          <li>
-            <Link to="/templates" onClick={onClose}>
-              Шаблоны
-            </Link>
-          </li>
-          <li>
-            <Link to="/macrocycles" onClick={onClose}>
-              Макроциклы
-            </Link>
-          </li>
-          <li>
-            <Link to="/admin/panel" onClick={onClose}>
-              Админ-панель
-            </Link>
-          </li>
-        </ul>
-        <button ref={closeButtonRef} type="button" onClick={onClose}>
-          Закрыть
-        </button>
-      </div>
-    </div>
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      title="Разделы зала"
+      className="trainer-menu-sheet"
+      footer={
+        onLogout ? (
+          <Button variant="ghost" fullWidth className="trainer-menu-sheet__logout" onClick={onLogout}>
+            <LogoutIcon />
+            Выйти из аккаунта
+          </Button>
+        ) : undefined
+      }
+    >
+      <ListCard label="Куда перейти">
+        {visibleItems.map((item) => (
+          <ListRow
+            key={item.to}
+            to={item.to}
+            onClick={onClose}
+            leading={item.icon}
+            title={item.label}
+            meta={item.meta ? <span className="trainer-menu-sheet__soon">{item.meta}</span> : undefined}
+          />
+        ))}
+      </ListCard>
+    </BottomSheet>
   );
 }

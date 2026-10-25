@@ -1,0 +1,42 @@
+.ui-bottom-cta {
+  display: flex;
+  gap: var(--spacing-3);
+  min-height: var(--spacing-bottom-cta-zone);
+  padding: var(--spacing-3) var(--spacing-4);
+  padding-bottom: calc(var(--spacing-3) + env(safe-area-inset-bottom, 0px));
+  background-color: var(--color-surface-card);
+  border-top: var(--ui-border-width) solid var(--color-border-control);
+}
+
+.ui-bottom-cta--session {
+  background-color: var(--color-surface-session-raised);
+  border-top-color: var(--color-border-session);
+}
+
+.ui-bottom-cta__primary {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ui-bottom-cta--pair .ui-bottom-cta__primary {
+  flex: 6 1 0;
+}
+
+.ui-bottom-cta__secondary {
+  display: flex;
+  flex: 4 1 0;
+  min-width: 0;
+}
+
+/* Кнопки в полосе — 56px и во всю ячейку, в т.ч. secondary рядом с primary */
+.ui-bottom-cta .ui-button {
+  width: 100%;
+  min-height: var(--spacing-control-lg);
+}
+
+@media (min-width: 768px) {
+  .ui-bottom-cta {
+    padding-inline: var(--spacing-margin-wide);
+  }
+}

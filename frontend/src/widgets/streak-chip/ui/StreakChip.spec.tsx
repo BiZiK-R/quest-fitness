@@ -8,19 +8,20 @@ describe('StreakChip', () => {
     cleanup();
   });
 
-  it('uses accessible name with streak count when streak > 0', () => {
+  it('shows apricot chip with number and plural caption when streak > 0', () => {
     render(<StreakChip streak={3} />);
 
-    expect(screen.getByLabelText('Стрик тренировок: 3 подряд')).toBeTruthy();
-    expect(screen.getByText('3')).toBeTruthy();
+    const chip = screen.getByTestId('streak-chip');
+    expect(chip.className).toContain('streak-chip--active');
+    expect(chip).toHaveTextContent('3');
+    expect(chip).toHaveTextContent('тренировки подряд');
   });
 
-  it('shows cream «копится» state when streak is 0', () => {
+  it('shows cream zero state without accent when streak is 0', () => {
     render(<StreakChip streak={0} />);
 
     const chip = screen.getByTestId('streak-chip');
-    expect(chip.className).toContain('streak-chip--accumulating');
-    expect(screen.getByText('копится')).toBeTruthy();
-    expect(screen.queryByLabelText(/Стрик тренировок/)).toBeNull();
+    expect(chip.className).toContain('streak-chip--zero');
+    expect(chip).toHaveTextContent('тренировок подряд — стрик копится');
   });
 });

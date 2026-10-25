@@ -1,90 +1,89 @@
 .cabinet-tab-bar {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-  padding-inline: var(--spacing-margin-mobile);
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   background-color: var(--color-surface-card);
-  border-top: 1px solid var(--color-border-subtle);
+  border-top: var(--ui-border-width) solid var(--color-border-hairline);
 }
 
-@media (min-width: 768px) {
-  .cabinet-tab-bar {
-    padding-inline: var(--spacing-margin-wide);
-  }
-}
-
-.cabinet-tab-bar__inner {
-  width: 100%;
-  max-width: var(--spacing-content-max);
-}
-
+/* Ячейки по ширине подписи, а не равные: шесть кириллических слов иначе не влезают в 360px */
 .cabinet-tab-bar__list {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--spacing-1);
+  display: flex;
+  min-height: var(--spacing-tab-bar);
 }
 
 .cabinet-tab-bar__tab {
+  position: relative;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  gap: var(--spacing-1);
+  justify-content: flex-start;
+  gap: 2px;
   min-width: 0;
-  min-height: var(--spacing-touch-min);
-  padding: var(--spacing-2) var(--spacing-1) var(--spacing-2);
+  padding: 6px 0 var(--spacing-1);
   color: var(--color-ink-muted);
   text-decoration: none;
-  border-bottom: 2px solid transparent;
+  transition: color var(--motion-press);
+}
+
+/* Индикатор 2px сверху — только у активной */
+.cabinet-tab-bar__tab::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: var(--spacing-2);
+  left: var(--spacing-2);
+  height: 2px;
+  background-color: transparent;
 }
 
 .cabinet-tab-bar__tab--active {
   color: var(--color-ink-primary);
-  border-bottom-color: var(--color-accent-red);
 }
 
+.cabinet-tab-bar__tab--active::before {
+  background-color: var(--color-accent-red);
+}
+
+/* Этап 2: ink-soon ≥4.5:1 на тёмной карточке, без opacity */
 .cabinet-tab-bar__tab--soon {
   color: var(--color-ink-soon);
 }
 
 .cabinet-tab-bar__tab--soon.cabinet-tab-bar__tab--active {
-  color: var(--color-ink-soon);
-  border-bottom-color: var(--color-accent-red);
+  color: var(--color-ink-primary);
+}
+
+.cabinet-tab-bar__tab:focus-visible {
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+@media (hover: hover) {
+  .cabinet-tab-bar__tab:hover {
+    color: var(--color-ink-primary);
+  }
 }
 
 .cabinet-tab-bar__icon {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
+  display: inline-flex;
+  flex: 0 0 auto;
 }
 
-.cabinet-tab-bar__label-row {
+.cabinet-tab-bar__text {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  max-width: 100%;
 }
 
-.cabinet-tab-bar__label {
-  font-size: 11px;
+.cabinet-tab-bar__label,
+.cabinet-tab-bar__soon {
+  font-size: 13px;
   font-weight: 500;
-  line-height: 13px;
+  line-height: 16px;
   text-align: center;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
-.cabinet-tab-bar__soon-badge {
-  font-size: 9px;
-  font-weight: 600;
-  line-height: 11px;
+.cabinet-tab-bar__soon {
+  font-weight: 400;
   color: var(--color-ink-soon);
 }

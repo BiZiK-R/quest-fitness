@@ -28,14 +28,20 @@ describe('TemplatesPage', () => {
     vi.mocked(clientModule.apiClient.GET).mockReset();
     vi.mocked(clientModule.apiClient.POST).mockReset();
     vi.mocked(clientModule.apiClient.PATCH).mockReset();
-
     vi.mocked(clientModule.apiClient.GET).mockImplementation(async (path) => {
+      if (path === '/api/auth/me') {
+        return {
+          data: { id: 't1', role: 'TRAINER', login: 'coach', clientProfileId: null },
+          error: undefined,
+          response: new Response(null, { status: 200 }),
+        };
+      }
       if (path === '/api/templates') {
         return {
           data: {
             templates: [
               {
-                id: 'tpl1',
+                id: 'tpl_1',
                 name: 'Силовая',
                 type: 'strength',
                 description: null,
@@ -53,18 +59,7 @@ describe('TemplatesPage', () => {
       }
       if (path === '/api/exercises') {
         return {
-          data: {
-            exercises: [
-              {
-                id: 'ex1',
-                name: 'Жим',
-                missingMuscleGroupsWarning: false,
-                primaryMuscleGroupId: null,
-                secondaryMuscleGroupIds: [],
-                archivedAt: null,
-              },
-            ],
-          },
+          data: { exercises: [] },
           error: undefined,
           response: new Response(null, { status: 200 }),
         };
@@ -73,39 +68,59 @@ describe('TemplatesPage', () => {
     });
   });
 
-  it('loads templates list', async () => {
+  it('lists templates and opens editor on row click', async () => {
+    const user = userEvent.setup();
     render(
       <MemoryRouter>
         <TemplatesPage />
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('Силовая')).toBeInTheDocument();
-    });
-    expect(clientModule.apiClient.GET).toHaveBeenCalledWith('/api/templates');
+    expect(await screen.findByText('Силовая')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Силовая/ }));
+    expect(await screen.findByLabelText('Название')).toHaveValue('Силовая');
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeInTheDocument();
   });
 
-  it('creates template via POST /api/templates', async () => {
-    vi.mocked(clientModule.apiClient.POST).mockImplementation(async (path) => {
+  it('creates template via POST from editor', async () => {
+    vi.mocked(clientModule.apiClient.GET).mockImplementation(async (path) => {
+      if (path === '/api/auth/me') {
+        return {
+          data: { id: 't1', role: 'TRAINER', login: 'coach', clientProfileId: null },
+          error: undefined,
+          response: new Response(null, { status: 200 }),
+        };
+      }
       if (path === '/api/templates') {
         return {
-          data: {
-            id: 'tpl_new',
-            name: 'Новый',
-            type: 'strength',
-            description: null,
-            durationMinutes: null,
-            microcycleWeeks: null,
-            version: 1,
-            archivedAt: null,
-            exercises: [],
-          },
+          data: { templates: [] },
           error: undefined,
-          response: new Response(null, { status: 201 }),
+          response: new Response(null, { status: 200 }),
+        };
+      }
+      if (path === '/api/exercises') {
+        return {
+          data: { exercises: [] },
+          error: undefined,
+          response: new Response(null, { status: 200 }),
         };
       }
       return { data: undefined, error: undefined, response: new Response(null, { status: 404 }) };
+    });
+    vi.mocked(clientModule.apiClient.POST).mockResolvedValue({
+      data: {
+        id: 'tpl_new',
+        name: 'Новый',
+        type: 'strength',
+        description: null,
+        durationMinutes: null,
+        microcycleWeeks: null,
+        version: 1,
+        archivedAt: null,
+        exercises: [],
+      },
+      error: undefined,
+      response: new Response(null, { status: 201 }),
     });
 
     const user = userEvent.setup();
@@ -115,13 +130,9 @@ describe('TemplatesPage', () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByLabelText('Название', { selector: '#template-name' })).toBeInTheDocument();
-    });
-
-    const nameInput = screen.getByLabelText('Название', { selector: '#template-name' });
-    await user.clear(nameInput);
-    await user.type(nameInput, 'Новый');
+    const createButtons = await screen.findAllByRole('button', { name: 'Новый шаблон' });
+    await user.click(createButtons[0]!);
+    await user.type(screen.getByLabelText('Название'), 'Новый');
     await user.click(screen.getByRole('button', { name: 'Создать шаблон' }));
 
     await waitFor(() => {
@@ -151,17 +162,11 @@ describe('TemplatesPage', () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('Силовая')).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole('button', { name: 'Силовая' }));
-    await user.click(screen.getByRole('button', { name: 'Сохранить шаблон' }));
+    await user.click(await screen.findByRole('button', { name: /Силовая/ }));
+    await user.click(screen.getByRole('button', { name: 'Сохранить' }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Другой тренер изменил этот шаблон/),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Другой тренер изменил этот шаблон/)).toBeInTheDocument();
     });
     expect(screen.getByRole('button', { name: 'Открыть заново' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Сохранить поверх' })).toBeInTheDocument();

@@ -1,0 +1,43 @@
+.login-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  padding-top: var(--spacing-4);
+}
+
+.login-page__mark-appbar {
+  display: inline-flex;
+  color: var(--color-accent-red);
+}
+
+.login-page__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding-bottom: var(--spacing-4);
+  border-bottom: var(--ui-border-width) solid var(--color-border-control);
+}
+
+.login-page__brand {
+  margin: 0;
+  color: var(--color-ink-primary);
+}
+
+.login-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.login-page__error {
+  margin: 0;
+  padding: var(--spacing-3);
+  border: var(--ui-border-width) solid var(--color-ink-error);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink-error);
+  background: var(--color-surface-sunken);
+}
+
+.login-page__recovery {
+  margin: 0;
+}

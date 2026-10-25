@@ -1,0 +1,47 @@
+/**
+ * BottomSheet = antd Drawer bottom — лёгкая подгонка под колонку 640 и session surface.
+ */
+.ui-sheet-wrapper.ant-drawer-content-wrapper {
+  max-width: var(--spacing-content-max);
+  margin-inline: auto;
+}
+
+.ui-sheet.ant-drawer .ant-drawer-header {
+  border-bottom: 1px solid var(--color-border-subtle);
+  padding-block: var(--spacing-3);
+}
+
+.ui-sheet.ant-drawer .ant-drawer-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 26px;
+  color: var(--color-ink-primary);
+}
+
+.ui-sheet.ant-drawer .ant-drawer-body {
+  padding-block: var(--spacing-4);
+  max-height: min(70vh, 640px);
+  overflow: auto;
+}
+
+.ui-sheet.ant-drawer .ant-drawer-footer {
+  border-top: 1px solid var(--color-border-subtle);
+  padding: var(--spacing-4);
+}
+
+.ui-sheet--session.ant-drawer .ant-drawer-content,
+.ui-sheet--session.ant-drawer .ant-drawer-header,
+.ui-sheet--session.ant-drawer .ant-drawer-body,
+.ui-sheet--session.ant-drawer .ant-drawer-footer {
+  background: var(--color-surface-session);
+  color: var(--color-ink-on-session);
+}
+
+.ui-sheet--session.ant-drawer .ant-drawer-title {
+  color: var(--color-ink-on-session);
+}
+
+.ui-sheet--session.ant-drawer .ant-drawer-header,
+.ui-sheet--session.ant-drawer .ant-drawer-footer {
+  border-color: var(--color-border-session);
+}

@@ -1,0 +1,32 @@
+.ordered-list-row {
+  display: flex;
+  align-items: stretch;
+  background-color: var(--color-surface-card);
+}
+
+.ordered-list-row__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-inline-end: var(--spacing-2);
+}
+
+.ordered-list-row__controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  padding-inline-end: var(--spacing-1);
+  color: var(--color-ink-primary);
+}
+
+/* Неактивная стрелка должна читаться как «некуда», без opacity */
+.ordered-list-row__controls .ui-icon-button:disabled {
+  color: var(--color-border-hairline);
+}
+
+.ordered-list-row__arrow--up {
+  transform: rotate(-90deg);
+}
+
+.ordered-list-row__arrow--down {
+  transform: rotate(90deg);
+}

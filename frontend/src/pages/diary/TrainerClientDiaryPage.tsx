@@ -9,7 +9,6 @@ export function TrainerClientDiaryPage() {
     <DiaryListPage
       clientId={safeClientId}
       backTo={`/clients/${safeClientId}`}
-      backLabel="← Карточка клиента"
       sessionDetailPath={(sessionId) => `/clients/${safeClientId}/diary/${sessionId}`}
     />
   );

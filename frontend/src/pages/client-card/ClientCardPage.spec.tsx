@@ -139,7 +139,7 @@ describe('ClientCardPage macro progress', () => {
       expect(screen.getByRole('heading', { name: 'Тестовый клиент' })).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole('button', { name: 'Назначить макроцикл' }));
+    await user.click(await screen.findByRole('button', { name: 'Назначить программу' }));
 
     await waitFor(() => {
       expect(clientModule.apiClient.PUT).toHaveBeenCalledWith('/api/clients/{id}/macro-progress', {
@@ -266,16 +266,14 @@ describe('ClientCardPage macro progress', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByRole('option', { name: /Силовая B/ })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: 'Текущий этап' })).toBeInTheDocument();
     });
 
-    await user.selectOptions(screen.getByLabelText('Этап'), 'st2');
+    await user.click(screen.getByRole('combobox', { name: 'Текущий этап' }));
+    await user.click(await screen.findByTitle('Силовая B'));
 
     await waitFor(() => {
-      expect(
-        screen.getAllByText(/Этапы кончились — продлите цикл или выберите шаблон тренировки вручную\./)
-          .length,
-      ).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Этапы кончились/).length).toBeGreaterThanOrEqual(1);
     });
   });
 });

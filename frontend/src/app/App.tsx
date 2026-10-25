@@ -1,6 +1,11 @@
 import { RouterProvider } from 'react-router-dom';
+import { AntdProvider } from '@/shared/ui/AntdProvider';
 import { appRouter } from './router';
 
 export function App() {
-  return <RouterProvider router={appRouter} />;
+  return (
+    <AntdProvider>
+      <RouterProvider router={appRouter} />
+    </AntdProvider>
+  );
 }

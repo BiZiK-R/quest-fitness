@@ -1877,11 +1877,14 @@ components:
       properties:
         holderTrainerId:
           type: string
+        holderDisplayName:
+          type: string
         expiresAt:
           type: string
           format: date-time
       required:
         - holderTrainerId
+        - holderDisplayName
         - expiresAt
     ClientMacroProgressSummaryDto:
       type: object
@@ -1998,11 +2001,14 @@ components:
       properties:
         holderTrainerId:
           type: string
+        holderDisplayName:
+          type: string
         expiresAt:
           type: string
           format: date-time
       required:
         - holderTrainerId
+        - holderDisplayName
         - expiresAt
     AssignClientMacroProgressRequestDto:
       type: object

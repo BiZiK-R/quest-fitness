@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { workoutStatusLabel } from '@/features/client-workout-schedule/lib/workout-schedule-labels';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
+import { errorMessageFor } from '@/shared/lib/error-message';
+import { Button } from '@/shared/ui/Button';
+import { EmptyState } from '@/shared/ui/EmptyState';
 import { StreakChip } from '@/widgets/streak-chip/ui/StreakChip';
 import { formatOverviewScheduledAt } from '../lib/format-overview-scheduled-at';
 
@@ -14,9 +17,11 @@ type Props = {
   diaryTo: string;
   /** Compact block for trainer client card (Story 6.1). */
   compact?: boolean;
+  /** Правки закрыты (клиент не взят) — empty-копирайт без ложных инструкций. */
+  mutationsDisabled?: boolean;
 };
 
-export const WORKOUTS_OVERVIEW_EMPTY_COPY = 'Первый поход ещё впереди';
+export const WORKOUTS_OVERVIEW_EMPTY_TITLE = 'Тренировок в этом месяце нет';
 
 function OverviewRow({ item }: { item: OverviewItem }) {
   return (
@@ -29,7 +34,12 @@ function OverviewRow({ item }: { item: OverviewItem }) {
   );
 }
 
-export function ClientWorkoutsOverviewPanel({ clientId, diaryTo, compact = false }: Props) {
+export function ClientWorkoutsOverviewPanel({
+  clientId,
+  diaryTo,
+  compact = false,
+  mutationsDisabled = false,
+}: Props) {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -52,35 +62,52 @@ export function ClientWorkoutsOverviewPanel({ clientId, diaryTo, compact = false
 
   if (loadError) {
     return (
-      <section aria-label="Обзор тренировок">
-        <p role="alert">{loadError}</p>
-        <button type="button" onClick={() => void loadOverview()}>
+      <div className="client-workouts-overview">
+        <p className="type-meta" role="alert" style={{ color: 'var(--color-ink-error)' }}>
+          {errorMessageFor(loadError)}
+        </p>
+        <Button variant="secondary" onClick={() => void loadOverview()}>
           Повторить
-        </button>
-      </section>
+        </Button>
+      </div>
     );
   }
 
   if (!overview) {
     return (
-      <section aria-label="Обзор тренировок">
-        <p role="status">Загрузка…</p>
-      </section>
+      <p className="type-meta type-muted" role="status">
+        Загрузка…
+      </p>
     );
   }
 
-  const heading = compact ? 'Обзор тренировок' : 'Тренировки в этом месяце';
+  const showStreak = overview.streak > 0;
+  /** На карточке тренера empty ведёт в «Расписание» — без второй стены EmptyState. */
+  const showEmptyWall = overview.isEmpty && !compact;
 
   return (
-    <section aria-label="Обзор тренировок">
-      {!compact ? <h2>{heading}</h2> : <h3>{heading}</h3>}
-      <p data-testid="workouts-streak">
-        <StreakChip streak={overview.streak} />
-      </p>
+    <div className="client-workouts-overview">
+      {!compact ? <h2>Тренировки в этом месяце</h2> : null}
 
-      {overview.isEmpty ? (
-        <p role="status">{WORKOUTS_OVERVIEW_EMPTY_COPY}</p>
-      ) : (
+      {showStreak ? (
+        <p data-testid="workouts-streak">
+          <StreakChip streak={overview.streak} />
+        </p>
+      ) : null}
+
+      {showEmptyWall ? (
+        <EmptyState
+          size="title"
+          title={WORKOUTS_OVERVIEW_EMPTY_TITLE}
+          description={
+            mutationsDisabled
+              ? 'Чтобы назначить тренировку, сначала возьмите клиента.'
+              : 'Назначьте тренировку клиенту или откройте дневник.'
+          }
+        />
+      ) : null}
+
+      {!overview.isEmpty ? (
         <>
           <p data-testid="workouts-month-summary">
             {overview.monthLabel}: {overview.workoutsThisMonth} тренировок
@@ -100,7 +127,7 @@ export function ClientWorkoutsOverviewPanel({ clientId, diaryTo, compact = false
 
           {overview.upcoming.length > 0 ? (
             <>
-              <p>Ближайшие:</p>
+              <p className="type-meta type-muted">Ближайшие</p>
               <ul>
                 {overview.upcoming.map((item) => (
                   <OverviewRow key={item.id} item={item} />
@@ -109,11 +136,13 @@ export function ClientWorkoutsOverviewPanel({ clientId, diaryTo, compact = false
             </>
           ) : null}
         </>
-      )}
+      ) : null}
 
-      <p>
-        <Link to={diaryTo}>Дневник тренировок</Link>
-      </p>
-    </section>
+      {!compact ? (
+        <p>
+          <Link to={diaryTo}>Дневник тренировок</Link>
+        </p>
+      ) : null}
+    </div>
   );
 }

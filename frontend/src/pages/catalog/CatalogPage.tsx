@@ -1,181 +1,201 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { TrainerMenuAction } from '@/features/trainer-menu-action/ui/TrainerMenuAction';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
+import { AppShell } from '@/shared/ui/AppShell';
+import { BottomCta } from '@/shared/ui/BottomCta';
+import { Button } from '@/shared/ui/Button';
+import { EmptyState } from '@/shared/ui/EmptyState';
+import { IconButton } from '@/shared/ui/IconButton';
+import { BackIcon, SearchIcon } from '@/shared/ui/icons';
+import { ListCard } from '@/shared/ui/ListCard';
+import { ListRow } from '@/shared/ui/ListRow';
 import { PageMeta } from '@/shared/ui/PageMeta';
+import { PageState } from '@/shared/ui/PageState';
+import { SectionTitle } from '@/shared/ui/SectionTitle';
+import { TextField } from '@/shared/ui/TextField';
+import { ExerciseSheet } from './ExerciseSheet';
+import { exerciseMeta } from './exercise-meta';
+import './CatalogPage.css';
 
 type ExerciseDto = components['schemas']['ExerciseDto'];
 type MuscleGroupDto = components['schemas']['MuscleGroupDto'];
 
-const NO_GROUPS_WARNING = 'Без групп упражнение не попадёт в статистику мышц';
+type LoadState = { status: 'loading' } | { status: 'error'; code: string } | { status: 'ready' };
+
+/** Открытая шторка: exercise = null — создание. */
+type SheetState = { exercise: ExerciseDto | null } | null;
 
 export function CatalogPage() {
+  const navigate = useNavigate();
   const [exercises, setExercises] = useState<ExerciseDto[]>([]);
   const [muscleGroups, setMuscleGroups] = useState<MuscleGroupDto[]>([]);
-  const [name, setName] = useState('');
-  const [primaryMuscleGroupId, setPrimaryMuscleGroupId] = useState('');
-  const [secondaryMuscleGroupIds, setSecondaryMuscleGroupIds] = useState<string[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const showNoGroupsWarning = useMemo(() => {
-    return !primaryMuscleGroupId && secondaryMuscleGroupIds.length === 0;
-  }, [primaryMuscleGroupId, secondaryMuscleGroupIds]);
+  const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sheet, setSheet] = useState<SheetState>(null);
 
   const loadCatalog = useCallback(async () => {
-    setLoadError(null);
     const [exercisesRes, groupsRes] = await Promise.all([
-      apiClient.GET('/api/exercises'),
+      apiClient.GET('/api/exercises', { params: { query: { includeArchived: true } } }),
       apiClient.GET('/api/muscle-groups'),
     ]);
     if (exercisesRes.error || groupsRes.error) {
-      setExercises([]);
-      setMuscleGroups([]);
-      setLoadError(
-        exercisesRes.error?.error?.code ??
-          groupsRes.error?.error?.code ??
-          'LOAD_FAILED',
-      );
+      setLoadState({
+        status: 'error',
+        code: exercisesRes.error?.error?.code ?? groupsRes.error?.error?.code ?? 'LOAD_FAILED',
+      });
       return;
     }
     setExercises(exercisesRes.data?.exercises ?? []);
     setMuscleGroups(groupsRes.data?.muscleGroups ?? []);
+    setLoadState({ status: 'ready' });
   }, []);
 
   useEffect(() => {
     void loadCatalog();
   }, [loadCatalog]);
 
-  function toggleSecondary(muscleGroupId: string, checked: boolean) {
-    setSecondaryMuscleGroupIds((prev) => {
-      if (checked) {
-        return prev.includes(muscleGroupId) ? prev : [...prev, muscleGroupId];
-      }
-      return prev.filter((id) => id !== muscleGroupId);
-    });
+  const groupNameById = useMemo(
+    () => new Map(muscleGroups.map((group) => [group.id, group.name])),
+    [muscleGroups],
+  );
+
+  const filteredExercises = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return exercises;
+    }
+    return exercises.filter((exercise) => exercise.name.toLowerCase().includes(query));
+  }, [exercises, searchQuery]);
+
+  const activeExercises = filteredExercises.filter((exercise) => !exercise.archivedAt);
+  const hiddenExercises = filteredExercises.filter((exercise) => exercise.archivedAt);
+
+  function retryLoad() {
+    setLoadState({ status: 'loading' });
+    void loadCatalog();
   }
 
-  async function handleCreate(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const trimmed = name.trim();
-    if (!trimmed) {
-      return;
-    }
-    setFormError(null);
-    setIsSubmitting(true);
-
-    const body: components['schemas']['CreateExerciseRequestDto'] = {
-      name: trimmed,
-      ...(primaryMuscleGroupId ? { primaryMuscleGroupId } : {}),
-      ...(secondaryMuscleGroupIds.length > 0
-        ? { secondaryMuscleGroupIds }
-        : {}),
-    };
-
-    const { error } = await apiClient.POST('/api/exercises', { body });
-    setIsSubmitting(false);
-    if (error) {
-      setFormError(error.error?.code ?? 'CREATE_FAILED');
-      return;
-    }
-    setName('');
-    setPrimaryMuscleGroupId('');
-    setSecondaryMuscleGroupIds([]);
-    await loadCatalog();
+  function handleSheetChanged() {
+    setSheet(null);
+    void loadCatalog();
   }
 
-  async function handleArchive(exerciseId: string) {
-    setFormError(null);
-    const { error } = await apiClient.POST('/api/exercises/{id}/archive', {
-      params: { path: { id: exerciseId } },
-    });
-    if (error) {
-      setFormError(error.error?.code ?? 'ARCHIVE_FAILED');
-      return;
+  function renderContent() {
+    if (loadState.status === 'loading') {
+      return <PageState status="loading" />;
     }
-    await loadCatalog();
+    if (loadState.status === 'error') {
+      return <PageState status="error" errorCode={loadState.code} onRetry={retryLoad} />;
+    }
+    if (exercises.length === 0) {
+      return (
+        <EmptyState
+          title="Каталог пуст"
+          description="Добавьте первое упражнение — оно появится в списке для шаблонов."
+          action={
+            <Button variant="primary" fullWidth onClick={() => setSheet({ exercise: null })}>
+              Добавить упражнение
+            </Button>
+          }
+        />
+      );
+    }
+    return (
+      <>
+        <TextField
+          variant="search"
+          type="search"
+          label="Найти упражнение по названию"
+          hideLabel
+          placeholder="Найти упражнение по названию"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          autoComplete="off"
+          leadingIcon={<SearchIcon />}
+        />
+
+        {filteredExercises.length === 0 ? (
+          <EmptyState
+            size="title"
+            title="Ничего не нашли"
+            description="Сбросьте поиск или добавьте упражнение с таким названием."
+            action={
+              <Button variant="secondary" fullWidth onClick={() => setSearchQuery('')}>
+                Очистить поиск
+              </Button>
+            }
+          />
+        ) : null}
+
+        {activeExercises.length > 0 ? (
+          <ListCard label="Упражнения зала" className="catalog-page__list">
+            {activeExercises.map((exercise) => (
+              <ListRow
+                key={exercise.id}
+                title={exercise.name}
+                meta={exerciseMeta(exercise, groupNameById)}
+                metaPlacement="below"
+                onClick={() => setSheet({ exercise })}
+              />
+            ))}
+          </ListCard>
+        ) : null}
+
+        {hiddenExercises.length > 0 ? (
+          <>
+            <SectionTitle>Скрытые</SectionTitle>
+            <ListCard label="Скрытые упражнения">
+              {hiddenExercises.map((exercise) => (
+                <ListRow
+                  key={exercise.id}
+                  title={exercise.name}
+                  meta="Скрыто — нажмите, чтобы открыть"
+                  onClick={() => setSheet({ exercise })}
+                />
+              ))}
+            </ListCard>
+          </>
+        ) : null}
+      </>
+    );
   }
 
   return (
     <>
       <PageMeta title="Каталог упражнений — Quest Fitness" robots="noindex,nofollow" />
-      <p>
-        <Link to="/pool">← Пул клиентов</Link>
-      </p>
-      <h1>Каталог упражнений</h1>
+      <AppShell
+        title="Каталог упражнений"
+        leading={
+          <IconButton label="Назад" onClick={() => navigate('/pool')}>
+            <BackIcon />
+          </IconButton>
+        }
+        action={<TrainerMenuAction />}
+        bottom={
+          loadState.status === 'ready' && exercises.length > 0 ? (
+            <BottomCta
+              primary={
+                <Button variant="primary" fullWidth onClick={() => setSheet({ exercise: null })}>
+                  Добавить упражнение
+                </Button>
+              }
+            />
+          ) : undefined
+        }
+      >
+        <div className="catalog-page">{renderContent()}</div>
+      </AppShell>
 
-      {loadError ? <p role="alert">{loadError}</p> : null}
-      {formError ? <p role="alert">{formError}</p> : null}
-
-      <form onSubmit={(e) => void handleCreate(e)}>
-        <h2>Новое упражнение</h2>
-        <label htmlFor="exercise-name">Название</label>
-        <input
-          id="exercise-name"
-          name="name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={128}
+      {sheet ? (
+        <ExerciseSheet
+          exercise={sheet.exercise}
+          muscleGroups={muscleGroups}
+          onClose={() => setSheet(null)}
+          onChanged={handleSheetChanged}
         />
-
-        <label htmlFor="exercise-primary">Основная группа</label>
-        <select
-          id="exercise-primary"
-          value={primaryMuscleGroupId}
-          onChange={(e) => setPrimaryMuscleGroupId(e.target.value)}
-        >
-          <option value="">— не выбрана —</option>
-          {muscleGroups.map((group) => (
-            <option key={group.id} value={group.id}>
-              {group.name}
-            </option>
-          ))}
-        </select>
-
-        <fieldset>
-          <legend>Дополнительные группы</legend>
-          {muscleGroups.map((group) => (
-            <label key={group.id}>
-              <input
-                type="checkbox"
-                checked={secondaryMuscleGroupIds.includes(group.id)}
-                disabled={group.id === primaryMuscleGroupId}
-                onChange={(e) => toggleSecondary(group.id, e.target.checked)}
-              />
-              {group.name}
-            </label>
-          ))}
-        </fieldset>
-
-        {showNoGroupsWarning ? (
-          <p role="status">{NO_GROUPS_WARNING}</p>
-        ) : null}
-
-        <button type="submit" disabled={isSubmitting || !name.trim()}>
-          Сохранить упражнение
-        </button>
-      </form>
-
-      <h2>Упражнения зала</h2>
-      {exercises.length === 0 ? (
-        <p>Пока нет упражнений</p>
-      ) : (
-        <ul>
-          {exercises.map((exercise) => (
-            <li key={exercise.id}>
-              <span>{exercise.name}</span>
-              {exercise.missingMuscleGroupsWarning ? (
-                <span> — {NO_GROUPS_WARNING}</span>
-              ) : null}
-              <button type="button" onClick={() => void handleArchive(exercise.id)}>
-                В архив
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      ) : null}
     </>
   );
 }

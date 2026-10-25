@@ -115,18 +115,20 @@ describe('MacrocyclesPage', () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByLabelText('Название', { selector: '#macro-name' })).toBeInTheDocument();
-    });
-
-    const nameInput = screen.getByLabelText('Название', { selector: '#macro-name' });
+    await user.click(await screen.findByRole('button', { name: 'Новый макроцикл' }));
+    const nameInput = screen.getByLabelText('Название');
     await user.clear(nameInput);
     await user.type(nameInput, 'Новый макро');
+    await user.click(screen.getByRole('combobox', { name: /Этап 1/ }));
+    await user.click(await screen.findByTitle('Силовая'));
     await user.click(screen.getByRole('button', { name: 'Создать макроцикл' }));
 
     await waitFor(() => {
       expect(clientModule.apiClient.POST).toHaveBeenCalledWith('/api/macrocycles', {
-        body: expect.objectContaining({ name: 'Новый макро' }),
+        body: expect.objectContaining({
+          name: 'Новый макро',
+          stages: [expect.objectContaining({ templateId: 'tpl1', sortOrder: 0 })],
+        }),
       });
     });
   });

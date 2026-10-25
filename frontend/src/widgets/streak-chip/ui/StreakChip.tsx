@@ -1,3 +1,4 @@
+import { pluralRu } from '@/shared/lib/plural-ru';
 import './StreakChip.css';
 
 export type StreakChipProps = {
@@ -6,24 +7,18 @@ export type StreakChipProps = {
 };
 
 /**
- * Workout streak indicator — apricot when active, cream «копится» at zero.
+ * Чип Стрика (DESIGN → streak-chip): число title + подпись meta.
+ * Абрикос при стрике > 0; при 0 — крем и приглушённый текст, без красного.
  */
 export function StreakChip({ streak }: StreakChipProps) {
-  if (streak > 0) {
-    return (
-      <span
-        className="streak-chip streak-chip--active"
-        aria-label={`Стрик тренировок: ${streak} подряд`}
-        data-testid="streak-chip"
-      >
-        {streak}
-      </span>
-    );
-  }
+  const isActive = streak > 0;
+  const caption = `${pluralRu(streak, ['тренировка', 'тренировки', 'тренировок'])} подряд`;
+  const classes = ['streak-chip', isActive ? 'streak-chip--active' : 'streak-chip--zero'].join(' ');
 
   return (
-    <span className="streak-chip streak-chip--accumulating" data-testid="streak-chip">
-      копится
+    <span className={classes} data-testid="streak-chip">
+      <span className="streak-chip__number">{streak}</span>
+      <span className="streak-chip__caption">{isActive ? caption : `${caption} — стрик копится`}</span>
     </span>
   );
 }

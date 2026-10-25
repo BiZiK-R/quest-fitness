@@ -1,0 +1,14 @@
+.ui-choice-row__slot,
+.ui-choice-row__check {
+  display: inline-flex;
+  flex: 0 0 24px;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--color-ink-primary);
+}
+
+.ui-choice-row--checked {
+  background: var(--color-surface-sunken);
+}

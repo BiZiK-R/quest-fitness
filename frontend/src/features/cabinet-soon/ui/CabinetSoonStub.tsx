@@ -1,20 +1,21 @@
 import type { CabinetSoonStubCopy } from '@/features/cabinet-soon/lib/cabinet-soon-copy';
+import { EmptyState } from '@/shared/ui/EmptyState';
 import { PageMeta } from '@/shared/ui/PageMeta';
-import './CabinetSoonStub.css';
 
-export type CabinetSoonStubProps = CabinetSoonStubCopy;
+export type CabinetSoonStubProps = CabinetSoonStubCopy & {
+  /** 2 — когда h1 экрана уже в appbar (вкладки кабинета); 1 — экран без заголовка в шапке. */
+  headingLevel?: 1 | 2;
+};
 
 /**
- * Stage 2 placeholder: title + one line only (UX-DR8 — no demo data or skeletons).
+ * «Скоро»-заглушка Этапа 2 (DESIGN → soon-stub): крем-панель, водяной знак, заголовок + одна строка.
+ * Без демо-данных и скелетонов (UX-DR8).
  */
-export function CabinetSoonStub({ title, line, metaTitle }: CabinetSoonStubProps) {
+export function CabinetSoonStub({ title, line, metaTitle, headingLevel = 1 }: CabinetSoonStubProps) {
   return (
     <>
       <PageMeta title={metaTitle} robots="noindex,nofollow" />
-      <section className="cabinet-soon-stub" aria-labelledby="cabinet-soon-stub-title">
-        <h1 id="cabinet-soon-stub-title">{title}</h1>
-        <p className="cabinet-soon-stub__line">{line}</p>
-      </section>
+      <EmptyState watermark size="title" headingLevel={headingLevel} title={title} description={line} />
     </>
   );
 }

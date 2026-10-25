@@ -1,0 +1,14 @@
+.cabinet-workouts {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-5);
+}
+
+.cabinet-workouts > .streak-chip {
+  align-self: flex-start;
+}
+
+.cabinet-workouts__month {
+  margin-bottom: var(--spacing-3);
+}

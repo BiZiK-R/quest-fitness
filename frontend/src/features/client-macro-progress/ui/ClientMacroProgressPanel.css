@@ -1,0 +1,25 @@
+.client-macro-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.client-macro-progress__error {
+  margin: 0;
+  color: var(--color-ink-error);
+}
+
+.client-macro-progress__current {
+  margin: 0;
+}
+
+.client-macro-progress__inline-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-ink-link, #e85a60);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}

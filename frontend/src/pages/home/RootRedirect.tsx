@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { resolveRootPathForRole } from '@/shared/auth/resolvePostLoginPath';
 import { apiClient } from '@/shared/api/client';
+import { AppShell } from '@/shared/ui/AppShell';
+import { PageState } from '@/shared/ui/PageState';
 
 export function RootRedirect() {
   const [target, setTarget] = useState<'/login' | '/pool' | '/cabinet/workouts' | null>(
@@ -28,7 +30,11 @@ export function RootRedirect() {
   }, []);
 
   if (!target) {
-    return null;
+    return (
+      <AppShell>
+        <PageState status="loading" message="Загружаем…" />
+      </AppShell>
+    );
   }
 
   return <Navigate to={target} replace />;

@@ -38,6 +38,7 @@ function renderCabinetAt(path: string) {
           {
             path: '/cabinet',
             element: <CabinetLayout />,
+            handle: { ownShell: true },
             children: [
               { path: 'workouts', element: <CabinetWorkoutsPage /> },
               { path: 'analytics', element: <CabinetAnalyticsSoonPage /> },
@@ -104,7 +105,7 @@ describe('Cabinet IA (Story 6.3)', () => {
   ] as const)('shows verbatim soon-stub on %s', (path, copy) => {
     renderCabinetAt(path);
 
-    expect(screen.getByRole('heading', { level: 1, name: copy.title })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 2, name: copy.title })).toBeTruthy();
     expect(screen.getByText(copy.line)).toBeTruthy();
   });
 });

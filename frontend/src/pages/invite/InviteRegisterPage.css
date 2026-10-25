@@ -1,0 +1,17 @@
+.invite-register {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+  padding-top: var(--spacing-4);
+}
+
+.invite-register__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.invite-register__error {
+  margin: 0;
+  color: var(--color-ink-error);
+}

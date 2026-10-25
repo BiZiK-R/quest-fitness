@@ -1,22 +1,32 @@
 .streak-chip {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--spacing-touch-min);
-  padding: var(--spacing-1) var(--spacing-3);
-  border-radius: var(--radius-full);
-  font-family: var(--font-family);
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.2;
-}
-
-.streak-chip--active {
-  background: var(--color-accent-apricot);
+  align-items: baseline;
+  gap: var(--spacing-2);
+  min-height: var(--spacing-control-lg);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-md);
   color: var(--color-ink-primary);
 }
 
-.streak-chip--accumulating {
-  background: var(--color-surface-cream);
+.streak-chip--active {
+  background-color: var(--color-accent-apricot);
+}
+
+.streak-chip--zero {
+  background-color: var(--color-surface-cream);
   color: var(--color-ink-muted);
+}
+
+.streak-chip__number {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 26px;
+  font-variant-numeric: tabular-nums;
+}
+
+.streak-chip__caption {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
 }

@@ -1,104 +1,72 @@
-import { useCallback, useEffect, useId, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useId, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { TrainerMenuAction } from '@/features/trainer-menu-action/ui/TrainerMenuAction';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
+import { errorMessageFor } from '@/shared/lib/error-message';
+import { AppShell } from '@/shared/ui/AppShell';
+import { BottomCta } from '@/shared/ui/BottomCta';
+import { Button } from '@/shared/ui/Button';
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { EmptyState } from '@/shared/ui/EmptyState';
+import { IconButton } from '@/shared/ui/IconButton';
+import {
+  BackIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ChevronUpIcon,
+  CloseIcon,
+  PlusIcon,
+} from '@/shared/ui/icons';
+import { ListCard } from '@/shared/ui/ListCard';
+import { ListRow } from '@/shared/ui/ListRow';
 import { PageMeta } from '@/shared/ui/PageMeta';
+import { PageState } from '@/shared/ui/PageState';
+import { SectionTitle } from '@/shared/ui/SectionTitle';
+import { SegmentedControl } from '@/shared/ui/SegmentedControl';
+import { TextArea } from '@/shared/ui/TextArea';
+import { TextField } from '@/shared/ui/TextField';
+import { ExercisePickerSheet } from './ExercisePickerSheet';
+import { PlannedSetsSheet } from './PlannedSetsSheet';
+import {
+  TEMPLATE_TYPES,
+  buildTemplateBody,
+  draftFromTemplate,
+  emptyDraft,
+  lineMeta,
+  templateListMeta,
+  type ExerciseLine,
+  type TemplateDraft,
+} from './template-draft';
+import './TemplatesPage.css';
 
 type WorkoutTemplateDto = components['schemas']['WorkoutTemplateDto'];
 type ExerciseDto = components['schemas']['ExerciseDto'];
-type UpdateWorkoutTemplateRequestDto =
-  components['schemas']['UpdateWorkoutTemplateRequestDto'];
-type CreateWorkoutTemplateRequestDto =
-  components['schemas']['CreateWorkoutTemplateRequestDto'];
 
-type ExerciseLine = {
-  key: string;
-  exerciseId: string;
-  plannedSets: string;
-  plannedReps: string;
-  plannedWeightKg: string;
-  notes: string;
-};
-
-const NO_GROUPS_WARNING = 'Без групп упражнение не попадёт в статистику мышц';
 const CONFLICT_MESSAGE =
   'Другой тренер изменил этот шаблон, пока вы редактировали.';
 
-function emptyLine(key: string): ExerciseLine {
-  return {
-    key,
-    exerciseId: '',
-    plannedSets: '',
-    plannedReps: '',
-    plannedWeightKg: '',
-    notes: '',
-  };
-}
+const FORM_ID = 'template-editor-form';
 
-function linesFromTemplate(template: WorkoutTemplateDto): ExerciseLine[] {
-  return template.exercises.map((row) => ({
-    key: row.id,
-    exerciseId: row.exerciseId,
-    plannedSets: row.plannedSets != null ? String(row.plannedSets) : '',
-    plannedReps: row.plannedReps != null ? String(row.plannedReps) : '',
-    plannedWeightKg:
-      row.plannedWeightKg != null ? String(row.plannedWeightKg) : '',
-    notes: row.notes ?? '',
-  }));
-}
-
-function parseOptionalInt(value: string): number | null | undefined {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
-  const parsed = Number.parseInt(trimmed, 10);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function parseOptionalNumber(value: string): number | null | undefined {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
-  const parsed = Number.parseFloat(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function buildExercisePayload(lines: ExerciseLine[]) {
-  return lines
-    .filter((line) => line.exerciseId)
-    .map((line, index) => ({
-      exerciseId: line.exerciseId,
-      sortOrder: index,
-      plannedSets: parseOptionalInt(line.plannedSets),
-      plannedReps: parseOptionalInt(line.plannedReps),
-      plannedWeightKg: parseOptionalNumber(line.plannedWeightKg),
-      notes: line.notes.trim() || null,
-    }));
-}
+type Mode = 'list' | 'editor';
 
 export function TemplatesPage() {
+  const navigate = useNavigate();
   const dialogTitleId = useId();
+  const [mode, setMode] = useState<Mode>('list');
   const [templates, setTemplates] = useState<WorkoutTemplateDto[]>([]);
   const [catalogExercises, setCatalogExercises] = useState<ExerciseDto[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [version, setVersion] = useState(1);
-  const [name, setName] = useState('');
-  const [type, setType] = useState('strength');
-  const [description, setDescription] = useState('');
-  const [durationMinutes, setDurationMinutes] = useState('');
-  const [microcycleWeeks, setMicrocycleWeeks] = useState('');
-  const [lines, setLines] = useState<ExerciseLine[]>([emptyLine('line_0')]);
+  const [draft, setDraft] = useState<TemplateDraft>(emptyDraft);
   const [lineSeq, setLineSeq] = useState(1);
-  const [inlineExerciseName, setInlineExerciseName] = useState('');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [conflictOpen, setConflictOpen] = useState(false);
-  const [conflictCurrentVersion, setConflictCurrentVersion] = useState<number | null>(
-    null,
-  );
+  const [conflictCurrentVersion, setConflictCurrentVersion] = useState<number | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [plannedIndex, setPlannedIndex] = useState<number | null>(null);
 
   const loadData = useCallback(async () => {
     setLoadError(null);
@@ -124,118 +92,98 @@ export function TemplatesPage() {
     void loadData();
   }, [loadData]);
 
-  function resetCreateForm() {
+  function openCreate() {
     setEditingId(null);
     setVersion(1);
-    setName('');
-    setType('strength');
-    setDescription('');
-    setDurationMinutes('');
-    setMicrocycleWeeks('');
-    setLines([emptyLine('line_0')]);
+    setDraft(emptyDraft());
     setLineSeq(1);
     setFormError(null);
     setConflictOpen(false);
-    setConflictCurrentVersion(null);
+    setMode('editor');
   }
 
-  function startEdit(template: WorkoutTemplateDto) {
+  function openEdit(template: WorkoutTemplateDto) {
     setEditingId(template.id);
     setVersion(template.version);
-    setName(template.name);
-    setType(template.type);
-    setDescription(template.description ?? '');
-    setDurationMinutes(
-      template.durationMinutes != null ? String(template.durationMinutes) : '',
-    );
-    setMicrocycleWeeks(
-      template.microcycleWeeks != null ? String(template.microcycleWeeks) : '',
-    );
-    const mapped = linesFromTemplate(template);
-    setLines(mapped.length > 0 ? mapped : [emptyLine('line_0')]);
+    setDraft(draftFromTemplate(template));
     setFormError(null);
     setConflictOpen(false);
+    setMode('editor');
+  }
+
+  function backToList() {
+    setMode('list');
+    setFormError(null);
+    setPickerOpen(false);
+    setPlannedIndex(null);
+  }
+
+  function patchDraft(patch: Partial<TemplateDraft>) {
+    setDraft((prev) => ({ ...prev, ...patch }));
   }
 
   function moveLine(index: number, direction: -1 | 1) {
     const target = index + direction;
-    if (target < 0 || target >= lines.length) {
+    if (target < 0 || target >= draft.lines.length) {
       return;
     }
-    setLines((prev) => {
-      const next = [...prev];
+    setDraft((prev) => {
+      const next = [...prev.lines];
       const tmp = next[index]!;
       next[index] = next[target]!;
       next[target] = tmp;
-      return next;
+      return { ...prev, lines: next };
     });
-  }
-
-  function addLine() {
-    const key = `line_${lineSeq}`;
-    setLineSeq((n) => n + 1);
-    setLines((prev) => [...prev, emptyLine(key)]);
   }
 
   function updateLine(index: number, patch: Partial<ExerciseLine>) {
-    setLines((prev) =>
-      prev.map((line, i) => (i === index ? { ...line, ...patch } : line)),
-    );
+    setDraft((prev) => ({
+      ...prev,
+      lines: prev.lines.map((line, i) => (i === index ? { ...line, ...patch } : line)),
+    }));
   }
 
   function removeLine(index: number) {
-    setLines((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
+    setDraft((prev) => ({
+      ...prev,
+      lines: prev.lines.filter((_, i) => i !== index),
+    }));
   }
 
-  async function handleInlineExerciseCreate() {
-    const trimmed = inlineExerciseName.trim();
-    if (!trimmed) {
-      return;
-    }
-    setFormError(null);
-    const { data, error } = await apiClient.POST('/api/exercises', {
-      body: { name: trimmed },
-    });
-    if (error || !data) {
-      setFormError(error?.error?.code ?? 'CREATE_EXERCISE_FAILED');
-      return;
-    }
-    setCatalogExercises((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+  function pickExercise(exercise: ExerciseDto) {
     const key = `line_${lineSeq}`;
     setLineSeq((n) => n + 1);
-    setLines((prev) => [...prev, { ...emptyLine(key), exerciseId: data.id }]);
-    setInlineExerciseName('');
-  }
-
-  function buildSaveBody():
-    | CreateWorkoutTemplateRequestDto
-    | UpdateWorkoutTemplateRequestDto {
-    const base = {
-      name: name.trim(),
-      type: type.trim(),
-      description: description.trim() || null,
-      durationMinutes: parseOptionalInt(durationMinutes),
-      microcycleWeeks: parseOptionalInt(microcycleWeeks),
-      exercises: buildExercisePayload(lines),
-    };
-    if (editingId) {
-      return { ...base, version };
-    }
-    return base;
+    setDraft((prev) => ({
+      ...prev,
+      lines: [
+        ...prev.lines,
+        {
+          key,
+          exerciseId: exercise.id,
+          exerciseName: exercise.name,
+          plannedSets: '',
+          plannedReps: '',
+          plannedWeightKg: '',
+          notes: '',
+        },
+      ],
+    }));
+    setPickerOpen(false);
   }
 
   async function persistTemplate(forcedVersion?: number) {
+    if (!draft.name.trim() || !draft.type.trim()) {
+      setFormError('Впишите название шаблона.');
+      return;
+    }
     setIsSubmitting(true);
     setFormError(null);
-    const body = buildSaveBody();
+    const body = buildTemplateBody(draft);
+
     if (editingId) {
-      const patchBody = body as UpdateWorkoutTemplateRequestDto;
-      if (forcedVersion != null) {
-        patchBody.version = forcedVersion;
-      }
       const { data, error, response } = await apiClient.PATCH('/api/templates/{id}', {
         params: { path: { id: editingId } },
-        body: patchBody,
+        body: { ...body, version: forcedVersion ?? version },
       });
       setIsSubmitting(false);
       if (response.status === 409 && error?.error?.code === 'TEMPLATE_VERSION_CONFLICT') {
@@ -248,37 +196,26 @@ export function TemplatesPage() {
         setFormError(error?.error?.code ?? 'SAVE_FAILED');
         return;
       }
-      setVersion(data.version);
       await loadData();
-      startEdit(data);
+      backToList();
       return;
     }
 
-    const { data, error } = await apiClient.POST('/api/templates', {
-      body: body as CreateWorkoutTemplateRequestDto,
-    });
+    const { data, error } = await apiClient.POST('/api/templates', { body });
     setIsSubmitting(false);
     if (error || !data) {
       setFormError(error?.error?.code ?? 'SAVE_FAILED');
       return;
     }
     await loadData();
-    startEdit(data);
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!name.trim() || !type.trim()) {
-      return;
-    }
-    await persistTemplate();
+    backToList();
   }
 
   async function handleConflictReload() {
     setConflictOpen(false);
     if (!editingId) {
       await loadData();
-      resetCreateForm();
+      openCreate();
       return;
     }
     const { data, error } = await apiClient.GET('/api/templates/{id}', {
@@ -288,7 +225,7 @@ export function TemplatesPage() {
       setFormError(error?.error?.code ?? 'RELOAD_FAILED');
       return;
     }
-    startEdit(data);
+    openEdit(data);
     await loadData();
   }
 
@@ -302,179 +239,275 @@ export function TemplatesPage() {
     await persistTemplate(conflictCurrentVersion);
   }
 
+  if (mode === 'list') {
+    return (
+      <>
+        <PageMeta title="Шаблоны тренировок — Quest Fitness" robots="noindex,nofollow" />
+        <AppShell
+          title="Шаблоны тренировки"
+          leading={
+            <IconButton label="Назад" onClick={() => navigate('/pool')}>
+              <BackIcon />
+            </IconButton>
+          }
+          action={<TrainerMenuAction />}
+          bottom={
+            !loadError && templates.length > 0 ? (
+              <BottomCta
+                primary={
+                  <Button variant="primary" fullWidth onClick={openCreate}>
+                    Новый шаблон
+                  </Button>
+                }
+              />
+            ) : undefined
+          }
+        >
+          {loadError ? (
+            <PageState
+              status="error"
+              errorCode={loadError}
+              onRetry={() => void loadData()}
+            />
+          ) : templates.length === 0 ? (
+            <EmptyState
+              title="Шаблонов пока нет"
+              description="Соберите тренировку из упражнений — её можно назначать клиентам."
+              action={
+                <Button variant="primary" fullWidth onClick={openCreate}>
+                  Новый шаблон
+                </Button>
+              }
+            />
+          ) : (
+            <ListCard label="Шаблоны зала">
+              {templates.map((template) => (
+                <ListRow
+                  key={template.id}
+                  title={template.name}
+                  meta={templateListMeta(template)}
+                  metaPlacement="below"
+                  onClick={() => openEdit(template)}
+                />
+              ))}
+            </ListCard>
+          )}
+        </AppShell>
+      </>
+    );
+  }
+
+  const plannedLine = plannedIndex != null ? draft.lines[plannedIndex] : null;
+
   return (
     <>
       <PageMeta title="Шаблоны тренировок — Quest Fitness" robots="noindex,nofollow" />
-      <p>
-        <Link to="/pool">← Пул клиентов</Link>
-      </p>
-      <h1>Шаблоны тренировок</h1>
-
-      {loadError ? <p role="alert">{loadError}</p> : null}
-      {formError ? <p role="alert">{formError}</p> : null}
-
-      <section>
-        <h2>Список</h2>
-        {templates.length === 0 ? (
-          <p>Пока нет шаблонов</p>
-        ) : (
-          <ul>
-            {templates.map((template) => (
-              <li key={template.id}>
-                <button type="button" onClick={() => startEdit(template)}>
-                  {template.name}
-                </button>
-                <span>
-                  {' '}
-                  — {template.type}, v{template.version}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <button type="button" onClick={resetCreateForm}>
-          Новый шаблон
-        </button>
-      </section>
-
-      <form onSubmit={(e) => void handleSubmit(e)}>
-        <h2>{editingId ? 'Редактирование' : 'Создание'}</h2>
-        <label htmlFor="template-name">Название</label>
-        <input
-          id="template-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={128}
-          required
-        />
-
-        <label htmlFor="template-type">Тип</label>
-        <input
-          id="template-type"
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          maxLength={64}
-          required
-        />
-
-        <label htmlFor="template-description">Описание</label>
-        <textarea
-          id="template-description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          maxLength={2000}
-        />
-
-        <label htmlFor="template-duration">Длительность (мин)</label>
-        <input
-          id="template-duration"
-          type="number"
-          min={1}
-          value={durationMinutes}
-          onChange={(e) => setDurationMinutes(e.target.value)}
-        />
-
-        <label htmlFor="template-microcycle">Недель в микроцикле</label>
-        <input
-          id="template-microcycle"
-          type="number"
-          min={1}
-          value={microcycleWeeks}
-          onChange={(e) => setMicrocycleWeeks(e.target.value)}
-        />
-
-        <h3>Упражнения</h3>
-        {lines.map((line, index) => (
-          <div key={line.key}>
-            <label htmlFor={`exercise-${line.key}`}>Упражнение</label>
-            <select
-              id={`exercise-${line.key}`}
-              value={line.exerciseId}
-              onChange={(e) => updateLine(index, { exerciseId: e.target.value })}
-            >
-              <option value="">— выберите —</option>
-              {catalogExercises.map((exercise) => (
-                <option key={exercise.id} value={exercise.id}>
-                  {exercise.name}
-                </option>
-              ))}
-            </select>
-
-            <label htmlFor={`sets-${line.key}`}>Подходы</label>
-            <input
-              id={`sets-${line.key}`}
-              type="number"
-              min={1}
-              value={line.plannedSets}
-              onChange={(e) => updateLine(index, { plannedSets: e.target.value })}
-            />
-
-            <label htmlFor={`reps-${line.key}`}>Повторения</label>
-            <input
-              id={`reps-${line.key}`}
-              type="number"
-              min={1}
-              value={line.plannedReps}
-              onChange={(e) => updateLine(index, { plannedReps: e.target.value })}
-            />
-
-            <button type="button" onClick={() => moveLine(index, -1)} disabled={index === 0}>
-              ↑ выше
-            </button>
-            <button
-              type="button"
-              onClick={() => moveLine(index, 1)}
-              disabled={index === lines.length - 1}
-            >
-              ↓ ниже
-            </button>
-            <button type="button" onClick={() => removeLine(index)}>
-              Удалить
-            </button>
-          </div>
-        ))}
-
-        <button type="button" onClick={addLine}>
-          + строка упражнения
-        </button>
-
-        <fieldset>
-          <legend>+ упражнение в каталог</legend>
-          <label htmlFor="inline-exercise-name">Название нового упражнения</label>
-          <input
-            id="inline-exercise-name"
-            value={inlineExerciseName}
-            onChange={(e) => setInlineExerciseName(e.target.value)}
-            maxLength={128}
+      <AppShell
+        title={editingId ? draft.name || 'Шаблон' : 'Новый шаблон'}
+        leading={
+          <IconButton label="К списку" onClick={backToList}>
+            <BackIcon />
+          </IconButton>
+        }
+        bottom={
+          <BottomCta
+            primary={
+              <Button
+                type="submit"
+                form={FORM_ID}
+                variant="primary"
+                fullWidth
+                loading={isSubmitting}
+                disabled={!draft.name.trim()}
+              >
+                {editingId ? 'Сохранить' : 'Создать шаблон'}
+              </Button>
+            }
           />
-          <p role="status">{NO_GROUPS_WARNING}</p>
-          <button
-            type="button"
-            onClick={() => void handleInlineExerciseCreate()}
-            disabled={!inlineExerciseName.trim()}
+        }
+      >
+        <form
+          id={FORM_ID}
+          className="templates-editor"
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            void persistTemplate();
+          }}
+        >
+          {formError ? (
+            <p className="type-meta templates-editor__error" role="alert">
+              {errorMessageFor(formError)}
+            </p>
+          ) : null}
+
+          <TextField
+            id="template-name"
+            label="Название"
+            value={draft.name}
+            onChange={(e) => patchDraft({ name: e.target.value })}
+            maxLength={128}
+            autoComplete="off"
+            required
+          />
+
+          <SegmentedControl
+            label="Тип"
+            value={
+              (TEMPLATE_TYPES.some((t) => t.value === draft.type)
+                ? draft.type
+                : 'strength') as (typeof TEMPLATE_TYPES)[number]['value']
+            }
+            options={TEMPLATE_TYPES}
+            onChange={(value) => patchDraft({ type: value })}
+          />
+
+          <TextArea
+            id="template-description"
+            label="Описание"
+            value={draft.description}
+            onChange={(e) => patchDraft({ description: e.target.value })}
+            maxLength={2000}
+            rows={3}
+            hint="Необязательно"
+          />
+
+          <div className="templates-editor__pair">
+            <TextField
+              id="template-duration"
+              label="Длительность"
+              inputMode="numeric"
+              value={draft.durationMinutes}
+              onChange={(e) =>
+                patchDraft({ durationMinutes: e.target.value.replace(/\D/g, '') })
+              }
+              trailing={<span className="templates-sheet__unit">мин</span>}
+              autoComplete="off"
+            />
+            <TextField
+              id="template-microcycle"
+              label="Микроцикл"
+              inputMode="numeric"
+              value={draft.microcycleWeeks}
+              onChange={(e) =>
+                patchDraft({ microcycleWeeks: e.target.value.replace(/\D/g, '') })
+              }
+              trailing={<span className="templates-sheet__unit">нед</span>}
+              autoComplete="off"
+            />
+          </div>
+
+          <SectionTitle
+            action={
+              <Button variant="secondary" onClick={() => setPickerOpen(true)}>
+                <PlusIcon size={20} />
+                Добавить
+              </Button>
+            }
           >
-            Добавить упражнение
-          </button>
-        </fieldset>
+            Упражнения
+          </SectionTitle>
 
-        <button type="submit" disabled={isSubmitting || !name.trim()}>
-          {editingId ? 'Сохранить шаблон' : 'Создать шаблон'}
-        </button>
-        {editingId ? <span> Версия: {version}</span> : null}
-      </form>
+          {draft.lines.length === 0 ? (
+            <EmptyState
+              size="title"
+              title="Упражнений в шаблоне нет"
+              description="Добавьте упражнения из каталога."
+              action={
+                <Button variant="primary" fullWidth onClick={() => setPickerOpen(true)}>
+                  Добавить упражнение
+                </Button>
+              }
+            />
+          ) : (
+            <ul className="templates-editor__lines" aria-label="Упражнения шаблона">
+              {draft.lines.map((line, index) => (
+                <li key={line.key} className="templates-editor__line">
+                  <button
+                    type="button"
+                    className="templates-editor__line-main"
+                    aria-label={`Настроить подходы: ${line.exerciseName || 'Упражнение'}`}
+                    onClick={() => setPlannedIndex(index)}
+                  >
+                    <span className="templates-editor__line-text">
+                      <span className="templates-editor__line-title">
+                        {line.exerciseName || 'Упражнение'}
+                      </span>
+                      <span className="templates-editor__line-meta type-meta type-muted">
+                        {lineMeta(line)}
+                      </span>
+                    </span>
+                    <ChevronRightIcon className="templates-editor__line-chevron" />
+                  </button>
+                  <div className="templates-editor__row-actions">
+                    <IconButton
+                      label="Выше"
+                      disabled={index === 0}
+                      onClick={() => moveLine(index, -1)}
+                    >
+                      <ChevronUpIcon />
+                    </IconButton>
+                    <IconButton
+                      label="Ниже"
+                      disabled={index === draft.lines.length - 1}
+                      onClick={() => moveLine(index, 1)}
+                    >
+                      <ChevronDownIcon />
+                    </IconButton>
+                    <IconButton label="Удалить" onClick={() => removeLine(index)}>
+                      <CloseIcon />
+                    </IconButton>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
 
-      {conflictOpen ? (
-        <div className="templates-conflict-dialog" role="dialog" aria-labelledby={dialogTitleId}>
-          <h2 id={dialogTitleId}>Конфликт версий</h2>
-          <p>{CONFLICT_MESSAGE}</p>
-          <button type="button" onClick={() => void handleConflictReload()}>
-            Открыть заново
-          </button>
-          <button type="button" onClick={() => void handleConflictForceSave()}>
-            Сохранить поверх
-          </button>
-        </div>
+          {editingId ? (
+            <p className="type-meta type-muted">Версия {version}</p>
+          ) : null}
+        </form>
+      </AppShell>
+
+      {pickerOpen ? (
+        <ExercisePickerSheet
+          catalog={catalogExercises}
+          onPick={pickExercise}
+          onCreated={(exercise) => {
+            setCatalogExercises((prev) =>
+              [...prev, exercise].sort((a, b) => a.name.localeCompare(b.name)),
+            );
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
       ) : null}
+
+      {plannedLine != null && plannedIndex != null ? (
+        <PlannedSetsSheet
+          line={plannedLine}
+          onApply={(patch) => {
+            updateLine(plannedIndex, patch);
+            setPlannedIndex(null);
+          }}
+          onClose={() => setPlannedIndex(null)}
+        />
+      ) : null}
+
+      <ConfirmDialog
+        open={conflictOpen}
+        title="Конфликт версий"
+        body={CONFLICT_MESSAGE}
+        confirmLabel="Сохранить поверх"
+        confirmVariant="danger"
+        alternativeLabel="Открыть заново"
+        onAlternative={() => void handleConflictReload()}
+        onConfirm={() => void handleConflictForceSave()}
+        onCancel={() => setConflictOpen(false)}
+        busy={isSubmitting}
+      />
+      <span id={dialogTitleId} className="ui-visually-hidden">
+        Конфликт версий
+      </span>
     </>
   );
 }

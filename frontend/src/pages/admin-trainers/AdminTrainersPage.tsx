@@ -1,29 +1,55 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { TrainerMenuAction } from '@/features/trainer-menu-action/ui/TrainerMenuAction';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
+import { errorMessageFor } from '@/shared/lib/error-message';
+import { AppShell } from '@/shared/ui/AppShell';
+import { BottomCta } from '@/shared/ui/BottomCta';
+import { BottomSheet } from '@/shared/ui/BottomSheet';
+import { Button } from '@/shared/ui/Button';
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { EmptyState } from '@/shared/ui/EmptyState';
+import { IconButton } from '@/shared/ui/IconButton';
+import { BackIcon } from '@/shared/ui/icons';
+import { ListCard } from '@/shared/ui/ListCard';
+import { ListRow } from '@/shared/ui/ListRow';
 import { PageMeta } from '@/shared/ui/PageMeta';
+import { PageState } from '@/shared/ui/PageState';
+import { TextField } from '@/shared/ui/TextField';
+import { PasswordField } from '@/features/password-field/ui/PasswordField';
 
 type StaffUser = components['schemas']['StaffUserDto'];
 
+const CREATE_FORM_ID = 'admin-create-trainer-form';
+
+type LoadState =
+  | { status: 'loading' }
+  | { status: 'error'; code: string }
+  | { status: 'ready' };
+
 export function AdminTrainersPage() {
+  const navigate = useNavigate();
   const [trainers, setTrainers] = useState<StaffUser[]>([]);
+  const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
+  const [createOpen, setCreateOpen] = useState(false);
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [promoteError, setPromoteError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [promoteTarget, setPromoteTarget] = useState<StaffUser | null>(null);
+  const [promoteBusy, setPromoteBusy] = useState(false);
+  const [promoteError, setPromoteError] = useState<string | null>(null);
 
   const loadTrainers = useCallback(async () => {
-    setLoadError(null);
     const { data, error } = await apiClient.GET('/api/admin/trainers');
     if (error) {
       setTrainers([]);
-      setLoadError(error.error?.code ?? 'LOAD_FAILED');
+      setLoadState({ status: 'error', code: error.error?.code ?? 'LOAD_FAILED' });
       return;
     }
     setTrainers(data?.trainers ?? []);
+    setLoadState({ status: 'ready' });
   }, []);
 
   useEffect(() => {
@@ -34,6 +60,7 @@ export function AdminTrainersPage() {
     event.preventDefault();
     const loginTrimmed = login.trim();
     if (!loginTrimmed || !password) {
+      setFormError('Впишите логин и пароль.');
       return;
     }
     setFormError(null);
@@ -43,77 +70,152 @@ export function AdminTrainersPage() {
     });
     setIsSubmitting(false);
     if (error) {
-      setFormError(error.error?.code ?? 'CREATE_FAILED');
+      setFormError(errorMessageFor(error.error?.code ?? 'CREATE_FAILED'));
       return;
     }
     setLogin('');
     setPassword('');
+    setCreateOpen(false);
     await loadTrainers();
   }
 
-  async function handlePromote(userId: string) {
-    setPromoteError(null);
-    const { error } = await apiClient.POST('/api/admin/trainers/{id}/promote', {
-      params: { path: { id: userId } },
-    });
-    if (error) {
-      setPromoteError(error.error?.code ?? 'PROMOTE_FAILED');
+  async function handlePromote() {
+    if (!promoteTarget) {
       return;
     }
+    setPromoteError(null);
+    setPromoteBusy(true);
+    const { error } = await apiClient.POST('/api/admin/trainers/{id}/promote', {
+      params: { path: { id: promoteTarget.id } },
+    });
+    setPromoteBusy(false);
+    if (error) {
+      setPromoteError(errorMessageFor(error.error?.code ?? 'PROMOTE_FAILED'));
+      return;
+    }
+    setPromoteTarget(null);
     await loadTrainers();
+  }
+
+  function renderContent() {
+    if (loadState.status === 'loading') {
+      return <PageState status="loading" />;
+    }
+    if (loadState.status === 'error') {
+      return (
+        <PageState
+          status="error"
+          errorCode={loadState.code}
+          onRetry={() => {
+            setLoadState({ status: 'loading' });
+            void loadTrainers();
+          }}
+        />
+      );
+    }
+    if (trainers.length === 0) {
+      return (
+        <EmptyState
+          title="В Гильдии пока один тренер"
+          description="Добавьте коллегу — он появится в пуле тренеров."
+        />
+      );
+    }
+    return (
+      <ListCard label="Тренеры зала">
+        {trainers.map((trainer) => (
+          <ListRow
+            key={trainer.id}
+            title={trainer.login}
+            meta={trainer.role === 'ADMIN' ? 'Админ' : 'Тренер'}
+            onClick={
+              trainer.role === 'TRAINER' ? () => setPromoteTarget(trainer) : undefined
+            }
+          />
+        ))}
+      </ListCard>
+    );
   }
 
   return (
     <>
       <PageMeta title="Тренеры — Quest Fitness" robots="noindex,nofollow" />
-      <p>
-        <Link to="/pool">← Пул клиентов</Link>
-      </p>
-      <h1>Тренеры</h1>
+      <AppShell
+        title="Тренеры"
+        leading={
+          <IconButton label="Назад" onClick={() => navigate('/pool')}>
+            <BackIcon />
+          </IconButton>
+        }
+        action={<TrainerMenuAction />}
+        bottom={
+          <BottomCta
+            primary={
+              <Button variant="primary" fullWidth onClick={() => setCreateOpen(true)}>
+                Добавить тренера
+              </Button>
+            }
+          />
+        }
+      >
+        {promoteError ? (
+          <p className="type-meta" role="alert" style={{ color: 'var(--color-ink-error)' }}>
+            {promoteError}
+          </p>
+        ) : null}
+        {renderContent()}
+      </AppShell>
 
-      {loadError ? <p role="alert">{loadError}</p> : null}
-      {promoteError ? <p role="alert">{promoteError}</p> : null}
+      <BottomSheet
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Новый тренер"
+        footer={
+          <Button
+            type="submit"
+            form={CREATE_FORM_ID}
+            variant="primary"
+            fullWidth
+            loading={isSubmitting}
+          >
+            Создать
+          </Button>
+        }
+      >
+        <form id={CREATE_FORM_ID} noValidate onSubmit={(e) => void handleCreate(e)}>
+          <TextField
+            id="trainer-login"
+            name="login"
+            label="Логин"
+            value={login}
+            onChange={(e) => setLogin(e.target.value)}
+            autoComplete="off"
+          />
+          <PasswordField
+            id="trainer-password"
+            name="password"
+            label="Пароль"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+            error={formError}
+          />
+        </form>
+      </BottomSheet>
 
-      <form onSubmit={(e) => void handleCreate(e)}>
-        <h2>Новый тренер</h2>
-        <label htmlFor="trainer-login">Логин</label>
-        <input
-          id="trainer-login"
-          name="login"
-          type="text"
-          value={login}
-          onChange={(e) => setLogin(e.target.value)}
-          autoComplete="off"
-          maxLength={32}
-        />
-        <label htmlFor="trainer-password">Пароль</label>
-        <input
-          id="trainer-password"
-          name="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="new-password"
-          minLength={8}
-        />
-        <button type="submit" disabled={isSubmitting || !login.trim() || password.length < 8}>
-          Создать тренера
-        </button>
-        {formError ? <p role="alert">{formError}</p> : null}
-      </form>
-
-      <ul aria-label="Список тренеров и админов">
-        {trainers.map((row) => (
-          <li key={row.id}>
-            {row.login} ({row.role})
-            {row.role === 'TRAINER' ? (
-              <button type="button" onClick={() => void handlePromote(row.id)}>
-                Сделать админом
-              </button>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+      <ConfirmDialog
+        open={Boolean(promoteTarget)}
+        title="Сделать админом?"
+        body={
+          promoteTarget
+            ? `${promoteTarget.login} получит права администратора.`
+            : undefined
+        }
+        confirmLabel="Сделать админом"
+        onConfirm={() => void handlePromote()}
+        onCancel={() => setPromoteTarget(null)}
+        busy={promoteBusy}
+      />
     </>
   );
 }

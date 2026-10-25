@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { LoadErrorWithRetry } from '@/features/diary/ui/LoadErrorWithRetry';
 import { DiaryListPage } from '@/pages/diary/DiaryListPage';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
 import { PageMeta } from '@/shared/ui/PageMeta';
+import { PageState } from '@/shared/ui/PageState';
 
 type MeResponse = components['schemas']['MeResponseDto'];
 
@@ -41,10 +40,7 @@ export function CabinetDiaryPage() {
     return (
       <>
         <PageMeta title="Дневник — Quest Fitness" robots="noindex,nofollow" />
-        <p>
-          <Link to="/cabinet/workouts">← Кабинет</Link>
-        </p>
-        <LoadErrorWithRetry message={loadError} onRetry={() => void loadMe()} />
+        <PageState status="error" errorCode={loadError} onRetry={() => void loadMe()} />
       </>
     );
   }
@@ -53,7 +49,7 @@ export function CabinetDiaryPage() {
     return (
       <>
         <PageMeta title="Дневник — Quest Fitness" robots="noindex,nofollow" />
-        <p role="status">Загрузка…</p>
+        <PageState status="loading" />
       </>
     );
   }
@@ -61,8 +57,7 @@ export function CabinetDiaryPage() {
   return (
     <DiaryListPage
       clientId={clientProfileId}
-      backTo="/cabinet/workouts"
-      backLabel="← Кабинет"
+      embedded
       sessionDetailPath={(sessionId) => `/cabinet/diary/${sessionId}`}
     />
   );

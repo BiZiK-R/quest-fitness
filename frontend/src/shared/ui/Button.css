@@ -1,0 +1,44 @@
+/**
+ * Тонкие оверрайды поверх antd — сессия, danger-контур, touch.
+ */
+.ui-button.ant-btn {
+  font-family: var(--font-family);
+  border-radius: var(--radius-sm) !important;
+  letter-spacing: 0.02em;
+}
+
+.ui-button.ant-btn-primary {
+  border-width: 2px;
+  border-color: var(--color-accent-red);
+}
+
+.ui-button.ant-btn-default {
+  border-width: 2px;
+}
+
+/** Danger: рамка + кость, без розовой заливки (WCAG + один красный CTA). */
+.ui-button--danger.ant-btn-default,
+.ui-button--danger.ant-btn-dangerous {
+  background: transparent !important;
+  border-color: var(--color-accent-red) !important;
+  color: var(--color-ink-primary) !important;
+}
+
+.ui-button--danger.ant-btn-default:hover:not(:disabled),
+.ui-button--danger.ant-btn-dangerous:hover:not(:disabled) {
+  background: var(--color-surface-raised) !important;
+  border-color: var(--color-accent-red-text) !important;
+  color: var(--color-ink-primary) !important;
+}
+
+.ui-button--secondary-session.ant-btn-default {
+  background: var(--color-surface-session-sunken);
+  border-color: var(--color-border-session);
+  color: var(--color-ink-on-session);
+}
+
+.ui-button--secondary-session.ant-btn-default:hover:not(:disabled) {
+  background: var(--color-surface-session-raised) !important;
+  border-color: var(--color-border-session) !important;
+  color: var(--color-ink-on-session) !important;
+}

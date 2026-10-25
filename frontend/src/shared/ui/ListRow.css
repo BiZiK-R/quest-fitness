@@ -1,0 +1,105 @@
+.ui-list-row__item {
+  display: block;
+}
+
+.ui-list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  width: 100%;
+  min-height: var(--spacing-control-lg);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: none;
+  background-color: var(--color-surface-card);
+  color: var(--color-ink-primary);
+  font-family: var(--font-family);
+  font-size: 16px;
+  line-height: 24px;
+  text-align: left;
+  text-decoration: none;
+}
+
+/* Бейдж сверху справа: имя тоже прижимаем к верху, как в макете Пула */
+.ui-list-row--with-badge {
+  align-items: flex-start;
+}
+
+.ui-list-row--with-badge .ui-list-row__main {
+  padding-top: var(--spacing-1);
+}
+
+.ui-list-row--interactive {
+  cursor: pointer;
+  transition: background-color var(--motion-press);
+}
+
+.ui-list-row--interactive:active {
+  background-color: var(--color-surface-sunken);
+}
+
+/* Кольцо внутрь, иначе его обрезает overflow карточки */
+.ui-list-row--interactive:focus-visible {
+  outline-offset: calc(-1 * var(--focus-ring-width) - var(--focus-ring-offset));
+  box-shadow: inset 0 0 0 var(--focus-ring-offset) var(--focus-ring-inner);
+}
+
+@media (hover: hover) {
+  .ui-list-row--interactive:hover {
+    background-color: var(--color-surface-sunken);
+  }
+}
+
+.ui-list-row__leading {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--color-ink-primary);
+}
+
+.ui-list-row__main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ui-list-row__title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+.ui-list-row__meta {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--color-ink-muted);
+}
+
+.ui-list-row__meta b {
+  font-weight: 500;
+  color: var(--color-ink-primary);
+}
+
+.ui-list-row__end {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.ui-list-row__meta--end {
+  text-align: right;
+}
+
+.ui-list-row__trailing {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  align-self: center;
+  color: var(--color-ink-muted);
+}

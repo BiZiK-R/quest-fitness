@@ -1,0 +1,19 @@
+/* Строки меню лежат прямо на белой шторке: карточке нужна рамка, иначе белое на белом */
+.trainer-menu-sheet .ui-list-card {
+  border: 1px solid var(--color-border-subtle);
+}
+
+.trainer-menu-sheet__soon {
+  color: var(--color-ink-soon);
+}
+
+.trainer-menu-sheet .ui-sheet__footer {
+  border-top: none;
+  padding-top: 0;
+}
+
+.trainer-menu-sheet__logout {
+  justify-content: flex-start;
+  padding-inline: var(--spacing-4);
+  color: var(--color-ink-muted);
+}

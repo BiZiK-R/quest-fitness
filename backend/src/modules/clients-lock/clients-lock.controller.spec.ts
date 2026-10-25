@@ -120,6 +120,10 @@ describe('ClientsLockController (HTTP)', () => {
         }
         return null;
       },
+      findMany: async ({ where }: { where?: { id?: { in: string[] } } }) => {
+        const ids = new Set(where?.id?.in ?? []);
+        return users.filter((u) => ids.has(u.id));
+      },
     };
   }
 
@@ -304,6 +308,9 @@ describe('ClientsLockController (HTTP)', () => {
     clientMacroProgress: {
       findUnique: async () => null,
     },
+    workout: {
+      findMany: async () => [],
+    },
   };
 
   beforeAll(async () => {
@@ -392,6 +399,7 @@ describe('ClientsLockController (HTTP)', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.holderTrainerId).toBe(trainerUser.id);
+    expect(res.body.holderDisplayName).toBe(trainerUser.login);
     expect(res.body.expiresAt).toBeTypeOf('string');
     const expiresMs = new Date(res.body.expiresAt as string).getTime();
     expect(expiresMs).toBeGreaterThanOrEqual(before + CLIENT_LOCK_IDLE_TTL_MS - 2000);
@@ -528,9 +536,35 @@ describe('ClientsLockController (HTTP)', () => {
     expect(getRes.status).toBe(200);
     expect(getRes.body.lockStatus).toEqual({
       holderTrainerId: trainerUser.id,
+      holderDisplayName: trainerUser.login,
       expiresAt: expect.any(String),
     });
     expect(clientLocks.size).toBe(1);
+  });
+
+  it('GET pool list includes holderDisplayName for locked client', async () => {
+    const t1 = await loginAndGetSession(app, trainerUser.login, TRAINER_PASSWORD);
+    const t2 = await loginAndGetSession(app, trainer2User.login, TRAINER2_PASSWORD);
+
+    await request(app.getHttpServer())
+      .post('/api/clients/client_pool_1/lock')
+      .set('Cookie', t1.cookiePairs)
+      .set('x-csrf-token', t1.csrfToken);
+
+    const listRes = await request(app.getHttpServer())
+      .get('/api/clients')
+      .set('Cookie', t2.cookiePairs)
+      .set('x-csrf-token', t2.csrfToken);
+
+    expect(listRes.status).toBe(200);
+    const locked = (
+      listRes.body.clients as Array<{ id: string; lockStatus: unknown }>
+    ).find((client) => client.id === 'client_pool_1');
+    expect(locked?.lockStatus).toEqual({
+      holderTrainerId: trainerUser.id,
+      holderDisplayName: trainerUser.login,
+      expiresAt: expect.any(String),
+    });
   });
 
   it('GET client returns null lockStatus when lock expired', async () => {

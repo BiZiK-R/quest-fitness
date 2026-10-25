@@ -1,19 +1,43 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { TrainerMenuAction } from '@/features/trainer-menu-action/ui/TrainerMenuAction';
 import { apiClient } from '@/shared/api/client';
 import type { components } from '@/shared/api/schema';
+import { errorMessageFor } from '@/shared/lib/error-message';
+import { AppShell } from '@/shared/ui/AppShell';
+import { BottomCta } from '@/shared/ui/BottomCta';
+import { Button } from '@/shared/ui/Button';
+import { EmptyState } from '@/shared/ui/EmptyState';
+import { IconButton } from '@/shared/ui/IconButton';
+import {
+  BackIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  CloseIcon,
+  PlusIcon,
+} from '@/shared/ui/icons';
+import { ListCard } from '@/shared/ui/ListCard';
+import { ListRow } from '@/shared/ui/ListRow';
 import { PageMeta } from '@/shared/ui/PageMeta';
+import { PageState } from '@/shared/ui/PageState';
+import { SectionTitle } from '@/shared/ui/SectionTitle';
+import { SelectField } from '@/shared/ui/SelectField';
+import { TextArea } from '@/shared/ui/TextArea';
+import { TextField } from '@/shared/ui/TextField';
+import './MacrocyclesPage.css';
 
 type MacrocycleDto = components['schemas']['MacrocycleDto'];
 type WorkoutTemplateDto = components['schemas']['WorkoutTemplateDto'];
-type CreateMacrocycleRequestDto = components['schemas']['CreateMacrocycleRequestDto'];
-type UpdateMacrocycleRequestDto = components['schemas']['UpdateMacrocycleRequestDto'];
 
 type StageLine = {
   key: string;
   id?: string;
   templateId: string;
 };
+
+type Mode = 'list' | 'editor';
+
+const FORM_ID = 'macrocycle-editor-form';
 
 function emptyStage(key: string): StageLine {
   return { key, templateId: '' };
@@ -37,13 +61,22 @@ function buildStagesPayload(lines: StageLine[]) {
     }));
 }
 
+function templateNameById(
+  templates: WorkoutTemplateDto[],
+  templateId: string,
+): string {
+  return templates.find((t) => t.id === templateId)?.name ?? 'Шаблон';
+}
+
 export function MacrocyclesPage() {
+  const navigate = useNavigate();
+  const [mode, setMode] = useState<Mode>('list');
   const [macrocycles, setMacrocycles] = useState<MacrocycleDto[]>([]);
   const [templates, setTemplates] = useState<WorkoutTemplateDto[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [periodicityNote, setPeriodicityNote] = useState('');
-  const [stageLines, setStageLines] = useState<StageLine[]>([emptyStage('stage_0')]);
+  const [stageLines, setStageLines] = useState<StageLine[]>([]);
   const [stageSeq, setStageSeq] = useState(1);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -56,12 +89,8 @@ export function MacrocyclesPage() {
       apiClient.GET('/api/templates'),
     ]);
     if (macrosRes.error || templatesRes.error) {
-      setMacrocycles([]);
-      setTemplates([]);
       setLoadError(
-        macrosRes.error?.error?.code ??
-          templatesRes.error?.error?.code ??
-          'LOAD_FAILED',
+        macrosRes.error?.error?.code ?? templatesRes.error?.error?.code ?? 'LOAD_FAILED',
       );
       return;
     }
@@ -73,40 +102,36 @@ export function MacrocyclesPage() {
     void loadData();
   }, [loadData]);
 
-  function resetCreateForm() {
+  function openCreate() {
     setEditingId(null);
     setName('');
     setPeriodicityNote('');
     setStageLines([emptyStage('stage_0')]);
     setStageSeq(1);
     setFormError(null);
+    setMode('editor');
   }
 
-  function startEdit(macro: MacrocycleDto) {
+  function openEdit(macro: MacrocycleDto) {
     setEditingId(macro.id);
     setName(macro.name);
     setPeriodicityNote(macro.periodicityNote ?? '');
-    const lines = stagesFromMacro(macro);
-    setStageLines(lines.length > 0 ? lines : [emptyStage('stage_0')]);
+    setStageLines(stagesFromMacro(macro));
     setFormError(null);
+    setMode('editor');
   }
 
-  function addStageLine() {
-    const key = `stage_${stageSeq}`;
-    setStageSeq((n) => n + 1);
-    setStageLines((prev) => [...prev, emptyStage(key)]);
-  }
-
-  function removeStageLine(index: number) {
-    setStageLines((prev) => prev.filter((_, i) => i !== index));
+  function backToList() {
+    setMode('list');
+    setFormError(null);
   }
 
   function moveStageLine(index: number, direction: -1 | 1) {
     const target = index + direction;
+    if (target < 0 || target >= stageLines.length) {
+      return;
+    }
     setStageLines((prev) => {
-      if (target < 0 || target >= prev.length) {
-        return prev;
-      }
       const next = [...prev];
       const tmp = next[index]!;
       next[index] = next[target]!;
@@ -121,151 +146,248 @@ export function MacrocyclesPage() {
     );
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    setFormError(null);
-    setIsSubmitting(true);
+  function removeStageLine(index: number) {
+    setStageLines((prev) => prev.filter((_, i) => i !== index));
+  }
 
-    const stages = buildStagesPayload(stageLines);
+  function addStageLine() {
+    const key = `stage_${stageSeq}`;
+    setStageSeq((n) => n + 1);
+    setStageLines((prev) => [...prev, emptyStage(key)]);
+  }
+
+  async function handleSave() {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      setFormError('NAME_REQUIRED');
-      setIsSubmitting(false);
+      setFormError('Впишите название.');
+      return;
+    }
+    const stages = buildStagesPayload(stageLines);
+    if (stages.length === 0) {
+      setFormError('Добавьте хотя бы один этап с шаблоном.');
       return;
     }
 
+    setIsSubmitting(true);
+    setFormError(null);
     try {
       if (editingId) {
-        const body: UpdateMacrocycleRequestDto = {
-          name: trimmedName,
-          periodicityNote: periodicityNote.trim() || null,
-          stages,
-        };
         const { error } = await apiClient.PATCH('/api/macrocycles/{id}', {
           params: { path: { id: editingId } },
-          body,
+          body: {
+            name: trimmedName,
+            periodicityNote: periodicityNote.trim() || null,
+            stages,
+          },
         });
         if (error) {
           setFormError(error.error?.code ?? 'SAVE_FAILED');
           return;
         }
       } else {
-        const body: CreateMacrocycleRequestDto = {
-          name: trimmedName,
-          periodicityNote: periodicityNote.trim() || null,
-          stages,
-        };
-        const { error } = await apiClient.POST('/api/macrocycles', { body });
+        const { error } = await apiClient.POST('/api/macrocycles', {
+          body: {
+            name: trimmedName,
+            periodicityNote: periodicityNote.trim() || null,
+            stages,
+          },
+        });
         if (error) {
           setFormError(error.error?.code ?? 'SAVE_FAILED');
           return;
         }
       }
       await loadData();
-      resetCreateForm();
+      backToList();
     } finally {
       setIsSubmitting(false);
     }
   }
 
+  if (mode === 'list') {
+    return (
+      <>
+        <PageMeta title="Макроциклы — Quest Fitness" robots="noindex,nofollow" />
+        <AppShell
+          title="Макроциклы"
+          leading={
+            <IconButton label="Назад" onClick={() => navigate('/pool')}>
+              <BackIcon />
+            </IconButton>
+          }
+          action={<TrainerMenuAction />}
+          bottom={
+            !loadError && macrocycles.length > 0 ? (
+              <BottomCta
+                primary={
+                  <Button variant="primary" fullWidth onClick={openCreate}>
+                    Новый макроцикл
+                  </Button>
+                }
+              />
+            ) : undefined
+          }
+        >
+          {loadError ? (
+            <PageState status="error" errorCode={loadError} onRetry={() => void loadData()} />
+          ) : macrocycles.length === 0 ? (
+            <EmptyState
+              title="Макроциклов пока нет"
+              description="Соберите программу из шаблонов — её можно назначать клиентам."
+              action={
+                <Button variant="primary" fullWidth onClick={openCreate}>
+                  Новый макроцикл
+                </Button>
+              }
+            />
+          ) : (
+            <ListCard label="Макроциклы зала">
+              {macrocycles.map((macro) => (
+                <ListRow
+                  key={macro.id}
+                  title={macro.name}
+                  meta={`этапов: ${macro.stages.length}`}
+                  onClick={() => openEdit(macro)}
+                />
+              ))}
+            </ListCard>
+          )}
+        </AppShell>
+      </>
+    );
+  }
+
   return (
     <>
       <PageMeta title="Макроциклы — Quest Fitness" robots="noindex,nofollow" />
-      <p>
-        <Link to="/pool">← Пул клиентов</Link>
-      </p>
-      <h1>Макроциклы</h1>
+      <AppShell
+        title={editingId ? name || 'Макроцикл' : 'Новый макроцикл'}
+        leading={
+          <IconButton label="К списку" onClick={backToList}>
+            <BackIcon />
+          </IconButton>
+        }
+        bottom={
+          <BottomCta
+            primary={
+              <Button
+                type="submit"
+                form={FORM_ID}
+                variant="primary"
+                fullWidth
+                loading={isSubmitting}
+                disabled={!name.trim()}
+              >
+                {editingId ? 'Сохранить' : 'Создать макроцикл'}
+              </Button>
+            }
+          />
+        }
+      >
+        <form
+          id={FORM_ID}
+          className="macro-editor"
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSave();
+          }}
+        >
+          {formError ? (
+            <p className="type-meta macro-editor__error" role="alert">
+              {errorMessageFor(formError)}
+            </p>
+          ) : null}
 
-      {loadError ? <p role="alert">{loadError}</p> : null}
-      {formError ? <p role="alert">{formError}</p> : null}
+          <TextField
+            id="macro-name"
+            label="Название"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={128}
+            autoComplete="off"
+            required
+          />
 
-      <section>
-        <h2>Список</h2>
-        {macrocycles.length === 0 ? (
-          <p>Пока нет макроциклов</p>
-        ) : (
-          <ul>
-            {macrocycles.map((macro) => (
-              <li key={macro.id}>
-                <button type="button" onClick={() => startEdit(macro)}>
-                  {macro.name}
-                </button>
-                <span> — этапов: {macro.stages.length}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <button type="button" onClick={resetCreateForm}>
-          Новый макроцикл
-        </button>
-      </section>
+          <TextArea
+            id="macro-periodicity"
+            label="Периодичность"
+            value={periodicityNote}
+            onChange={(e) => setPeriodicityNote(e.target.value)}
+            maxLength={2000}
+            rows={2}
+            hint="Необязательно — подсказка для тренера"
+          />
 
-      <form onSubmit={(e) => void handleSubmit(e)}>
-        <h2>{editingId ? 'Редактирование' : 'Создание'}</h2>
-        <label htmlFor="macro-name">Название</label>
-        <input
-          id="macro-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={128}
-          required
-        />
+          <SectionTitle
+            action={
+              <Button variant="secondary" onClick={addStageLine}>
+                <PlusIcon size={20} />
+                Этап
+              </Button>
+            }
+          >
+            Этапы
+          </SectionTitle>
 
-        <label htmlFor="macro-periodicity">Примечание по периодичности</label>
-        <textarea
-          id="macro-periodicity"
-          value={periodicityNote}
-          onChange={(e) => setPeriodicityNote(e.target.value)}
-          maxLength={2000}
-        />
-
-        <h3>Этапы (шаблоны)</h3>
-        {stageLines.map((line, index) => (
-          <div key={line.key}>
-            <label htmlFor={`macro-stage-${line.key}`}>Шаблон этапа {index + 1}</label>
-            <select
-              id={`macro-stage-${line.key}`}
-              value={line.templateId}
-              onChange={(e) => updateStageLine(index, { templateId: e.target.value })}
-            >
-              <option value="">— выберите шаблон —</option>
-              {templates.map((template) => (
-                <option key={template.id} value={template.id}>
-                  {template.name}
-                </option>
+          {stageLines.length === 0 ? (
+            <EmptyState
+              size="title"
+              title="Этапов пока нет"
+              description="Добавьте этап и выберите шаблон для каждого."
+              action={
+                <Button variant="primary" fullWidth onClick={addStageLine}>
+                  Добавить этап
+                </Button>
+              }
+            />
+          ) : (
+            <div className="macro-editor__stages">
+              {stageLines.map((line, index) => (
+                <div key={line.key} className="macro-editor__stage">
+                  <SelectField
+                    id={`macro-stage-${line.key}`}
+                    label={`Этап ${index + 1}`}
+                    value={line.templateId}
+                    placeholder="Выберите шаблон"
+                    onChange={(e) => updateStageLine(index, { templateId: e.target.value })}
+                  >
+                    {templates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </SelectField>
+                  <div className="macro-editor__stage-actions">
+                    <IconButton
+                      label="Выше"
+                      disabled={index === 0}
+                      onClick={() => moveStageLine(index, -1)}
+                    >
+                      <ChevronUpIcon />
+                    </IconButton>
+                    <IconButton
+                      label="Ниже"
+                      disabled={index === stageLines.length - 1}
+                      onClick={() => moveStageLine(index, 1)}
+                    >
+                      <ChevronDownIcon />
+                    </IconButton>
+                    <IconButton label="Удалить этап" onClick={() => removeStageLine(index)}>
+                      <CloseIcon />
+                    </IconButton>
+                  </div>
+                  {line.templateId ? (
+                    <p className="type-meta type-muted macro-editor__stage-hint">
+                      {templateNameById(templates, line.templateId)}
+                    </p>
+                  ) : null}
+                </div>
               ))}
-            </select>
-            <button
-              type="button"
-              aria-label={`Поднять этап ${index + 1}`}
-              disabled={index === 0}
-              onClick={() => moveStageLine(index, -1)}
-            >
-              ↑
-            </button>
-            <button
-              type="button"
-              aria-label={`Опустить этап ${index + 1}`}
-              disabled={index === stageLines.length - 1}
-              onClick={() => moveStageLine(index, 1)}
-            >
-              ↓
-            </button>
-            <button type="button" onClick={() => removeStageLine(index)}>
-              Удалить этап
-            </button>
-          </div>
-        ))}
-        <button type="button" onClick={addStageLine}>
-          Добавить этап
-        </button>
-
-        <p>
-          <button type="submit" disabled={isSubmitting}>
-            {editingId ? 'Сохранить макроцикл' : 'Создать макроцикл'}
-          </button>
-        </p>
-      </form>
+            </div>
+          )}
+        </form>
+      </AppShell>
     </>
   );
 }
